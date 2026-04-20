@@ -1,0 +1,57 @@
+package com.amael.joalabft_backend.model.entity;
+
+import com.amael.joalabft_backend.model.enums.RoleUtilisateur;
+import jakarta.persistence.*;
+
+/**
+ * Compte applicatif d'un employé du casino.
+ * Le mot de passe est stocké sous forme de hash SHA-256.
+ */
+@Entity
+@Table(name = "utilisateurs")
+public class Utilisateur {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String identifiant;
+
+    @Column(name = "mot_de_passe", nullable = false, length = 64)
+    private String motDePasse;
+
+    @Column(nullable = false, length = 50)
+    private String nom;
+
+    @Column(nullable = false, length = 50)
+    private String prenom;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RoleUtilisateur role;
+
+    public Utilisateur() {}
+
+    public Long getId() { return id; }
+
+    public String getIdentifiant() { return identifiant; }
+    public void setIdentifiant(String identifiant) { this.identifiant = identifiant; }
+
+    public String getMotDePasse() { return motDePasse; }
+    public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
+
+    public String getNom() { return nom; }
+    public void setNom(String nom) { this.nom = nom; }
+
+    public String getPrenom() { return prenom; }
+    public void setPrenom(String prenom) { this.prenom = prenom; }
+
+    public RoleUtilisateur getRole() { return role; }
+    public void setRole(RoleUtilisateur role) { this.role = role; }
+
+    /** Retourne le nom complet affiché dans l'interface (ex : "Alexis Duchat"). */
+    public String getNomComplet() {
+        return prenom + " " + nom;
+    }
+}
