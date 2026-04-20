@@ -7,6 +7,7 @@
 | JDK | 21 |
 | Maven | 3.9+ (ou utiliser `./mvnw`) |
 | Serveur d'application | Compatible Jakarta EE 11 (ex: WildFly 35+, GlassFish 8, Payara 6) |
+| Base de données | A définir (PostgreSQL recommandé) |
 | IDE (recommandé) | IntelliJ IDEA |
 
 ## Installation
@@ -27,13 +28,13 @@ git checkout dev
 
 Le WAR est généré dans `target/JOALABFT_Backend-1.0-SNAPSHOT.war`.
 
-### 3. Déployer sur le serveur d'application
-
-Déposer le WAR dans le répertoire de déploiement de votre serveur d'application (ex: `standalone/deployments/` pour WildFly).
-
-### 4. Configurer la base de données
+### 3. Configurer la base de données
 
 Voir [database.md](database.md) pour la configuration de la datasource et du schéma.
+
+### 4. Déployer sur le serveur d'application
+
+Déposer le WAR dans le répertoire de déploiement du serveur (ex: `standalone/deployments/` pour WildFly).
 
 ## Commandes courantes
 
@@ -52,3 +53,4 @@ Voir [database.md](database.md) pour la configuration de la datasource et du sch
 2. IntelliJ détecte automatiquement le `pom.xml` Maven.
 3. Configurer un **Application Server** (WildFly / GlassFish) dans `Run > Edit Configurations`.
 4. Ajouter un artefact de déploiement pointant vers le WAR généré.
+5. S'assurer que le JDK 21 est sélectionné dans `File > Project Structure`.
