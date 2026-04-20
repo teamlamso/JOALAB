@@ -1,0 +1,90 @@
+package com.amael.joalabft_backend.model.entity;
+
+import com.amael.joalabft_backend.model.enums.TypeChange;
+import com.amael.joalabft_backend.model.enums.TypeJeu;
+import com.amael.joalabft_backend.model.enums.TypePaiement;
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+
+/**
+ * Ligne de transaction au sein d'une {@link FicheLABFT}.
+ *
+ * <p>Chaque ligne représente une opération de jeu distincte pour un client :
+ * type de jeu, mode de paiement, type de change, montants et observations.
+ */
+@Entity
+@Table(name = "lignes_transaction")
+public class LigneTransaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "fiche_id", nullable = false)
+    private FicheLABFT fiche;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_jeu", nullable = false, length = 10)
+    private TypeJeu typeJeu;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_paiement", nullable = false, length = 10)
+    private TypePaiement typePaiement;
+
+    /** Type de support de change — facultatif selon la transaction. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_change", length = 10)
+    private TypeChange typeChange;
+
+    /** Numéro de socle de la machine (MAS) — facultatif. */
+    @Column(name = "numero_socle")
+    private Integer numeroSocle;
+
+    /** Montant Online / RGM (Recette Globale Machine). */
+    @Column(name = "montant_rgm", precision = 12, scale = 2)
+    private BigDecimal montantRGM;
+
+    @Column(name = "change_entrant", precision = 12, scale = 2)
+    private BigDecimal changeEntrant;
+
+    @Column(name = "change_sortant", precision = 12, scale = 2)
+    private BigDecimal changeSortant;
+
+    @Column(length = 500)
+    private String observations;
+
+    public LigneTransaction() {}
+
+    // --- Getters / Setters ---
+
+    public Long getId() { return id; }
+
+    public FicheLABFT getFiche() { return fiche; }
+    public void setFiche(FicheLABFT fiche) { this.fiche = fiche; }
+
+    public TypeJeu getTypeJeu() { return typeJeu; }
+    public void setTypeJeu(TypeJeu typeJeu) { this.typeJeu = typeJeu; }
+
+    public TypePaiement getTypePaiement() { return typePaiement; }
+    public void setTypePaiement(TypePaiement typePaiement) { this.typePaiement = typePaiement; }
+
+    public TypeChange getTypeChange() { return typeChange; }
+    public void setTypeChange(TypeChange typeChange) { this.typeChange = typeChange; }
+
+    public Integer getNumeroSocle() { return numeroSocle; }
+    public void setNumeroSocle(Integer numeroSocle) { this.numeroSocle = numeroSocle; }
+
+    public BigDecimal getMontantRGM() { return montantRGM; }
+    public void setMontantRGM(BigDecimal montantRGM) { this.montantRGM = montantRGM; }
+
+    public BigDecimal getChangeEntrant() { return changeEntrant; }
+    public void setChangeEntrant(BigDecimal changeEntrant) { this.changeEntrant = changeEntrant; }
+
+    public BigDecimal getChangeSortant() { return changeSortant; }
+    public void setChangeSortant(BigDecimal changeSortant) { this.changeSortant = changeSortant; }
+
+    public String getObservations() { return observations; }
+    public void setObservations(String observations) { this.observations = observations; }
+}
