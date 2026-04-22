@@ -20,7 +20,7 @@ import java.io.IOException;
 @Provider
 public class AuthFilter implements ContainerRequestFilter {
 
-    private static final String LOGIN_PATH = "/auth/login";
+    private static final String LOGIN_PATH = "auth/login";
 
     @Inject
     private SessionStore sessionStore;
