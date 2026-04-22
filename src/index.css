@@ -991,11 +991,12 @@ tbody tr:hover {
   margin-bottom: 16px;
 }
 
-.field-warning {
-  display: block;
+.field-warning-icon {
   color: #e67e22;
-  font-size: 0.8rem;
-  margin-top: 3px;
+  font-size: 1rem;
+  margin-left: 6px;
+  cursor: help;
+  position: relative;
 }
 
 .loading {

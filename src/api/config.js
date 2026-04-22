@@ -10,7 +10,7 @@ export async function request(path, options = {}) {
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
 
-  if (res.status === 204) return null
+  if (res.status === 204 || res.status === 201) return null
 
   if (res.status === 401 && !path.includes('/auth/login')) {
     localStorage.removeItem('token')

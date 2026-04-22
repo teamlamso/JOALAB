@@ -64,16 +64,21 @@ function Toggle({ options, value, onChange, required }) {
 
 function validateRGM(value) {
   if (!value) return []
-  const n = parseFloat(value)
+  const n = parseFloat(value.replace(',', '.'))
+  if (isNaN(n)) return []
   const warnings = []
-  if (n < 500) warnings.push('Le RGM ne peut pas être inférieur à 500 €.')
-  if (value.includes('.') || value.includes(',')) warnings.push('Le RGM ne peut pas contenir de décimales (insert billet).')
-  if (n % 5 !== 0) warnings.push('Le RGM doit être un multiple de 5 € (insert billet).')
+  if (n < 500) warnings.push('Le RGM ne peut pas être inférieur à 500 €')
+  if (n % 1 !== 0) warnings.push('Le RGM ne peut pas contenir de décimales (insert billet)')
+  if (n % 5 !== 0) warnings.push('Le RGM doit être un multiple de 5 € (insert billet)')
   return warnings
 }
 
+function toDisplay(val) { return val ? String(val).replace('.', ',') : '' }
+function toInternal(raw) { return raw.replace(',', '.') }
+
 function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
   const set = (field) => (e) => onChange({ ...ligne, [field]: e.target.value })
+  const setMoney = (field) => (e) => onChange({ ...ligne, [field]: toInternal(e.target.value) })
   const rgmWarnings = validateRGM(ligne.montantRGM)
   const socleRequired = !!ligne.montantRGM
 
@@ -100,17 +105,21 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
           <input type="text" value={ligne.numeroSocle} onChange={set('numeroSocle')} />
         </div>
         <div className="form-group">
-          <label>Montant Online (RGM) :</label>
-          <input type="number" step="any" value={ligne.montantRGM} onChange={set('montantRGM')} placeholder="0 €" />
-          {rgmWarnings.map((w, i) => <small key={i} className="field-warning">{w}</small>)}
+          <label>
+            Montant Online (RGM) :
+            {rgmWarnings.length > 0 && (
+              <span className="field-warning-icon" title={rgmWarnings.join('\n')}>&#9888;</span>
+            )}
+          </label>
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} placeholder="0 €" />
         </div>
         <div className="form-group">
           <label>Change Entrant :</label>
-          <input type="number" step="0.01" value={ligne.changeEntrant} onChange={set('changeEntrant')} placeholder="0,00 €" />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeEntrant)} onChange={setMoney('changeEntrant')} placeholder="0,00 €" />
         </div>
         <div className="form-group">
           <label>Change Sortant :</label>
-          <input type="number" step="0.01" value={ligne.changeSortant} onChange={set('changeSortant')} placeholder="0,00 €" />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeSortant)} onChange={setMoney('changeSortant')} placeholder="0,00 €" />
         </div>
         <div className="form-group">
           <label>Observations (ligne) :</label>

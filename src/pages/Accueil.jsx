@@ -149,11 +149,11 @@ export default function Accueil() {
               </div>
               <div className="fiche-card-row">
                 <span>Change entrant :</span>
-                <span>{formatEur(f.totalChangeEntrant)}</span>
+                <span>{formatEur(f.totalEntrant)}</span>
               </div>
               <div className="fiche-card-row">
                 <span>Change sortant :</span>
-                <span>{formatEur(f.totalChangeSortant)}</span>
+                <span>{formatEur(f.totalSortant)}</span>
               </div>
               <div className="fiche-card-footer">
                 <span className="fiche-card-footer-time">
