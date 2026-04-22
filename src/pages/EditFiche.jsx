@@ -45,15 +45,17 @@ function TrashIcon() {
   )
 }
 
-function Toggle({ options, value, onChange, required }) {
+function Toggle({ options, value, onChange, disabledOptions }) {
+  const disabled = disabledOptions || []
   return (
     <div className="toggle-group">
       {options.map((o) => (
         <button
           key={o}
           type="button"
-          className={`toggle-btn ${value === o ? 'active' : ''}`}
-          onClick={() => onChange(required && value === o ? value : value === o ? null : o)}
+          className={`toggle-btn ${value === o ? 'active' : ''} ${disabled.includes(o) ? 'disabled' : ''}`}
+          disabled={disabled.includes(o)}
+          onClick={() => onChange(value === o ? null : o)}
         >
           {o}
         </button>
@@ -67,30 +69,42 @@ function validateRGM(value) {
   const n = parseFloat(value.replace(',', '.'))
   if (isNaN(n)) return []
   const warnings = []
-  if (n < 500) warnings.push('Le RGM ne peut pas être inférieur à 500 €')
-  if (n % 1 !== 0) warnings.push('Le RGM ne peut pas contenir de décimales (insert billet)')
-  if (n % 5 !== 0) warnings.push('Le RGM doit être un multiple de 5 € (insert billet)')
+  if (n < 500) warnings.push('Le RGM ne peut pas \u00eatre inf\u00e9rieur \u00e0 500 \u20ac')
+  if (n % 1 !== 0) warnings.push('Le RGM ne peut pas contenir de d\u00e9cimales (insert billet)')
+  if (n % 5 !== 0) warnings.push('Le RGM doit \u00eatre un multiple de 5 \u20ac (insert billet)')
   return warnings
 }
 
 function toDisplay(val) { return val ? String(val).replace('.', ',') : '' }
 function toInternal(raw) { return raw.replace(',', '.') }
+function filterMoney(val) { return val.replace(/[^0-9.,]/g, '') }
 
 function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
   const set = (field) => (e) => onChange({ ...ligne, [field]: e.target.value })
-  const setMoney = (field) => (e) => onChange({ ...ligne, [field]: toInternal(e.target.value) })
+  const setMoney = (field) => (e) => {
+    const filtered = filterMoney(e.target.value)
+    onChange({ ...ligne, [field]: toInternal(filtered) })
+  }
+
+  const hasRGM = !!ligne.montantRGM
+  const isJT = ligne.typeJeu === 'JT'
+  const hasEntrantOrSortant = !!ligne.changeEntrant || !!ligne.changeSortant
   const rgmWarnings = validateRGM(ligne.montantRGM)
-  const socleRequired = !!ligne.montantRGM
+
+  // Exclusion mutuelle : RGM ↔ JT
+  const disabledJeux = hasRGM ? ['JT'] : []
+  const rgmDisabled = isJT
+  const socleDisabled = isJT
 
   return (
     <div className="transaction-line">
       <div className="transaction-line-selectors">
         <div className="transaction-line-selector-group">
-          <label>Jeu :</label>
-          <Toggle options={JEUX} value={ligne.typeJeu} onChange={(v) => onChange({ ...ligne, typeJeu: v })} />
+          <label>Jeu :{(hasRGM || hasEntrantOrSortant) && ' *'}</label>
+          <Toggle options={JEUX} value={ligne.typeJeu} onChange={(v) => onChange({ ...ligne, typeJeu: v })} disabledOptions={disabledJeux} />
         </div>
         <div className="transaction-line-selector-group">
-          <label>Paiement :</label>
+          <label>Paiement :{hasEntrantOrSortant && ' *'}</label>
           <Toggle options={PAIEMENTS} value={ligne.typePaiement} onChange={(v) => onChange({ ...ligne, typePaiement: v })} />
         </div>
         <div className="transaction-line-selector-group">
@@ -100,29 +114,29 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
       </div>
 
       <div className="transaction-line-fields">
-        <div className="form-group">
-          <label>N° de socle :{socleRequired && ' *'}</label>
-          <input type="text" value={ligne.numeroSocle} onChange={set('numeroSocle')} />
+        <div className={`form-group ${socleDisabled ? 'field-disabled' : ''}`}>
+          <label>N\u00b0 de socle :{hasRGM && ' *'}</label>
+          <input type="text" value={ligne.numeroSocle} onChange={set('numeroSocle')} disabled={socleDisabled} />
         </div>
-        <div className="form-group">
+        <div className={`form-group ${rgmDisabled ? 'field-disabled' : ''}`}>
           <label>
             Montant Online (RGM) :
             {rgmWarnings.length > 0 && (
               <span className="field-warning-icon" title={rgmWarnings.join('\n')}>&#9888;</span>
             )}
           </label>
-          <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} placeholder="0 €" />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} placeholder="0 \u20ac" disabled={rgmDisabled} />
         </div>
         <div className="form-group">
           <label>Change Entrant :</label>
-          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeEntrant)} onChange={setMoney('changeEntrant')} placeholder="0,00 €" />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeEntrant)} onChange={setMoney('changeEntrant')} placeholder="0,00 \u20ac" />
         </div>
         <div className="form-group">
           <label>Change Sortant :</label>
-          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeSortant)} onChange={setMoney('changeSortant')} placeholder="0,00 €" />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeSortant)} onChange={setMoney('changeSortant')} placeholder="0,00 \u20ac" />
         </div>
         <div className="form-group">
-          <label>Observations (ligne) :</label>
+          <label>Observations :{hasEntrantOrSortant && ' *'}</label>
           <input type="text" value={ligne.observations} onChange={set('observations')} />
         </div>
         <button
@@ -138,6 +152,35 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
       </div>
     </div>
   )
+}
+
+function validateLignes(lignes) {
+  for (let i = 0; i < lignes.length; i++) {
+    const l = lignes[i]
+    const hasRGM = !!l.montantRGM
+    const hasEntrant = !!l.changeEntrant
+    const hasSortant = !!l.changeSortant
+
+    if (!hasRGM && !hasEntrant && !hasSortant) {
+      return `Ligne ${i + 1} : au moins un montant (RGM, entrant ou sortant) est requis.`
+    }
+    if (hasRGM && !l.numeroSocle) {
+      return `Ligne ${i + 1} : le num\u00e9ro de socle est obligatoire avec un montant RGM.`
+    }
+    if (hasRGM && !l.typeJeu) {
+      return `Ligne ${i + 1} : le type de jeu est obligatoire avec un montant RGM.`
+    }
+    if ((hasEntrant || hasSortant) && !l.typeJeu) {
+      return `Ligne ${i + 1} : le type de jeu est obligatoire avec un montant entrant ou sortant.`
+    }
+    if ((hasEntrant || hasSortant) && !l.typePaiement) {
+      return `Ligne ${i + 1} : le type de paiement est obligatoire avec un montant entrant ou sortant.`
+    }
+    if ((hasEntrant || hasSortant) && !l.observations) {
+      return `Ligne ${i + 1} : l'observation est obligatoire avec un montant entrant ou sortant.`
+    }
+  }
+  return null
 }
 
 export default function EditFiche() {
@@ -170,9 +213,9 @@ export default function EditFiche() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    const missingSocle = lignes.some((l) => l.montantRGM && !l.numeroSocle)
-    if (missingSocle) {
-      setError('Le numéro de socle est obligatoire lorsqu\'un montant RGM est renseigné.')
+    const validationError = validateLignes(lignes)
+    if (validationError) {
+      setError(validationError)
       return
     }
     setSaving(true)
@@ -197,7 +240,7 @@ export default function EditFiche() {
     }
   }
 
-  if (loading) return <div className="loading">Chargement…</div>
+  if (loading) return <div className="loading">Chargement\u2026</div>
 
   return (
     <div className="page">
@@ -239,7 +282,7 @@ export default function EditFiche() {
 
         <div className="fiche-form-footer">
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Mise à jour…' : 'Mettre à jour la fiche'}
+            {saving ? 'Mise \u00e0 jour\u2026' : 'Mettre \u00e0 jour la fiche'}
           </button>
         </div>
       </form>

@@ -435,6 +435,34 @@ tbody tr:hover {
   border-color: var(--primary);
 }
 
+.toggle-btn.disabled,
+.toggle-btn:disabled {
+  background: repeating-linear-gradient(
+    -45deg,
+    #e8e8e8,
+    #e8e8e8 4px,
+    #d0d0d0 4px,
+    #d0d0d0 8px
+  );
+  color: #999;
+  border-color: #ccc;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.field-disabled input,
+.field-disabled input:disabled {
+  background: repeating-linear-gradient(
+    -45deg,
+    #f0f0f0,
+    #f0f0f0 4px,
+    #e4e4e4 4px,
+    #e4e4e4 8px
+  );
+  color: #999;
+  cursor: not-allowed;
+}
+
 /* ===================== LOGIN PAGE ===================== */
 .login-page {
   min-height: 100vh;
