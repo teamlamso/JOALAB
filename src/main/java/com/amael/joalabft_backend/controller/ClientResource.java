@@ -44,11 +44,13 @@ public class ClientResource {
         return Response.ok(clientService.getClient(id)).build();
     }
 
-    /** Crée un nouveau client. Retourne 201 Created avec l'URI du nouveau client. */
+    /** Crée un nouveau client. Retourne 201 Created avec l'ID du nouveau client. */
     @POST
     public Response createClient(ClientRequest req) {
         Long id = clientService.createClient(req);
-        return Response.created(URI.create("/api/clients/" + id)).build();
+        return Response.created(URI.create("/api/clients/" + id))
+                .entity("{\"id\":" + id + "}")
+                .build();
     }
 
     /** Met à jour un client existant. */
