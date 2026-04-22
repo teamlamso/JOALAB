@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listFiches } from '../api/fiches.js'
+import DateInput from '../components/DateInput.jsx'
 
 function today() {
   return new Date().toISOString().slice(0, 10)
@@ -100,20 +101,12 @@ export default function Accueil() {
         </div>
         <div className="date-input-wrapper">
           <CalendarIcon />
-          <input
-            type="date"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-          />
+          <DateInput value={dateDebut} onChange={setDateDebut} />
         </div>
         <span className="date-separator">au</span>
         <div className="date-input-wrapper">
           <CalendarIcon />
-          <input
-            type="date"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-          />
+          <DateInput value={dateFin} onChange={setDateFin} />
         </div>
       </div>
 

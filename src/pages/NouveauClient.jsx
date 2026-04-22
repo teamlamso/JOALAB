@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { createClient } from '../api/clients.js'
+import DateInput from '../components/DateInput.jsx'
+import AddressSearch from '../components/AddressSearch.jsx'
 
 const EMPTY_IDENTIFIED = {
   nom: '', prenom: '', dateNaissance: '',
@@ -20,6 +22,17 @@ export default function NouveauClient() {
   const [loading, setLoading] = useState(false)
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
+  const setField = (field, value) => setForm((f) => ({ ...f, [field]: value }))
+
+  const handleAddressSelect = (addr) => {
+    setForm((f) => ({
+      ...f,
+      rue: addr.rue,
+      codePostal: addr.codePostal,
+      ville: addr.ville,
+      pays: addr.pays,
+    }))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -69,14 +82,14 @@ export default function NouveauClient() {
             className={`tab-switch-btn ${mode === 'identifie' ? 'active' : ''}`}
             onClick={() => setMode('identifie')}
           >
-            Client identifié
+            Client identifi&eacute;
           </button>
           <button
             type="button"
             className={`tab-switch-btn ${mode === 'non-identifie' ? 'active' : ''}`}
             onClick={() => setMode('non-identifie')}
           >
-            Client non-identifié
+            Client non-identifi&eacute;
           </button>
         </div>
       </div>
@@ -94,19 +107,25 @@ export default function NouveauClient() {
                 <input type="text" value={form.nom} onChange={set('nom')} required />
               </div>
               <div className="form-group">
-                <label>Prénom :</label>
+                <label>Pr&eacute;nom :</label>
                 <input type="text" value={form.prenom} onChange={set('prenom')} required />
               </div>
               <div className="form-group">
                 <label>Date de naissance :</label>
-                <input type="date" value={form.dateNaissance} onChange={set('dateNaissance')} />
+                <DateInput value={form.dateNaissance} onChange={(v) => setField('dateNaissance', v)} />
+              </div>
+
+              <div className="form-section-title" style={{ marginTop: '16px' }}>Adresse :</div>
+              <div className="form-group">
+                <label>Rechercher une adresse :</label>
+                <AddressSearch onSelect={handleAddressSelect} initialValue="" />
               </div>
               <div className="form-group">
                 <label>Rue :</label>
                 <input type="text" value={form.rue} onChange={set('rue')} />
               </div>
               <div className="form-group">
-                <label>Complément :</label>
+                <label>Compl&eacute;ment :</label>
                 <input type="text" value={form.complement} onChange={set('complement')} />
               </div>
               <div className="form-row-2">
@@ -125,20 +144,20 @@ export default function NouveauClient() {
               </div>
             </div>
 
-            {/* Pièce d'identité */}
+            {/* Pi&egrave;ce d'identit&eacute; */}
             <div className="form-section">
-              <div className="form-section-title">Pièce d'identité :</div>
+              <div className="form-section-title">Pi&egrave;ce d'identit&eacute; :</div>
               <div className="form-group">
-                <label>Type de pièce :</label>
+                <label>Type de pi&egrave;ce :</label>
                 <input type="text" value={form.typePiece} onChange={set('typePiece')}
-                  placeholder="CNI, Passeport…" />
+                  placeholder="CNI, Passeport..." />
               </div>
               <div className="form-group">
-                <label>Date de délivrance :</label>
-                <input type="date" value={form.dateDelivrance} onChange={set('dateDelivrance')} />
+                <label>Date de d&eacute;livrance :</label>
+                <DateInput value={form.dateDelivrance} onChange={(v) => setField('dateDelivrance', v)} />
               </div>
               <div className="form-group">
-                <label>Préfecture de délivrance :</label>
+                <label>Pr&eacute;fecture de d&eacute;livrance :</label>
                 <input type="text" value={form.prefectureDelivrance} onChange={set('prefectureDelivrance')} />
               </div>
             </div>
@@ -151,7 +170,7 @@ export default function NouveauClient() {
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex : Homme, blond, tatouage bras droit, environ 40 ans…"
+                placeholder="Ex : Homme, blond, tatouage bras droit, environ 40 ans..."
                 rows={4}
                 required
               />
@@ -161,7 +180,7 @@ export default function NouveauClient() {
 
         <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Enregistrement…' : 'Enregistrer le client'}
+            {loading ? 'Enregistrement...' : 'Enregistrer le client'}
           </button>
         </div>
       </form>

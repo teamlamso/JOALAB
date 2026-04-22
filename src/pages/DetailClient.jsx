@@ -119,8 +119,8 @@ export default function DetailClient() {
                   <td>{formatDate(f.date)}</td>
                   <td>{f.creePar}</td>
                   <td>{formatEur(f.totalRGM)}</td>
-                  <td>{formatEur(f.totalChangeEntrant)}</td>
-                  <td>{formatEur(f.totalChangeSortant)}</td>
+                  <td>{formatEur(f.totalEntrant)}</td>
+                  <td>{formatEur(f.totalSortant)}</td>
                   <td style={{ textAlign: 'center' }}>
                     <button
                       className="btn-icon"

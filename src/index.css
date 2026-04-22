@@ -1027,6 +1027,42 @@ tbody tr:hover {
   position: relative;
 }
 
+/* ===================== ADDRESS SEARCH ===================== */
+.address-search {
+  position: relative;
+}
+
+.address-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: var(--shadow);
+  list-style: none;
+  z-index: 50;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.address-suggestions li {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--surface-alt);
+}
+
+.address-suggestions li:last-child {
+  border-bottom: none;
+}
+
+.address-suggestions li:hover {
+  background: var(--surface-alt);
+}
+
 .loading {
   text-align: center;
   color: var(--text-muted);
