@@ -3,7 +3,19 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd"
              version="3.2">
-    <persistence-unit name="default">
 
+    <persistence-unit name="LABFTPU" transaction-type="JTA">
+        <!-- EclipseLink fourni nativement par Payara -->
+        <jta-data-source>jdbc/LABFTDB</jta-data-source>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
+
+        <properties>
+            <!-- Crée/met à jour le schéma automatiquement (à passer sur "none" en production) -->
+            <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="database"/>
+            <property name="eclipselink.logging.level" value="FINE"/>
+            <property name="eclipselink.logging.level.sql" value="FINE"/>
+        </properties>
     </persistence-unit>
+
 </persistence>
