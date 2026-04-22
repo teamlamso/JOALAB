@@ -16,6 +16,7 @@ import com.amael.joalabft_backend.model.repository.ClientRepository;
 import com.amael.joalabft_backend.model.repository.FicheLABFTRepository;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 
 import java.time.LocalDate;
@@ -108,6 +109,9 @@ public class FicheService {
     // --- Helpers ---
 
     private LigneTransaction buildLigne(LigneTransactionRequest req) {
+        if (req.typeJeu == null || req.typePaiement == null) {
+            throw new BadRequestException("Le type de jeu et le type de paiement sont obligatoires pour chaque ligne");
+        }
         LigneTransaction l = new LigneTransaction();
         l.setTypeJeu(TypeJeu.valueOf(req.typeJeu));
         l.setTypePaiement(TypePaiement.valueOf(req.typePaiement));
