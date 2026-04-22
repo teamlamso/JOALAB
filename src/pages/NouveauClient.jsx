@@ -1,0 +1,170 @@
+import { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { createClient } from '../api/clients.js'
+
+const EMPTY_IDENTIFIED = {
+  nom: '', prenom: '', dateNaissance: '',
+  rue: '', complement: '', codePostal: '', ville: '', pays: 'France',
+  typePiece: '', dateDelivrance: '', prefectureDelivrance: '',
+}
+
+export default function NouveauClient() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = location.state?.returnTo
+
+  const [mode, setMode] = useState('identifie')
+  const [form, setForm] = useState(EMPTY_IDENTIFIED)
+  const [description, setDescription] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      let payload
+      if (mode === 'identifie') {
+        payload = { identifie: true, ...form }
+      } else {
+        payload = { identifie: false, descriptionPhysique: description }
+      }
+      const res = await createClient(payload)
+      const newId = res?.id ?? res
+      if (returnTo === 'fiche') {
+        navigate('/fiches/identification', {
+          state: { preselectClient: { id: newId, libelle: mode === 'identifie' ? `${form.prenom} ${form.nom}` : description } },
+        })
+      } else {
+        navigate(`/clients/${newId}`)
+      }
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1>Nouveau client :</h1>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-secondary" onClick={() => navigate(-1)}>
+            Retour
+          </button>
+        </div>
+      </div>
+
+      {/* Mode toggle */}
+      <div style={{ marginBottom: '20px' }}>
+        <div className="tab-switch">
+          <button
+            type="button"
+            className={`tab-switch-btn ${mode === 'identifie' ? 'active' : ''}`}
+            onClick={() => setMode('identifie')}
+          >
+            Client identifié
+          </button>
+          <button
+            type="button"
+            className={`tab-switch-btn ${mode === 'non-identifie' ? 'active' : ''}`}
+            onClick={() => setMode('non-identifie')}
+          >
+            Client non-identifié
+          </button>
+        </div>
+      </div>
+
+      {error && <div className="alert-error">{error}</div>}
+
+      <form onSubmit={handleSubmit}>
+        {mode === 'identifie' ? (
+          <div className="form-grid-2">
+            {/* Informations personnelles */}
+            <div className="form-section">
+              <div className="form-section-title">Informations personnelles :</div>
+              <div className="form-group">
+                <label>Nom :</label>
+                <input type="text" value={form.nom} onChange={set('nom')} required />
+              </div>
+              <div className="form-group">
+                <label>Prénom :</label>
+                <input type="text" value={form.prenom} onChange={set('prenom')} required />
+              </div>
+              <div className="form-group">
+                <label>Date de naissance :</label>
+                <input type="date" value={form.dateNaissance} onChange={set('dateNaissance')} />
+              </div>
+              <div className="form-group">
+                <label>Rue :</label>
+                <input type="text" value={form.rue} onChange={set('rue')} />
+              </div>
+              <div className="form-group">
+                <label>Complément :</label>
+                <input type="text" value={form.complement} onChange={set('complement')} />
+              </div>
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label>Code postal :</label>
+                  <input type="text" value={form.codePostal} onChange={set('codePostal')} />
+                </div>
+                <div className="form-group">
+                  <label>Ville :</label>
+                  <input type="text" value={form.ville} onChange={set('ville')} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Pays :</label>
+                <input type="text" value={form.pays} onChange={set('pays')} />
+              </div>
+            </div>
+
+            {/* Pièce d'identité */}
+            <div className="form-section">
+              <div className="form-section-title">Pièce d'identité :</div>
+              <div className="form-group">
+                <label>Type de pièce :</label>
+                <input type="text" value={form.typePiece} onChange={set('typePiece')}
+                  placeholder="CNI, Passeport…" />
+              </div>
+              <div className="form-group">
+                <label>Date de délivrance :</label>
+                <input type="date" value={form.dateDelivrance} onChange={set('dateDelivrance')} />
+              </div>
+              <div className="form-group">
+                <label>Préfecture de délivrance :</label>
+                <input type="text" value={form.prefectureDelivrance} onChange={set('prefectureDelivrance')} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="form-section" style={{ maxWidth: '600px' }}>
+            <div className="form-section-title">Description physique :</div>
+            <div className="form-group">
+              <label>Description :</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Ex : Homme, blond, tatouage bras droit, environ 40 ans…"
+                rows={4}
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Enregistrement…' : 'Enregistrer le client'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
