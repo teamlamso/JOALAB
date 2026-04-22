@@ -12,11 +12,18 @@ export async function request(path, options = {}) {
 
   if (res.status === 204) return null
 
+  if (res.status === 401 && !path.includes('/auth/login')) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.location.href = '/'
+    throw new Error('Session expirée')
+  }
+
   if (!res.ok) {
     let message = `Erreur ${res.status}`
     try {
       const body = await res.json()
-      message = body.message || message
+      message = body.message || body.error || message
     } catch {
       // ignore
     }

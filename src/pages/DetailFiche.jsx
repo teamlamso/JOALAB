@@ -53,6 +53,9 @@ export default function DetailFiche() {
           <p>Créée le {formatDate(fiche.dateCreation)} par {fiche.creePar}</p>
         </div>
         <div className="page-header-actions no-print">
+          <button className="btn btn-secondary" onClick={() => navigate('/accueil')}>
+            Retour
+          </button>
           <button
             className="btn btn-secondary"
             onClick={() => navigate(`/fiches/${id}/modifier`)}

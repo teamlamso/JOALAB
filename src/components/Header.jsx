@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
 function JoaLogo() {
@@ -49,11 +49,11 @@ export default function Header() {
 
   return (
     <header className="header">
-      <div className="header-logo">
+      <Link to="/accueil" className="header-logo" style={{ textDecoration: 'none' }}>
         <JoaLogo />
-      </div>
+      </Link>
 
-      <span className="header-title">JOA LAB-FT</span>
+      <Link to="/accueil" className="header-title" style={{ textDecoration: 'none', color: 'inherit' }}>JOA LAB-FT</Link>
 
       {user && (
         <div className="header-user" ref={ref} onClick={() => setOpen((o) => !o)}>

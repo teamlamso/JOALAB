@@ -62,19 +62,31 @@ function Toggle({ options, value, onChange, required }) {
   )
 }
 
+function validateRGM(value) {
+  if (!value) return []
+  const n = parseFloat(value)
+  const warnings = []
+  if (n < 500) warnings.push('Le RGM ne peut pas être inférieur à 500 €.')
+  if (value.includes('.') || value.includes(',')) warnings.push('Le RGM ne peut pas contenir de décimales (insert billet).')
+  if (n % 5 !== 0) warnings.push('Le RGM doit être un multiple de 5 € (insert billet).')
+  return warnings
+}
+
 function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
   const set = (field) => (e) => onChange({ ...ligne, [field]: e.target.value })
+  const rgmWarnings = validateRGM(ligne.montantRGM)
+  const socleRequired = !!ligne.montantRGM
 
   return (
     <div className="transaction-line">
       <div className="transaction-line-selectors">
         <div className="transaction-line-selector-group">
           <label>Jeu :</label>
-          <Toggle options={JEUX} value={ligne.typeJeu} onChange={(v) => onChange({ ...ligne, typeJeu: v })} required />
+          <Toggle options={JEUX} value={ligne.typeJeu} onChange={(v) => onChange({ ...ligne, typeJeu: v })} />
         </div>
         <div className="transaction-line-selector-group">
           <label>Paiement :</label>
-          <Toggle options={PAIEMENTS} value={ligne.typePaiement} onChange={(v) => onChange({ ...ligne, typePaiement: v })} required />
+          <Toggle options={PAIEMENTS} value={ligne.typePaiement} onChange={(v) => onChange({ ...ligne, typePaiement: v })} />
         </div>
         <div className="transaction-line-selector-group">
           <label>Change :</label>
@@ -84,12 +96,13 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
 
       <div className="transaction-line-fields">
         <div className="form-group">
-          <label>N° de socle :</label>
+          <label>N° de socle :{socleRequired && ' *'}</label>
           <input type="text" value={ligne.numeroSocle} onChange={set('numeroSocle')} />
         </div>
         <div className="form-group">
           <label>Montant Online (RGM) :</label>
-          <input type="number" step="0.01" value={ligne.montantRGM} onChange={set('montantRGM')} placeholder="0,00 €" />
+          <input type="number" step="any" value={ligne.montantRGM} onChange={set('montantRGM')} placeholder="0 €" />
+          {rgmWarnings.map((w, i) => <small key={i} className="field-warning">{w}</small>)}
         </div>
         <div className="form-group">
           <label>Change Entrant :</label>
@@ -148,9 +161,9 @@ export default function EditFiche() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    const incomplete = lignes.some((l) => !l.typeJeu || !l.typePaiement)
-    if (incomplete) {
-      setError('Le type de jeu et le type de paiement sont obligatoires pour chaque ligne.')
+    const missingSocle = lignes.some((l) => l.montantRGM && !l.numeroSocle)
+    if (missingSocle) {
+      setError('Le numéro de socle est obligatoire lorsqu\'un montant RGM est renseigné.')
       return
     }
     setSaving(true)

@@ -991,6 +991,13 @@ tbody tr:hover {
   margin-bottom: 16px;
 }
 
+.field-warning {
+  display: block;
+  color: #e67e22;
+  font-size: 0.8rem;
+  margin-top: 3px;
+}
+
 .loading {
   text-align: center;
   color: var(--text-muted);
