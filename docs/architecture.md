@@ -4,19 +4,19 @@
 
 JOALABFT_Backend est l'application backend d'un outil de gestion des fiches **LAB-FT** (Lutte Anti-Blanchiment et contre le Financement du Terrorisme) pour le casino JOA de Saint Laurent en Grandvaux.
 
-L'application est une WAR **Jakarta EE 11** suivant une architecture **MVC stricte**.
+L'application est une WAR **Jakarta EE 11** exposant une **API REST JAX-RS** consommee par un frontend React (SPA).
 
-## Domaine métier
+## Domaine metier
 
-Une **fiche LAB-FT** est un document de conformité créé lorsqu'un client effectue une opération de change ou de jeu dépassant un certain seuil. Les fiches dépassant **2000 €** doivent être inscrites dans des registres officiels anti-blanchiment.
+Une **fiche LAB-FT** est un document de conformite cree lorsqu'un client effectue une operation de change ou de jeu depassant un certain seuil. Les fiches depassant **2000 EUR** doivent etre inscrites dans des registres officiels anti-blanchiment.
 
 ### Profils utilisateurs
 
-| Profil | Rôle |
+| Profil | Role |
 |---|---|
-| **Caissier** | Crée et consulte les fiches LAB-FT |
+| **Caissier** | Cree et consulte les fiches LAB-FT |
 | **Responsable caisse** | Valide, supervise et recherche les fiches |
-| **MCD** (Manager Conformité et Déontologie) | Accès complet, gestion des registres officiels |
+| **MCD** (Manager Conformite et Deontologie) | Acces complet, gestion des registres officiels |
 
 ## Stack technique
 
@@ -25,73 +25,96 @@ Une **fiche LAB-FT** est un document de conformité créé lorsqu'un client effe
 | Plateforme | Jakarta EE | 11.0.0 |
 | Langage | Java | 21 |
 | Build | Apache Maven | 3.9.6 |
-| Persistence | JPA / Hibernate ORM | 7.0.4.Final |
-| ORM secondaire | EclipseLink | 4.0.7 |
-| Injection de dépendances | CDI | Jakarta EE 11 |
-| Interface web | JSF (Jakarta Faces) | 4.1.3 |
+| Serveur d'application | Payara | 7.2025.1 |
+| Persistence | JPA / EclipseLink | 4.0.7 |
+| Injection de dependances | CDI + EJB | Jakarta EE 11 |
+| API REST | JAX-RS (Jersey) | Jakarta EE 11 |
 | Tests | JUnit Jupiter | 5.13.2 |
 
 ## Structure MVC
 
 ```
 src/main/java/com/amael/joalabft_backend/
-├── model/
-│   ├── entity/         # Entités JPA (FicheLABFT, Client, Utilisateur…)
-│   ├── dto/            # DTOs pour le transfert de données entre couches
-│   ├── service/        # Logique métier (création de fiche, règles >2000€…)
-│   └── repository/     # DAOs / accès EntityManager
-├── controller/         # Managed Beans CDI (JSF) ou Servlets
-└── util/               # Classes utilitaires transverses
-
-src/main/webapp/
-├── WEB-INF/
-│   └── web.xml         # Descripteur de déploiement
-├── pages/              # Vues JSF (.xhtml) par fonctionnalité
-└── index.jsp           # Page d'accueil / redirection
++-- model/
+|   +-- entity/         # Entites JPA (FicheLABFT, Client, Utilisateur, LigneTransaction)
+|   +-- enums/          # Enumerations (TypeJeu, TypePaiement, TypeChange, RoleUtilisateur)
+|   +-- dto/
+|   |   +-- request/    # DTOs entrants (FicheRequest, LigneTransactionRequest, LoginRequest...)
+|   |   +-- response/   # DTOs sortants (FicheDetailResponse, FicheSummaryResponse, LoginResponse...)
+|   +-- service/        # Logique metier (FicheService, AuthService, SessionStore)
+|   +-- repository/     # DAOs / acces EntityManager (EJBs @Stateless)
++-- controller/         # Ressources JAX-RS (@Path) + AuthFilter
++-- test/               # Donnees de test inserees au demarrage (TestInsert)
 
 src/main/resources/
-└── META-INF/
-    ├── persistence.xml  # Configuration JPA
-    └── beans.xml        # Activation CDI
++-- META-INF/
+    +-- persistence.xml  # Configuration JPA (EclipseLink, datasource jdbc/LABFTDB)
+    +-- beans.xml        # Activation CDI
 ```
 
 ## Couches MVC
 
 ### Model
-- **Entités JPA** (`@Entity`) : `Client`, `FicheLABFT`, `Utilisateur`, `Role`…
-- **Services** : logique métier (calcul de seuil, archivage, règles de conformité).
-- **Repositories/DAOs** : accès base de données via `EntityManager`.
-- **DTOs** : objets de transfert découplés des entités pour les vues.
+- **Entites JPA** (`@Entity`) : `Client`, `FicheLABFT`, `LigneTransaction`, `Utilisateur`
+- **Services** (`@Stateless` EJB) : logique metier (FicheService, AuthService)
+- **Repositories** (`@Stateless` EJB) : acces base de donnees via `EntityManager`
+- **DTOs** : objets de transfert decouple des entites pour l'API REST
 
 ### View
-- Pages **JSF** (`.xhtml`) dans `src/main/webapp/pages/`.
-- Aucune logique métier dans les vues — uniquement du binding EL (`#{bean.propriete}`).
-- Formulaires de saisie rapide avec pré-remplissage depuis les données client.
+- **Frontend React** (SPA) dans un projet separe (`joalabft_frontend/`)
+- Communique avec le backend via l'API REST (JSON)
+- Aucune vue JSF/JSP cote backend
 
 ### Controller
-- **Managed Beans CDI** (`@Named`, scoped) pour JSF.
-- Délèguent systématiquement la logique aux services du Model.
-- Gèrent la navigation entre les vues.
+- **Ressources JAX-RS** (`@Path`) : AuthResource, FicheResource, ClientResource
+- **AuthFilter** : filtre d'authentification par token Bearer sur toutes les routes (sauf login et OPTIONS)
+- Deleguent systematiquement la logique aux services du Model
 
-## Flux de données
+## Authentification
+
+L'authentification est geree par tokens de session en memoire :
+
+1. `POST /api/auth/login` : verifie identifiant + mot de passe (SHA-256), retourne un token UUID
+2. Le token est stocke dans `SessionStore` (ConcurrentHashMap en memoire)
+3. `AuthFilter` intercepte toutes les requetes, verifie le token Bearer et injecte l'`Utilisateur` dans le contexte de la requete
+4. `POST /api/auth/logout` : invalide le token
+
+## Flux de donnees
 
 ```
-Requête HTTP (Caissier / Responsable / MCD)
-    ↓
-Controller (Managed Bean CDI)
-    ↓
-Service (logique métier, règles LAB-FT)
-    ↓
-Repository → EntityManager → Base de données
-    ↑
-Controller
-    ↓
-View JSF → réponse HTML
+Requete HTTP (Frontend React)
+    |
+AuthFilter (verification token Bearer)
+    |
+Controller (Ressource JAX-RS)
+    |
+Service (logique metier, validation)
+    |
+Repository -> EntityManager -> Base de donnees
+    |
+Controller -> Response JSON
 ```
 
-## Points d'extension futurs
+## Endpoints API
 
-- **Sécurité par profil** : Jakarta Security avec rôles `CAISSIER`, `RESPONSABLE`, `MCD`.
-- **Export registres officiels** : génération PDF/Excel des fiches >2000€.
-- **Recherche avancée** : JPQL ou Criteria API sur les fiches par client, date, montant.
-- **Audit trail** : journalisation automatique des créations/modifications de fiches.
+| Methode | Chemin | Description |
+|---|---|---|
+| POST | `/api/auth/login` | Connexion |
+| POST | `/api/auth/logout` | Deconnexion |
+| GET | `/api/fiches` | Liste filtree (dates, recherche) |
+| GET | `/api/fiches/{id}` | Detail d'une fiche |
+| POST | `/api/fiches` | Creation d'une fiche |
+| PUT | `/api/fiches/{id}` | Mise a jour des lignes |
+| GET | `/api/clients` | Liste / recherche de clients |
+| GET | `/api/clients/{id}` | Detail d'un client |
+| POST | `/api/clients` | Creation d'un client |
+| PUT | `/api/clients/{id}` | Mise a jour d'un client |
+
+## Donnees de test
+
+La classe `TestInsert` (`@Singleton @Startup`) insere des donnees de test au demarrage :
+- 3 utilisateurs (aduchat, mcurie, jbond) avec mot de passe `password`
+- 4 clients (3 identifies + 1 non-identifie)
+- 4 fiches avec des lignes de transaction variees
+
+Cette insertion est automatique car EclipseLink est configure en `drop-and-create-tables`.
