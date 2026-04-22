@@ -26,11 +26,11 @@ public class LigneTransaction {
     private FicheLABFT fiche;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type_jeu", nullable = false, length = 10)
+    @Column(name = "type_jeu", length = 10)
     private TypeJeu typeJeu;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type_paiement", nullable = false, length = 10)
+    @Column(name = "type_paiement", length = 10)
     private TypePaiement typePaiement;
 
     /** Type de support de change — facultatif selon la transaction. */

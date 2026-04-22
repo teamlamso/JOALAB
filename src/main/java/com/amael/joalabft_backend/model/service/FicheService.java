@@ -109,12 +109,12 @@ public class FicheService {
     // --- Helpers ---
 
     private LigneTransaction buildLigne(LigneTransactionRequest req) {
-        if (req.typeJeu == null || req.typePaiement == null) {
-            throw new BadRequestException("Le type de jeu et le type de paiement sont obligatoires pour chaque ligne");
+        if (req.montantRGM != null && req.numeroSocle == null) {
+            throw new BadRequestException("Le numéro de socle est obligatoire lorsqu'un montant RGM est renseigné");
         }
         LigneTransaction l = new LigneTransaction();
-        l.setTypeJeu(TypeJeu.valueOf(req.typeJeu));
-        l.setTypePaiement(TypePaiement.valueOf(req.typePaiement));
+        l.setTypeJeu(req.typeJeu != null ? TypeJeu.valueOf(req.typeJeu) : null);
+        l.setTypePaiement(req.typePaiement != null ? TypePaiement.valueOf(req.typePaiement) : null);
         l.setTypeChange(req.typeChange != null ? TypeChange.valueOf(req.typeChange) : null);
         l.setNumeroSocle(req.numeroSocle);
         l.setMontantRGM(req.montantRGM);
