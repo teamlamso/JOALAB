@@ -87,8 +87,10 @@ export default function DetailClient() {
         {client.identifie && (
           <div className="client-info-id">
             {client.typePiece && <span>Type de pièce : {client.typePiece}<br /></span>}
+            {client.numeroPiece && <span>Numéro : {client.numeroPiece}<br /></span>}
             {client.dateDelivrance && <span>Date de délivrance : {formatDate(client.dateDelivrance)}<br /></span>}
-            {client.prefectureDelivrance && <span>Préfecture : {client.prefectureDelivrance}</span>}
+            {client.prefectureDelivrance && <span>Préfecture : {client.prefectureDelivrance}<br /></span>}
+            {client.paysDelivrance && <span>Pays de délivrance : {client.paysDelivrance}</span>}
           </div>
         )}
       </div>
@@ -117,7 +119,7 @@ export default function DetailClient() {
               client.fiches.map((f) => (
                 <tr key={f.id}>
                   <td>{formatDate(f.date)}</td>
-                  <td>{f.creePar}</td>
+                  <td>{f.caissierNom}</td>
                   <td>{formatEur(f.totalRGM)}</td>
                   <td>{formatEur(f.totalEntrant)}</td>
                   <td>{formatEur(f.totalSortant)}</td>

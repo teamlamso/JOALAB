@@ -37,20 +37,23 @@ export default function DetailFiche() {
   if (error) return <div className="page"><div className="alert-error">{error}</div></div>
   if (!fiche) return null
 
-  const client = fiche.client
-  const adresseLines = client ? [
-    client.rue,
-    client.complement,
-    [client.codePostal, client.ville].filter(Boolean).join(' '),
-    client.pays,
-  ].filter(Boolean) : []
+  const adresseLines = [
+    fiche.clientRue,
+    [fiche.clientCodePostal, fiche.clientVille].filter(Boolean).join(' '),
+    fiche.clientPays,
+  ].filter(Boolean)
 
   return (
     <div className="page">
       <div className="page-header">
         <div className="page-header-left">
           <h1>Détail de la fiche</h1>
-          <p>Créée le {formatDate(fiche.dateCreation)} par {fiche.creePar}</p>
+          <p>
+            Créée le {fiche.date ?? '-'} par {fiche.creePar}
+            {fiche.dateModification && (
+              <> — Modifiée le {fiche.dateModification} par {fiche.modifiePar}</>
+            )}
+          </p>
         </div>
         <div className="page-header-actions no-print">
           <button className="btn btn-secondary" onClick={() => navigate('/accueil')}>
@@ -69,28 +72,28 @@ export default function DetailFiche() {
       </div>
 
       {/* Info client */}
-      {client && (
-        <div className="detail-client-info">
-          <div className="detail-client-info-main">
-            <strong>{client.libelle || `${client.prenom ?? ''} ${client.nom ?? ''}`.trim()}</strong>
-            {client.identifie ? (
-              <p>
-                {adresseLines.map((l, i) => <span key={i}>{l}<br /></span>)}
-                {client.dateNaissance && <>Né(e) le : {formatDate(client.dateNaissance)}</>}
-              </p>
-            ) : (
-              <p>{client.descriptionPhysique}</p>
-            )}
-          </div>
-          {client.identifie && (
-            <div className="detail-client-info-id">
-              {client.typePiece && <span>Type de pièce : {client.typePiece}<br /></span>}
-              {client.dateDelivrance && <span>Date de délivrance : {formatDate(client.dateDelivrance)}<br /></span>}
-              {client.prefectureDelivrance && <span>Préfecture : {client.prefectureDelivrance}</span>}
-            </div>
+      <div className="detail-client-info">
+        <div className="detail-client-info-main">
+          <strong>{fiche.clientLibelle || `${fiche.clientPrenom ?? ''} ${fiche.clientNom ?? ''}`.trim()}</strong>
+          {fiche.clientIdentifie ? (
+            <p>
+              {adresseLines.map((l, i) => <span key={i}>{l}<br /></span>)}
+              {fiche.clientDateNaissance && <>Né(e) le : {formatDate(fiche.clientDateNaissance)}</>}
+            </p>
+          ) : (
+            <p>{fiche.clientDescriptionPhysique}</p>
           )}
         </div>
-      )}
+        {fiche.clientIdentifie && (
+          <div className="detail-client-info-id">
+            {fiche.clientTypePiece && <span>Type de pièce : {fiche.clientTypePiece}<br /></span>}
+            {fiche.clientNumeroPiece && <span>Numéro : {fiche.clientNumeroPiece}<br /></span>}
+            {fiche.clientDateDelivrance && <span>Date de délivrance : {formatDate(fiche.clientDateDelivrance)}<br /></span>}
+            {fiche.clientPrefecture && <span>Préfecture : {fiche.clientPrefecture}<br /></span>}
+            {fiche.clientPaysDelivrance && <span>Pays de délivrance : {fiche.clientPaysDelivrance}</span>}
+          </div>
+        )}
+      </div>
 
       {/* Transaction lines */}
       {fiche.lignes?.map((l, i) => (

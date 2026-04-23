@@ -4,10 +4,35 @@ import { createClient } from '../api/clients.js'
 import DateInput from '../components/DateInput.jsx'
 import AddressSearch from '../components/AddressSearch.jsx'
 
+const TYPES_PIECE = [
+  'CNIe',
+  'CNI',
+  'Permis de Conduire (Carte)',
+  'Permis de Conduire (Papier)',
+  'Passeport Français',
+  'Passeport Etranger',
+  'Carte Identité Etrangère',
+  'Titre de Séjour',
+]
+
+const PIECES_FRANCAISES_AVEC_PREFECTURE = [
+  'CNI',
+  'Permis de Conduire (Carte)',
+  'Permis de Conduire (Papier)',
+  'Passeport Français',
+]
+
+const PIECES_ETRANGERES = [
+  'Passeport Etranger',
+  'Carte Identité Etrangère',
+  'Titre de Séjour',
+]
+
 const EMPTY_IDENTIFIED = {
   nom: '', prenom: '', dateNaissance: '',
   rue: '', complement: '', codePostal: '', ville: '', pays: 'France',
-  typePiece: '', dateDelivrance: '', prefectureDelivrance: '',
+  typePiece: '', numeroPiece: '', dateDelivrance: '',
+  prefectureDelivrance: '', paysDelivrance: '',
 }
 
 export default function NouveauClient() {
@@ -145,22 +170,36 @@ export default function NouveauClient() {
               </div>
             </div>
 
-            {/* Pi&egrave;ce d'identit&eacute; */}
+            {/* Pièce d'identité */}
             <div className="form-section">
-              <div className="form-section-title">Pi&egrave;ce d'identit&eacute; :</div>
+              <div className="form-section-title">Pièce d'identité :</div>
               <div className="form-group">
-                <label>Type de pi&egrave;ce :</label>
-                <input type="text" value={form.typePiece} onChange={set('typePiece')}
-                  placeholder="CNI, Passeport..." />
+                <label>Type de pièce :</label>
+                <select value={form.typePiece} onChange={set('typePiece')}>
+                  <option value="">— Sélectionner —</option>
+                  {TYPES_PIECE.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
               <div className="form-group">
-                <label>Date de d&eacute;livrance :</label>
+                <label>Numéro de pièce :</label>
+                <input type="text" value={form.numeroPiece} onChange={set('numeroPiece')} />
+              </div>
+              <div className="form-group">
+                <label>Date de délivrance :</label>
                 <DateInput value={form.dateDelivrance} onChange={(v) => setField('dateDelivrance', v)} />
               </div>
-              <div className="form-group">
-                <label>Pr&eacute;fecture de d&eacute;livrance :</label>
-                <input type="text" value={form.prefectureDelivrance} onChange={set('prefectureDelivrance')} />
-              </div>
+              {PIECES_FRANCAISES_AVEC_PREFECTURE.includes(form.typePiece) && (
+                <div className="form-group">
+                  <label>Préfecture de délivrance :</label>
+                  <input type="text" value={form.prefectureDelivrance} onChange={set('prefectureDelivrance')} />
+                </div>
+              )}
+              {PIECES_ETRANGERES.includes(form.typePiece) && (
+                <div className="form-group">
+                  <label>Pays de délivrance :</label>
+                  <input type="text" value={form.paysDelivrance} onChange={set('paysDelivrance')} />
+                </div>
+              )}
             </div>
           </div>
         ) : (
