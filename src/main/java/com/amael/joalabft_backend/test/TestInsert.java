@@ -115,30 +115,31 @@ public class TestInsert {
         FicheLABFT fiche1 = new FicheLABFT();
         fiche1.setClient(gustavo);
         fiche1.setCreePar(alexis);
-        fiche1.addLigne(ligne(TypeJeu.MAS, TypePaiement.ESPECE, null,        36,   "3450.48", null,      "3002.00", null));
-        fiche1.addLigne(ligne(TypeJeu.JT,  TypePaiement.CB,     TypeChange.TICKET, null, null,      null,      "1200.00", "Paiement CB table roulette"));
+        fiche1.addLigne(ligne(TypeJeu.MAS, TypePaiement.ESPECE, null,        36,   "550", null,      "1254.78", "BP 546721 Socle 36"));
+        fiche1.addLigne(ligne(TypeJeu.JT,  TypePaiement.CB,     TypeChange.JETON, null, null,      "600",      null, "CB JT"));
         ficheRepository.save(fiche1);
 
         // Fiche 2 — Julien Moreau / mcurie
         FicheLABFT fiche2 = new FicheLABFT();
         fiche2.setClient(julien);
         fiche2.setCreePar(marie);
-        fiche2.addLigne(ligne(TypeJeu.JTE, TypePaiement.CHEQUE, TypeChange.JETON,  null, "4785.66", null,      "3415.00", null));
+        fiche2.addLigne(ligne(TypeJeu.MAS, TypePaiement.CHEQUE, TypeChange.TICKET,  null, null, "760",      null, "Divers Cheques"));
+        fiche2.addLigne(ligne(TypeJeu.MAS, TypePaiement.ESPECE, null,  null, null, null,      "876.98", "Remb Tickets"));
         ficheRepository.save(fiche2);
 
         // Fiche 3 — Paityn George / aduchat
         FicheLABFT fiche3 = new FicheLABFT();
         fiche3.setClient(paityn);
         fiche3.setCreePar(alexis);
-        fiche3.addLigne(ligne(TypeJeu.MAS, TypePaiement.ESPECE, null,         12,  "1923.41", "9402.12", "1550.56", null));
-        fiche3.addLigne(ligne(TypeJeu.JT,  TypePaiement.CB,     TypeChange.PLAQUE, null, null,      null,      "2100.00", "Mise sur table blackjack"));
+        fiche3.addLigne(ligne(TypeJeu.MAS, TypePaiement.ESPECE, null,         null,  null, null, "1550.56", "BP546727 Socle 101 CSG 212.43"));
+        fiche3.addLigne(ligne(TypeJeu.JT,  TypePaiement.CB,     TypeChange.PLAQUE, null, null,      "2100",      null, "Mise sur table blackjack"));
         ficheRepository.save(fiche3);
 
         // Fiche 4 — Client non-identifié / aduchat
         FicheLABFT fiche4 = new FicheLABFT();
         fiche4.setClient(anonyme);
         fiche4.setCreePar(alexis);
-        fiche4.addLigne(ligne(TypeJeu.MAS, TypePaiement.ESPECE, TypeChange.TICKET, 99,  "7787.48", "8482.26", "8200.74", null));
+        fiche4.addLigne(ligne(TypeJeu.MAS, null, null, 35,  "950", null, null, null));
         ficheRepository.save(fiche4);
     }
 
