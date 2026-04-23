@@ -8,6 +8,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
+import java.util.Map;
 
 /**
  * Ressource JAX-RS pour la gestion des clients.
@@ -49,7 +50,7 @@ public class ClientResource {
     public Response createClient(ClientRequest req) {
         Long id = clientService.createClient(req);
         return Response.created(URI.create("/api/clients/" + id))
-                .entity("{\"id\":" + id + "}")
+                .entity(Map.of("id", id))
                 .build();
     }
 
