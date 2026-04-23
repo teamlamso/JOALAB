@@ -210,11 +210,12 @@ export default function AjoutFiche() {
           identifie: false,
           descriptionPhysique: clientData.descriptionPhysique,
         })
-        clientId = created?.id ?? created
+        clientId = created?.id
+        if (!clientId) throw new Error('Impossible de créer le client')
       }
 
       const payload = {
-        clientId,
+        clientId: Number(clientId),
         lignes: lignes.map((l) => ({
           typeJeu: l.typeJeu,
           typePaiement: l.typePaiement,

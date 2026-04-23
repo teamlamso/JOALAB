@@ -46,7 +46,8 @@ export default function NouveauClient() {
         payload = { identifie: false, descriptionPhysique: description }
       }
       const res = await createClient(payload)
-      const newId = res?.id ?? res
+      const newId = res?.id
+      if (!newId) throw new Error('Impossible de créer le client')
       if (returnTo === 'fiche') {
         navigate('/fiches/identification', {
           state: { preselectClient: { id: newId, libelle: mode === 'identifie' ? `${form.prenom} ${form.nom}` : description } },
