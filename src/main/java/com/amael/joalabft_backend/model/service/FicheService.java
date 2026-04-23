@@ -161,8 +161,10 @@ public class FicheService {
         dto.clientVille             = c.getVille();
         dto.clientPays              = c.getPays();
         dto.clientTypePiece         = c.getTypePiece();
+        dto.clientNumeroPiece       = c.getNumeroPiece();
         dto.clientDateDelivrance    = c.getDateDelivrance() != null ? c.getDateDelivrance().format(DATE_FMT) : null;
         dto.clientPrefecture        = c.getPrefectureDelivrance();
+        dto.clientPaysDelivrance    = c.getPaysDelivrance();
         dto.clientDescriptionPhysique = c.getDescriptionPhysique();
 
         dto.totalRGM                = f.getTotalRGM();

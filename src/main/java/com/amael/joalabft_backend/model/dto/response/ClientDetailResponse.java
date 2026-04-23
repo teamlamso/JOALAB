@@ -5,6 +5,7 @@ import java.util.List;
 /** Détail complet d'un client avec l'historique de ses fiches. */
 public class ClientDetailResponse {
     public Long id;
+    public String libelle;
     public boolean identifie;
 
     // --- Client identifié ---
@@ -17,8 +18,10 @@ public class ClientDetailResponse {
     public String ville;
     public String pays;
     public String typePiece;
+    public String numeroPiece;
     public String dateDelivrance;
     public String prefectureDelivrance;
+    public String paysDelivrance;
 
     // --- Client non-identifié ---
     public String descriptionPhysique;
