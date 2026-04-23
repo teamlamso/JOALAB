@@ -46,9 +46,10 @@ public class ClientRepository {
         return Optional.ofNullable(em.find(Client.class, id));
     }
 
-    /** Persiste un nouveau client. */
+    /** Persiste un nouveau client et force la génération de l'ID. */
     public Client save(Client client) {
         em.persist(client);
+        em.flush();
         return client;
     }
 
