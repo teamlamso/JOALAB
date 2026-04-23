@@ -22,8 +22,10 @@ public class FicheDetailResponse {
     public String clientVille;
     public String clientPays;
     public String clientTypePiece;
+    public String clientNumeroPiece;
     public String clientDateDelivrance;
     public String clientPrefecture;
+    public String clientPaysDelivrance;
     public String clientDescriptionPhysique;
     public boolean clientIdentifie;
 

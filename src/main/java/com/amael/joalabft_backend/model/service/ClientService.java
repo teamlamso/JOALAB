@@ -62,6 +62,7 @@ public class ClientService {
 
         ClientDetailResponse dto = new ClientDetailResponse();
         dto.id                  = c.getId();
+        dto.libelle             = c.getLibelle();
         dto.identifie           = c.isIdentifie();
         dto.nom                 = c.getNom();
         dto.prenom              = c.getPrenom();
@@ -72,8 +73,10 @@ public class ClientService {
         dto.ville               = c.getVille();
         dto.pays                = c.getPays();
         dto.typePiece           = c.getTypePiece();
+        dto.numeroPiece         = c.getNumeroPiece();
         dto.dateDelivrance      = c.getDateDelivrance() != null ? c.getDateDelivrance().format(DATE_FMT) : null;
         dto.prefectureDelivrance = c.getPrefectureDelivrance();
+        dto.paysDelivrance      = c.getPaysDelivrance();
         dto.descriptionPhysique = c.getDescriptionPhysique();
         dto.fiches              = fiches;
         return dto;
@@ -110,8 +113,10 @@ public class ClientService {
         c.setVille(req.ville);
         c.setPays(req.pays);
         c.setTypePiece(req.typePiece);
+        c.setNumeroPiece(req.numeroPiece);
         c.setDateDelivrance(req.dateDelivrance != null ? LocalDate.parse(req.dateDelivrance, DATE_FMT) : null);
         c.setPrefectureDelivrance(req.prefectureDelivrance);
+        c.setPaysDelivrance(req.paysDelivrance);
         c.setDescriptionPhysique(req.descriptionPhysique);
         return c;
     }

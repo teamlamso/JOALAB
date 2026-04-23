@@ -71,6 +71,7 @@ public class TestInsert {
         gustavo.setVille("Paris");
         gustavo.setPays("France");
         gustavo.setTypePiece("CNI");
+        gustavo.setNumeroPiece("0512345678901");
         gustavo.setDateDelivrance(LocalDate.of(2020, 1, 10));
         gustavo.setPrefectureDelivrance("Paris (75)");
         gustavo = clientRepository.save(gustavo);
@@ -85,7 +86,8 @@ public class TestInsert {
         julien.setCodePostal("69007");
         julien.setVille("Lyon");
         julien.setPays("France");
-        julien.setTypePiece("Passeport");
+        julien.setTypePiece("Passeport Français");
+        julien.setNumeroPiece("19FR45678");
         julien.setDateDelivrance(LocalDate.of(2019, 3, 22));
         julien.setPrefectureDelivrance("Lyon (69)");
         julien = clientRepository.save(julien);
@@ -99,9 +101,10 @@ public class TestInsert {
         paityn.setCodePostal("13001");
         paityn.setVille("Marseille");
         paityn.setPays("France");
-        paityn.setTypePiece("CNI");
+        paityn.setTypePiece("Passeport Etranger");
+        paityn.setNumeroPiece("AB1234567");
         paityn.setDateDelivrance(LocalDate.of(2021, 6, 15));
-        paityn.setPrefectureDelivrance("Marseille (13)");
+        paityn.setPaysDelivrance("Royaume-Uni");
         paityn = clientRepository.save(paityn);
 
         Client anonyme = new Client();

@@ -19,9 +19,11 @@ public class ClientRequest {
 
     // --- Pièce d'identité ---
     public String typePiece;
+    public String numeroPiece;
     /** Format ISO : yyyy-MM-dd */
     public String dateDelivrance;
     public String prefectureDelivrance;
+    public String paysDelivrance;
 
     // --- Client non-identifié ---
     public String descriptionPhysique;

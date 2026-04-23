@@ -54,11 +54,17 @@ public class Client {
     @Column(name = "type_piece", length = 50)
     private String typePiece;
 
+    @Column(name = "numero_piece", length = 50)
+    private String numeroPiece;
+
     @Column(name = "date_delivrance")
     private LocalDate dateDelivrance;
 
     @Column(name = "prefecture_delivrance", length = 100)
     private String prefectureDelivrance;
+
+    @Column(name = "pays_delivrance", length = 100)
+    private String paysDelivrance;
 
     // --- Client non-identifié ---
 
@@ -117,8 +123,14 @@ public class Client {
     public LocalDate getDateDelivrance() { return dateDelivrance; }
     public void setDateDelivrance(LocalDate dateDelivrance) { this.dateDelivrance = dateDelivrance; }
 
+    public String getNumeroPiece() { return numeroPiece; }
+    public void setNumeroPiece(String numeroPiece) { this.numeroPiece = numeroPiece; }
+
     public String getPrefectureDelivrance() { return prefectureDelivrance; }
     public void setPrefectureDelivrance(String prefectureDelivrance) { this.prefectureDelivrance = prefectureDelivrance; }
+
+    public String getPaysDelivrance() { return paysDelivrance; }
+    public void setPaysDelivrance(String paysDelivrance) { this.paysDelivrance = paysDelivrance; }
 
     public String getDescriptionPhysique() { return descriptionPhysique; }
     public void setDescriptionPhysique(String descriptionPhysique) { this.descriptionPhysique = descriptionPhysique; }
