@@ -44,7 +44,9 @@ public class FicheLABFT {
 
     @PrePersist
     private void onPrePersist() {
-        dateCreation = LocalDateTime.now();
+        if (dateCreation == null) {
+            dateCreation = LocalDateTime.now();
+        }
     }
 
     public FicheLABFT() {}
@@ -60,6 +62,7 @@ public class FicheLABFT {
     public void setCreePar(Utilisateur creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
+    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public Utilisateur getModifiePar() { return modifiePar; }
     public void setModifiePar(Utilisateur modifiePar) { this.modifiePar = modifiePar; }

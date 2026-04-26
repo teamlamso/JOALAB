@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Bean de démarrage qui insère les données de test au premier lancement.
@@ -114,10 +115,11 @@ public class TestInsert {
 
         // ── 3. Fiches + Lignes (cascade automatique) ─────────────────────────────
 
-        // Fiche 1 — Gustavo Press / aduchat
+        // Fiche 1 — Gustavo Press / aduchat (datée de la veille)
         FicheLABFT fiche1 = new FicheLABFT();
         fiche1.setClient(gustavo);
         fiche1.setCreePar(alexis);
+        fiche1.setDateCreation(LocalDateTime.now().minusDays(1));
         fiche1.addLigne(ligne(TypeJeu.MAS, TypePaiement.ESPECE, null,        36,   "550", null,      "1254.78", "BP 546721 Socle 36"));
         fiche1.addLigne(ligne(TypeJeu.JT,  TypePaiement.CB,     TypeChange.JETON, null, null,      "600",      null, "CB JT"));
         ficheRepository.save(fiche1);

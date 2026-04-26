@@ -39,7 +39,7 @@ public class FicheLABFTRepository {
         if (search == null || search.isBlank()) {
             jpql = "SELECT f FROM FicheLABFT f " +
                    "WHERE f.dateCreation >= :debut AND f.dateCreation < :fin " +
-                   "ORDER BY f.dateCreation DESC";
+                   "ORDER BY COALESCE(f.dateModification, f.dateCreation) DESC";
             q = em.createQuery(jpql, FicheLABFT.class);
         } else {
             String param = "%" + search.toLowerCase() + "%";
@@ -47,7 +47,7 @@ public class FicheLABFTRepository {
                    "WHERE f.dateCreation >= :debut AND f.dateCreation < :fin " +
                    "AND (LOWER(c.nom) LIKE :p OR LOWER(c.prenom) LIKE :p " +
                    "OR LOWER(c.descriptionPhysique) LIKE :p) " +
-                   "ORDER BY f.dateCreation DESC";
+                   "ORDER BY COALESCE(f.dateModification, f.dateCreation) DESC";
             q = em.createQuery(jpql, FicheLABFT.class);
             q.setParameter("p", param);
         }
@@ -60,7 +60,7 @@ public class FicheLABFTRepository {
     /** Retourne toutes les fiches d'un client, triées par date de création décroissante. */
     public List<FicheLABFT> findByClientId(Long clientId) {
         return em.createQuery(
-                "SELECT f FROM FicheLABFT f WHERE f.client.id = :id ORDER BY f.dateCreation DESC",
+                "SELECT f FROM FicheLABFT f WHERE f.client.id = :id ORDER BY COALESCE(f.dateModification, f.dateCreation) DESC",
                 FicheLABFT.class
         ).setParameter("id", clientId).getResultList();
     }
