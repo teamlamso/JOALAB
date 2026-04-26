@@ -78,12 +78,22 @@ function validateRGM(value) {
 function toDisplay(val) { return val ? String(val).replace('.', ',') : '' }
 function toInternal(raw) { return raw.replace(',', '.') }
 function filterMoney(val) { return val.replace(/[^0-9.,]/g, '') }
+function formatOnBlur(val) {
+  if (!val) return val
+  const n = parseFloat(val)
+  if (isNaN(n)) return val
+  return n.toFixed(2)
+}
 
 function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
   const set = (field) => (e) => onChange({ ...ligne, [field]: e.target.value })
   const setMoney = (field) => (e) => {
     const filtered = filterMoney(e.target.value)
     onChange({ ...ligne, [field]: toInternal(filtered) })
+  }
+  const blurMoney = (field) => () => {
+    const formatted = formatOnBlur(ligne[field])
+    if (formatted !== ligne[field]) onChange({ ...ligne, [field]: formatted })
   }
 
   const hasRGM = !!ligne.montantRGM
@@ -115,7 +125,7 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
 
       <div className="transaction-line-fields">
         <div className={`form-group ${socleDisabled ? 'field-disabled' : ''}`}>
-          <label>N\u00b0 de socle :{hasRGM && ' *'}</label>
+          <label>{"N° de socle :"}{hasRGM && ' *'}</label>
           <input type="text" value={ligne.numeroSocle} onChange={set('numeroSocle')} disabled={socleDisabled} />
         </div>
         <div className={`form-group ${rgmDisabled ? 'field-disabled' : ''}`}>
@@ -125,15 +135,15 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
               <span className="field-warning-icon" title={rgmWarnings.join('\n')}>&#9888;</span>
             )}
           </label>
-          <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} placeholder="0 \u20ac" disabled={rgmDisabled} />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} onBlur={blurMoney('montantRGM')} placeholder={"0 €"} disabled={rgmDisabled} />
         </div>
         <div className="form-group">
           <label>Change Entrant :</label>
-          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeEntrant)} onChange={setMoney('changeEntrant')} placeholder="0,00 \u20ac" />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeEntrant)} onChange={setMoney('changeEntrant')} onBlur={blurMoney('changeEntrant')} placeholder={"0,00 €"} />
         </div>
         <div className="form-group">
           <label>Change Sortant :</label>
-          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeSortant)} onChange={setMoney('changeSortant')} placeholder="0,00 \u20ac" />
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.changeSortant)} onChange={setMoney('changeSortant')} onBlur={blurMoney('changeSortant')} placeholder={"0,00 €"} />
         </div>
         <div className="form-group">
           <label>Observations :{hasEntrantOrSortant && ' *'}</label>

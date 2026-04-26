@@ -12,14 +12,9 @@ function formatEur(value) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)
 }
 
-function formatTime(iso) {
-  if (!iso) return '-'
-  try {
-    const d = new Date(iso)
-    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  } catch {
-    return iso
-  }
+function formatTime(val) {
+  if (!val) return '-'
+  return val
 }
 
 function SearchIcon() {
@@ -131,19 +126,31 @@ export default function Accueil() {
         <div className="empty-state">Aucune fiche pour cette période.</div>
       ) : (
         <div className="fiches-grid">
-          {fiches.map((f) => (
+          {fiches.map((f) => {
+            const isToday = f.date === today()
+            const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
+            return (
             <div key={f.id} className="fiche-card">
               <div className="fiche-card-name" title={f.clientLibelle}>
                 {f.clientLibelle}
               </div>
-              <div className="fiche-card-row">
-                <span>Montant RGM :</span>
-                <span>{formatEur(f.totalRGM)}</span>
-              </div>
-              <div className="fiche-card-row">
-                <span>Change entrant :</span>
-                <span>{formatEur(f.totalEntrant)}</span>
-              </div>
+              {isToday ? (
+                <>
+                  <div className="fiche-card-row">
+                    <span>Montant RGM :</span>
+                    <span>{formatEur(f.totalRGM)}</span>
+                  </div>
+                  <div className="fiche-card-row">
+                    <span>Change entrant :</span>
+                    <span>{formatEur(f.totalEntrant)}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="fiche-card-row">
+                  <span>RGM + Entrant :</span>
+                  <span>{formatEur(totalRGMEntrant || null)}</span>
+                </div>
+              )}
               <div className="fiche-card-row">
                 <span>Change sortant :</span>
                 <span>{formatEur(f.totalSortant)}</span>
@@ -170,7 +177,7 @@ export default function Accueil() {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>
