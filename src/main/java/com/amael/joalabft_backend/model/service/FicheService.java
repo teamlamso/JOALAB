@@ -125,9 +125,10 @@ public class FicheService {
     }
 
     private FicheSummaryResponse toSummary(FicheLABFT f) {
-        String modif = f.getDateModification() != null
-                ? f.getDateModification().format(TIME_FMT)
-                : null;
+        LocalDateTime derniere = f.getDateModification() != null
+                ? f.getDateModification()
+                : f.getDateCreation();
+        String modif = derniere != null ? derniere.format(TIME_FMT) : null;
         return new FicheSummaryResponse(
                 f.getId(),
                 f.getClient().getLibelle(),
