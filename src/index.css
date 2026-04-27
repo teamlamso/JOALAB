@@ -676,6 +676,12 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  border-left: 3px solid transparent;
+}
+
+.fiche-card-alert {
+  border-left-color: #b33a00;
+  background: #fff8f5;
 }
 
 .fiches-section {

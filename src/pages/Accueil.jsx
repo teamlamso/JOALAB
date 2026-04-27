@@ -56,13 +56,13 @@ function isOver2000(f) {
   return ((f.totalEntrant || 0) + (f.totalSortant || 0)) >= 2000
 }
 
-function FicheCard({ f, navigate, showDate }) {
+function FicheCard({ f, navigate, showDate, highlight }) {
   const jour = workDay()
   const isToday = f.date === jour
   const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
 
   return (
-    <div className="fiche-card">
+    <div className={`fiche-card${highlight ? ' fiche-card-alert' : ''}`}
       <div className="fiche-card-name" title={f.clientLibelle}>
         {f.clientLibelle}
         {showDate && <span className="fiche-card-date">{f.date ? formatDateFr(f.date) : ''}</span>}
@@ -221,7 +221,7 @@ export default function Accueil() {
                   </h4>
                   <div className="fiches-grid">
                     {veilleOver.map((f) => (
-                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} />
+                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} highlight />
                     ))}
                   </div>
                 </>
