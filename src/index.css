@@ -589,20 +589,48 @@ tbody tr:hover {
   width: 100px;
 }
 
-.date-picker {
+.date-picker-input {
+  position: relative;
+  display: flex;
+  align-items: center;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 8px 12px;
   background: var(--surface);
+  padding: 0 4px 0 12px;
+}
+
+.date-picker-input input[type="text"] {
+  border: none;
+  outline: none;
   font-size: 0.88rem;
   font-family: inherit;
   color: var(--text);
-  cursor: pointer;
+  width: 90px;
+  padding: 8px 0;
 }
 
-.date-picker:focus {
-  outline: 2px solid var(--primary);
-  outline-offset: -1px;
+.date-picker-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.date-picker-btn:hover {
+  color: var(--primary);
+}
+
+.date-picker-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .date-separator {
@@ -665,6 +693,18 @@ tbody tr:hover {
 
 .fiches-section-title-alert {
   color: #b33a00;
+}
+
+.fiches-subsection-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 12px 0 8px;
+}
+
+.fiches-subsection-title-alert {
+  color: #b33a00;
+  font-weight: 600;
 }
 
 .fiche-card-name {

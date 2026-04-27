@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listFiches } from '../api/fiches.js'
+import DatePickerInput from '../components/DatePickerInput.jsx'
 
-function today() {
-  return new Date().toISOString().slice(0, 10)
+/** Journée de travail courante (06h00→05h59 le lendemain). */
+function workDay() {
+  const now = new Date()
+  if (now.getHours() < 6) now.setDate(now.getDate() - 1)
+  return now.toISOString().slice(0, 10)
 }
 
-function yesterday() {
-  const d = new Date()
+function workDayYesterday() {
+  const d = new Date(workDay())
   d.setDate(d.getDate() - 1)
   return d.toISOString().slice(0, 10)
 }
@@ -20,16 +24,6 @@ function formatEur(value) {
 function formatTime(val) {
   if (!val) return '-'
   return val
-}
-
-function formatDateFr(iso) {
-  if (!iso) return ''
-  try {
-    const [y, m, d] = iso.split('-')
-    return `${d}/${m}/${y}`
-  } catch {
-    return iso
-  }
 }
 
 function SearchIcon() {
@@ -62,15 +56,16 @@ function isOver2000(f) {
   return ((f.totalEntrant || 0) + (f.totalSortant || 0)) >= 2000
 }
 
-function FicheCard({ f, navigate }) {
-  const isToday = f.date === today()
+function FicheCard({ f, navigate, showDate }) {
+  const jour = workDay()
+  const isToday = f.date === jour
   const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
 
   return (
     <div className="fiche-card">
       <div className="fiche-card-name" title={f.clientLibelle}>
         {f.clientLibelle}
-        {!isToday && <span className="fiche-card-date">{formatDateFr(f.date)}</span>}
+        {showDate && <span className="fiche-card-date">{f.date ? formatDateFr(f.date) : ''}</span>}
       </div>
       {isToday ? (
         <>
@@ -98,18 +93,10 @@ function FicheCard({ f, navigate }) {
           Dernière modification : {formatTime(f.derniereModif)}
         </span>
         <div className="fiche-card-footer-actions">
-          <button
-            className="btn-icon"
-            title="Modifier"
-            onClick={() => navigate(`/fiches/${f.id}/modifier`)}
-          >
+          <button className="btn-icon" title="Modifier" onClick={() => navigate(`/fiches/${f.id}/modifier`)}>
             <EditIcon />
           </button>
-          <button
-            className="btn-icon"
-            title="Voir le détail"
-            onClick={() => navigate(`/fiches/${f.id}`)}
-          >
+          <button className="btn-icon" title="Voir le détail" onClick={() => navigate(`/fiches/${f.id}`)}>
             <EyeIcon />
           </button>
         </div>
@@ -118,11 +105,21 @@ function FicheCard({ f, navigate }) {
   )
 }
 
+function formatDateFr(iso) {
+  if (!iso) return ''
+  try {
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}/${y}`
+  } catch {
+    return iso
+  }
+}
+
 export default function Accueil() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [dateDebut, setDateDebut] = useState(yesterday())
-  const [dateFin, setDateFin] = useState(today())
+  const [dateDebut, setDateDebut] = useState(workDayYesterday())
+  const [dateFin, setDateFin] = useState(workDay())
   const [fiches, setFiches] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -145,8 +142,16 @@ export default function Accueil() {
     return () => clearTimeout(timer)
   }, [load])
 
-  const fichesOver = fiches.filter(isOver2000)
-  const fichesUnder = fiches.filter((f) => !isOver2000(f))
+  const jour = workDay()
+  const hier = workDayYesterday()
+
+  // Séparation : fiches du jour vs fiches de la veille/antérieures
+  const fichesJour = fiches.filter((f) => f.date === jour)
+  const fichesVeille = fiches.filter((f) => f.date !== jour)
+
+  // Sur la veille : séparer les > 2000€
+  const veilleOver = fichesVeille.filter(isOver2000)
+  const veilleUnder = fichesVeille.filter((f) => !isOver2000(f))
 
   return (
     <div className="page">
@@ -161,19 +166,9 @@ export default function Accueil() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <input
-          type="date"
-          className="date-picker"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-        />
+        <DatePickerInput value={dateDebut} onChange={setDateDebut} />
         <span className="date-separator">au</span>
-        <input
-          type="date"
-          className="date-picker"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-        />
+        <DatePickerInput value={dateFin} onChange={setDateFin} />
       </div>
 
       {/* Section header */}
@@ -197,33 +192,56 @@ export default function Accueil() {
         <div className="empty-state">Aucune fiche pour cette période.</div>
       ) : (
         <>
-          {/* Fiches > 2000€ */}
-          {fichesOver.length > 0 && (
+          {/* ── Fiches du jour ── */}
+          {fichesJour.length > 0 && (
             <div className="fiches-section">
-              <h3 className="fiches-section-title fiches-section-title-alert">
-                {"Fiches dépassant 2 000 € (" + fichesOver.length + ")"}
+              <h3 className="fiches-section-title">
+                {"Fiches du jour (" + fichesJour.length + ")"}
               </h3>
               <div className="fiches-grid">
-                {fichesOver.map((f) => (
-                  <FicheCard key={f.id} f={f} navigate={navigate} />
+                {fichesJour.map((f) => (
+                  <FicheCard key={f.id} f={f} navigate={navigate} showDate={false} />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Autres fiches */}
-          {fichesUnder.length > 0 && (
+          {/* ── Fiches de la veille / antérieures ── */}
+          {fichesVeille.length > 0 && (
             <div className="fiches-section">
-              {fichesOver.length > 0 && (
-                <h3 className="fiches-section-title">
-                  {"Autres fiches (" + fichesUnder.length + ")"}
-                </h3>
+              <h3 className="fiches-section-title">
+                {"Fiches de la veille (" + fichesVeille.length + ")"}
+              </h3>
+
+              {/* > 2000€ en haut */}
+              {veilleOver.length > 0 && (
+                <>
+                  <h4 className="fiches-subsection-title fiches-subsection-title-alert">
+                    {"Dépassant 2 000 € (" + veilleOver.length + ")"}
+                  </h4>
+                  <div className="fiches-grid">
+                    {veilleOver.map((f) => (
+                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} />
+                    ))}
+                  </div>
+                </>
               )}
-              <div className="fiches-grid">
-                {fichesUnder.map((f) => (
-                  <FicheCard key={f.id} f={f} navigate={navigate} />
-                ))}
-              </div>
+
+              {/* Autres */}
+              {veilleUnder.length > 0 && (
+                <>
+                  {veilleOver.length > 0 && (
+                    <h4 className="fiches-subsection-title">
+                      {"Autres (" + veilleUnder.length + ")"}
+                    </h4>
+                  )}
+                  <div className="fiches-grid">
+                    {veilleUnder.map((f) => (
+                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>
