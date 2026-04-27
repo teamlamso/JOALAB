@@ -29,9 +29,12 @@ public class FicheLABFTRepository {
      * @param to       date de fin (incluse)
      * @param search   terme de recherche (nullable)
      */
+    /** Heure de début d'une journée de travail casino (06h00). */
+    private static final LocalTime DEBUT_JOURNEE = LocalTime.of(6, 0);
+
     public List<FicheLABFT> findWithFilters(LocalDate from, LocalDate to, String search) {
-        LocalDateTime debut = LocalDateTime.of(from, LocalTime.MIDNIGHT);
-        LocalDateTime fin   = LocalDateTime.of(to.plusDays(1), LocalTime.MIDNIGHT);
+        LocalDateTime debut = LocalDateTime.of(from, DEBUT_JOURNEE);
+        LocalDateTime fin   = LocalDateTime.of(to.plusDays(1), DEBUT_JOURNEE);
 
         String jpql;
         TypedQuery<FicheLABFT> q;
