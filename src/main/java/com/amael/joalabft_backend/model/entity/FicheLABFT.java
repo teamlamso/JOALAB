@@ -87,9 +87,16 @@ public class FicheLABFT {
         });
     }
 
-    /** Date de la fiche (partie date uniquement, sans l'heure). */
+    /**
+     * Retourne la journée de travail de la fiche.
+     * Une journée commence à 06h00 et se termine à 05h59 le lendemain.
+     * Une fiche créée avant 06h00 appartient au jour précédent.
+     */
     public LocalDate getDate() {
-        return dateCreation != null ? dateCreation.toLocalDate() : null;
+        if (dateCreation == null) return null;
+        return dateCreation.getHour() < 6
+                ? dateCreation.toLocalDate().minusDays(1)
+                : dateCreation.toLocalDate();
     }
 
     /** Somme du montant RGM de toutes les lignes. */
