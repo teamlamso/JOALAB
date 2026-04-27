@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listFiches } from '../api/fiches.js'
-import DateInput from '../components/DateInput.jsx'
 
 function today() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function yesterday() {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return d.toISOString().slice(0, 10)
 }
 
 function formatEur(value) {
@@ -17,21 +22,20 @@ function formatTime(val) {
   return val
 }
 
+function formatDateFr(iso) {
+  if (!iso) return ''
+  try {
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}/${y}`
+  } catch {
+    return iso
+  }
+}
+
 function SearchIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-  )
-}
-
-function CalendarIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-      <line x1="16" y1="2" x2="16" y2="6"/>
-      <line x1="8" y1="2" x2="8" y2="6"/>
-      <line x1="3" y1="10" x2="21" y2="10"/>
     </svg>
   )
 }
@@ -54,10 +58,70 @@ function EyeIcon() {
   )
 }
 
+function isOver2000(f) {
+  return ((f.totalEntrant || 0) + (f.totalSortant || 0)) >= 2000
+}
+
+function FicheCard({ f, navigate }) {
+  const isToday = f.date === today()
+  const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
+
+  return (
+    <div className="fiche-card">
+      <div className="fiche-card-name" title={f.clientLibelle}>
+        {f.clientLibelle}
+        {!isToday && <span className="fiche-card-date">{formatDateFr(f.date)}</span>}
+      </div>
+      {isToday ? (
+        <>
+          <div className="fiche-card-row">
+            <span>Montant RGM :</span>
+            <span>{formatEur(f.totalRGM)}</span>
+          </div>
+          <div className="fiche-card-row">
+            <span>Change entrant :</span>
+            <span>{formatEur(f.totalEntrant)}</span>
+          </div>
+        </>
+      ) : (
+        <div className="fiche-card-row">
+          <span>RGM + Entrant :</span>
+          <span>{formatEur(totalRGMEntrant || null)}</span>
+        </div>
+      )}
+      <div className="fiche-card-row">
+        <span>Change sortant :</span>
+        <span>{formatEur(f.totalSortant)}</span>
+      </div>
+      <div className="fiche-card-footer">
+        <span className="fiche-card-footer-time">
+          Dernière modification : {formatTime(f.derniereModif)}
+        </span>
+        <div className="fiche-card-footer-actions">
+          <button
+            className="btn-icon"
+            title="Modifier"
+            onClick={() => navigate(`/fiches/${f.id}/modifier`)}
+          >
+            <EditIcon />
+          </button>
+          <button
+            className="btn-icon"
+            title="Voir le détail"
+            onClick={() => navigate(`/fiches/${f.id}`)}
+          >
+            <EyeIcon />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Accueil() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [dateDebut, setDateDebut] = useState(today())
+  const [dateDebut, setDateDebut] = useState(yesterday())
   const [dateFin, setDateFin] = useState(today())
   const [fiches, setFiches] = useState([])
   const [loading, setLoading] = useState(true)
@@ -81,6 +145,9 @@ export default function Accueil() {
     return () => clearTimeout(timer)
   }, [load])
 
+  const fichesOver = fiches.filter(isOver2000)
+  const fichesUnder = fiches.filter((f) => !isOver2000(f))
+
   return (
     <div className="page">
       {/* Filters */}
@@ -94,20 +161,24 @@ export default function Accueil() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="date-input-wrapper">
-          <CalendarIcon />
-          <DateInput value={dateDebut} onChange={setDateDebut} />
-        </div>
+        <input
+          type="date"
+          className="date-picker"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+        />
         <span className="date-separator">au</span>
-        <div className="date-input-wrapper">
-          <CalendarIcon />
-          <DateInput value={dateFin} onChange={setDateFin} />
-        </div>
+        <input
+          type="date"
+          className="date-picker"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+        />
       </div>
 
       {/* Section header */}
       <div className="accueil-section-header">
-        <h2>Fiches du jour</h2>
+        <h2>Fiches récentes</h2>
         <div className="accueil-section-header-actions">
           <button className="btn btn-secondary" onClick={() => navigate('/clients')}>
             Voir les clients
@@ -125,60 +196,37 @@ export default function Accueil() {
       ) : fiches.length === 0 ? (
         <div className="empty-state">Aucune fiche pour cette période.</div>
       ) : (
-        <div className="fiches-grid">
-          {fiches.map((f) => {
-            const isToday = f.date === today()
-            const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
-            return (
-            <div key={f.id} className="fiche-card">
-              <div className="fiche-card-name" title={f.clientLibelle}>
-                {f.clientLibelle}
-              </div>
-              {isToday ? (
-                <>
-                  <div className="fiche-card-row">
-                    <span>Montant RGM :</span>
-                    <span>{formatEur(f.totalRGM)}</span>
-                  </div>
-                  <div className="fiche-card-row">
-                    <span>Change entrant :</span>
-                    <span>{formatEur(f.totalEntrant)}</span>
-                  </div>
-                </>
-              ) : (
-                <div className="fiche-card-row">
-                  <span>RGM + Entrant :</span>
-                  <span>{formatEur(totalRGMEntrant || null)}</span>
-                </div>
-              )}
-              <div className="fiche-card-row">
-                <span>Change sortant :</span>
-                <span>{formatEur(f.totalSortant)}</span>
-              </div>
-              <div className="fiche-card-footer">
-                <span className="fiche-card-footer-time">
-                  Dernière modification : {formatTime(f.derniereModif)}
-                </span>
-                <div className="fiche-card-footer-actions">
-                  <button
-                    className="btn-icon"
-                    title="Modifier"
-                    onClick={() => navigate(`/fiches/${f.id}/modifier`)}
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    className="btn-icon"
-                    title="Voir le détail"
-                    onClick={() => navigate(`/fiches/${f.id}`)}
-                  >
-                    <EyeIcon />
-                  </button>
-                </div>
+        <>
+          {/* Fiches > 2000€ */}
+          {fichesOver.length > 0 && (
+            <div className="fiches-section">
+              <h3 className="fiches-section-title fiches-section-title-alert">
+                {"Fiches dépassant 2 000 € (" + fichesOver.length + ")"}
+              </h3>
+              <div className="fiches-grid">
+                {fichesOver.map((f) => (
+                  <FicheCard key={f.id} f={f} navigate={navigate} />
+                ))}
               </div>
             </div>
-          )})}
-        </div>
+          )}
+
+          {/* Autres fiches */}
+          {fichesUnder.length > 0 && (
+            <div className="fiches-section">
+              {fichesOver.length > 0 && (
+                <h3 className="fiches-section-title">
+                  {"Autres fiches (" + fichesUnder.length + ")"}
+                </h3>
+              )}
+              <div className="fiches-grid">
+                {fichesUnder.map((f) => (
+                  <FicheCard key={f.id} f={f} navigate={navigate} />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
