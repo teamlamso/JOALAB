@@ -74,11 +74,14 @@ export default function DetailClient() {
       {/* Info client */}
       <div className="client-info-card">
         <div className="client-info-main">
-          <strong>{client.libelle}</strong>
+          <strong>
+            {client.libelle}
+            {client.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+          </strong>
           {client.identifie ? (
             <p>
               {adresseLines.map((l, i) => <span key={i}>{l}<br /></span>)}
-              {client.dateNaissance && <>Né(e) le : {formatDate(client.dateNaissance)}</>}
+              {client.dateNaissance && <>Né(e) le : {formatDate(client.dateNaissance)}{client.lieuNaissance ? ` à ${client.lieuNaissance}` : ''}</>}
             </p>
           ) : (
             <p>{client.descriptionPhysique}</p>

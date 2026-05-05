@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { createClient } from '../api/clients.js'
 import DateInput from '../components/DateInput.jsx'
 import AddressSearch from '../components/AddressSearch.jsx'
+import PlaceSearch from '../components/PlaceSearch.jsx'
+import CountrySearch from '../components/CountrySearch.jsx'
+import PrefectureSearch from '../components/PrefectureSearch.jsx'
 
 const TYPES_PIECE = [
   'CNIe',
@@ -15,21 +18,21 @@ const TYPES_PIECE = [
   'Titre de Séjour',
 ]
 
-const PIECES_FRANCAISES_AVEC_PREFECTURE = [
+const PIECES_AVEC_PREFECTURE = [
   'CNI',
   'Permis de Conduire (Carte)',
   'Permis de Conduire (Papier)',
   'Passeport Français',
-]
-
-const PIECES_ETRANGERES = [
-  'Passeport Etranger',
-  'Carte Identité Etrangère',
   'Titre de Séjour',
 ]
 
+const PIECES_AVEC_PAYS = [
+  'Passeport Etranger',
+  'Carte Identité Etrangère',
+]
+
 const EMPTY_IDENTIFIED = {
-  nom: '', prenom: '', dateNaissance: '',
+  nom: '', prenom: '', dateNaissance: '', lieuNaissance: '', ppe: false,
   rue: '', complement: '', codePostal: '', ville: '', pays: 'France',
   typePiece: '', numeroPiece: '', dateDelivrance: '',
   prefectureDelivrance: '', paysDelivrance: '',
@@ -128,23 +131,46 @@ export default function NouveauClient() {
             {/* Informations personnelles */}
             <div className="form-section">
               <div className="form-section-title">Informations personnelles :</div>
-              <div className="form-group">
-                <label>Nom :</label>
-                <input type="text" value={form.nom} onChange={set('nom')} required />
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label>Nom :</label>
+                  <input type="text" value={form.nom} onChange={set('nom')} required />
+                </div>
+                <div className="form-group">
+                  <label>Pr&eacute;nom :</label>
+                  <input type="text" value={form.prenom} onChange={set('prenom')} required />
+                </div>
               </div>
-              <div className="form-group">
-                <label>Pr&eacute;nom :</label>
-                <input type="text" value={form.prenom} onChange={set('prenom')} required />
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label>Date de naissance :</label>
+                  <DateInput value={form.dateNaissance} onChange={(v) => setField('dateNaissance', v)} />
+                </div>
+                <div className="form-group">
+                  <label>Lieu de naissance :</label>
+                  <PlaceSearch
+                    value={form.lieuNaissance}
+                    onChange={(v) => setField('lieuNaissance', v)}
+                    placeholder="Ex : Besançon (25), Tokyo (Japon)"
+                  />
+                </div>
               </div>
+
               <div className="form-group">
-                <label>Date de naissance :</label>
-                <DateInput value={form.dateNaissance} onChange={(v) => setField('dateNaissance', v)} />
+                <label className="ppe-toggle">
+                  <input
+                    type="checkbox"
+                    checked={form.ppe}
+                    onChange={(e) => setField('ppe', e.target.checked)}
+                  />
+                  <span>Personne Politiquement Exposée (PPE)</span>
+                </label>
               </div>
 
               <div className="form-section-title" style={{ marginTop: '16px' }}>Adresse :</div>
               <div className="form-group">
                 <label>Rechercher une adresse :</label>
-                <AddressSearch onSelect={handleAddressSelect} initialValue="" />
+                <AddressSearch onSelect={handleAddressSelect} />
               </div>
               <div className="form-group">
                 <label>Rue :</label>
@@ -166,7 +192,7 @@ export default function NouveauClient() {
               </div>
               <div className="form-group">
                 <label>Pays :</label>
-                <input type="text" value={form.pays} onChange={set('pays')} />
+                <CountrySearch value={form.pays} onChange={(v) => setField('pays', v)} />
               </div>
             </div>
 
@@ -188,16 +214,22 @@ export default function NouveauClient() {
                 <label>Date de délivrance :</label>
                 <DateInput value={form.dateDelivrance} onChange={(v) => setField('dateDelivrance', v)} />
               </div>
-              {PIECES_FRANCAISES_AVEC_PREFECTURE.includes(form.typePiece) && (
+              {PIECES_AVEC_PREFECTURE.includes(form.typePiece) && (
                 <div className="form-group">
                   <label>Préfecture de délivrance :</label>
-                  <input type="text" value={form.prefectureDelivrance} onChange={set('prefectureDelivrance')} />
+                  <PrefectureSearch
+                    value={form.prefectureDelivrance}
+                    onChange={(v) => setField('prefectureDelivrance', v)}
+                  />
                 </div>
               )}
-              {PIECES_ETRANGERES.includes(form.typePiece) && (
+              {PIECES_AVEC_PAYS.includes(form.typePiece) && (
                 <div className="form-group">
                   <label>Pays de délivrance :</label>
-                  <input type="text" value={form.paysDelivrance} onChange={set('paysDelivrance')} />
+                  <CountrySearch
+                    value={form.paysDelivrance}
+                    onChange={(v) => setField('paysDelivrance', v)}
+                  />
                 </div>
               )}
             </div>

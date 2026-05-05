@@ -103,7 +103,10 @@ export default function ListeClients() {
               ) : (
                 clients.map((c) => (
                   <tr key={c.id}>
-                    <td><strong>{c.libelle}</strong></td>
+                    <td>
+                      <strong>{c.libelle}</strong>
+                      {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+                    </td>
                     <td>{formatDate(c.dateNaissance)}</td>
                     <td>{c.ville || '-'}</td>
                     <td>{c.pays || '-'}</td>

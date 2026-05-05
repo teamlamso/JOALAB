@@ -717,13 +717,19 @@ tbody tr:hover {
   font-size: 1rem;
   font-weight: 700;
   margin-bottom: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 8px;
+  min-width: 0;
+}
+
+.fiche-card-name-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fiche-card-date {
@@ -928,108 +934,238 @@ tbody tr:hover {
   border-top: 1px solid var(--border);
 }
 
-/* ===================== DETAIL FICHE ===================== */
-.detail-client-info {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  margin-bottom: 16px;
+/* ===================== FICHE PAPIER (DETAIL FICHE) ===================== */
+.fiche-papier {
+  background: white;
+  color: #111;
+  border: 1px solid #d0d0d0;
+  padding: 14px 18px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.fp-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 1px solid #111;
+}
+
+.fp-table th,
+.fp-table td {
+  border: 1px solid #111;
+  padding: 4px 5px;
+  font-size: 10px;
+  text-align: center;
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+
+/* --- En-tête (titre, casino, identité) — rendus en <div> au-dessus du tableau --- */
+.fp-titre-bar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 110px 1fr 50px;
+  align-items: stretch;
+  margin-bottom: 8px;
 }
 
-.detail-client-info-main strong {
-  font-size: 1rem;
+.fp-titre-tag {
+  background: #6b6b6b;
+  color: white;
   font-weight: 700;
-}
-
-.detail-client-info-main p {
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-  line-height: 1.6;
-}
-
-.detail-client-info-id {
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  line-height: 1.8;
-}
-
-.detail-ligne {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  margin-bottom: 12px;
-}
-
-.detail-ligne-header {
+  font-size: 17px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
+  justify-content: center;
 }
 
-.detail-ligne-badges {
+.fp-titre-main {
+  background: #5a1f6b;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 10px 16px;
   display: flex;
-  gap: 8px;
+  align-items: center;
 }
 
-.badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
+.fp-titre-logo {
+  background: #5a1f6b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid #fff3;
+  padding: 4px;
 }
 
-.badge-MAS  { background: #c5b3e8; color: #3d1e8a; }
-.badge-JTE  { background: #90caf9; color: #0d47a1; }
-.badge-JT   { background: #a5d6a7; color: #1b5e20; }
-.badge-ESPECE { background: #80cbc4; color: #004d40; }
-.badge-CHEQUE { background: #ffcc80; color: #e65100; }
-.badge-CB   { background: #a5d6a7; color: #1b5e20; }
-.badge-JETON  { background: #ef9a9a; color: #b71c1c; }
-.badge-PLAQUE { background: #ce93d8; color: #4a148c; }
-.badge-TICKET { background: #b39ddb; color: #311b92; }
+.fp-titre-logo img {
+  width: 28px;
+  height: 28px;
+  filter: brightness(0) invert(1);
+}
 
-.detail-ligne-grid {
+.fp-casino-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1.5px solid #111;
+  padding: 4px 6px 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.fp-casino-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fp-identite-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px 16px;
-  margin-bottom: 12px;
+  grid-template-columns: 1.1fr 1.2fr 1fr;
+  border: 1.5px solid #111;
+  margin-bottom: 8px;
 }
 
-.detail-ligne-field label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  display: block;
+.fp-identite-col {
+  padding: 6px 10px;
+  line-height: 1.5;
+  font-size: 11px;
 }
 
-.detail-ligne-field strong {
-  font-size: 0.95rem;
+.fp-identite-titre {
+  font-weight: 700;
+  text-decoration: underline;
+  font-size: 10.5px;
+  margin-bottom: 4px;
+}
+
+.fp-identite-nom {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.fp-identite-desc {
+  font-style: italic;
+}
+
+.fp-empty {
+  color: #888;
+}
+
+.fp-ppe {
+  display: inline-block;
+  background: #c0392b;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+
+/* --- En-tête colonnes du tableau --- */
+.fp-tr-cat th,
+.fp-tr-sub th {
+  color: white;
   font-weight: 700;
 }
 
-.detail-ligne-obs {
-  border-top: 1px solid #ececec;
-  padding-top: 10px;
-  margin-top: 4px;
+.fp-th-change         { background: #5a1f6b; width: 4%; }
+.fp-th-alerte         { background: #c0392b; }
+.fp-th-alerte-montant { width: 7%; }
+.fp-th-alerte-num     { width: 5%; }
+.fp-th-vert           { background: #5a1f6b; width: 9%; }
+.fp-th-jeu            { background: #c0392b; width: 3.7%; }
+.fp-th-mode           { background: #5a1f6b; width: 3.7%; }
+.fp-th-obs            { background: #5a1f6b; width: 23%; }
+.fp-th-caissier       { background: #5a1f6b; width: 7%; }
+
+/* --- Lignes --- */
+.fp-table tbody tr {
+  height: 36px;
 }
 
-.detail-ligne-obs label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  display: block;
-  margin-bottom: 2px;
+.fp-td-change {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-.detail-ligne-obs p {
-  font-size: 0.88rem;
+.fp-td-num {
+  text-align: right;
+  padding-right: 6px;
+  font-size: 11px;
+}
+
+.fp-td-check {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fp-check {
+  color: #111;
+}
+
+.fp-td-obs {
+  text-align: left;
+  font-size: 10px;
+  padding: 4px 6px;
+}
+
+.fp-td-caissier {
+  font-size: 10px;
+  text-align: center;
+  padding: 4px;
+}
+
+.fp-tr-totaux td {
+  background: #f4eef6;
+  font-weight: 700;
+}
+
+.fp-nota {
+  text-align: right;
+  font-size: 10.5px;
+  font-style: italic;
+  color: #5a1f6b;
+  line-height: 1.6;
+  margin-top: 8px;
+  padding-top: 6px;
+}
+
+/* ===================== PPE (Politiquement Exposé) ===================== */
+.ppe-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.ppe-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.badge-ppe {
+  display: inline-block;
+  background: #c0392b;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-left: 10px;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
 }
 
 /* ===================== DETAIL CLIENT ===================== */
@@ -1063,23 +1199,76 @@ tbody tr:hover {
 }
 
 /* ===================== PRINT ===================== */
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
 @media print {
   .header,
   .no-print {
     display: none !important;
   }
 
+  html, body {
+    background: white;
+    margin: 0;
+    padding: 0;
+  }
+
   .page {
     padding: 0;
     max-width: 100%;
+    margin: 0;
   }
 
-  body {
-    background: white;
+  .fiche-papier {
+    border: none;
+    padding: 8mm;
+    font-size: 10px;
   }
 
-  .detail-ligne {
+  /* Le thead se répète automatiquement à chaque page imprimée */
+  .fp-table thead {
+    display: table-header-group;
+  }
+
+  .fp-table tfoot {
+    display: table-footer-group;
+  }
+
+  .fp-table tr {
+    page-break-inside: avoid;
+  }
+
+  /* L'en-tête (titre + casino + identité) reste solidaire sur une page */
+  .fp-titre-bar,
+  .fp-casino-bar,
+  .fp-identite-grid {
     break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .fp-identite-grid {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .fp-table th,
+  .fp-table td {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .fp-titre-tag,
+  .fp-titre-main,
+  .fp-titre-logo,
+  .fp-tr-cat th,
+  .fp-tr-sub th,
+  .fp-ppe,
+  .fp-tr-totaux td {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 

@@ -20,6 +20,13 @@ function newLigne() {
   }
 }
 
+function loadMoney(value) {
+  if (value == null) return ''
+  const n = parseFloat(value)
+  if (isNaN(n)) return ''
+  return n.toFixed(2)
+}
+
 function ligneFromResponse(l) {
   return {
     _id: l.id ?? Math.random(),
@@ -27,9 +34,9 @@ function ligneFromResponse(l) {
     typePaiement: l.typePaiement ?? null,
     typeChange: l.typeChange ?? null,
     numeroSocle: l.numeroSocle ?? '',
-    montantRGM: l.montantRGM != null ? String(l.montantRGM) : '',
-    changeEntrant: l.changeEntrant != null ? String(l.changeEntrant) : '',
-    changeSortant: l.changeSortant != null ? String(l.changeSortant) : '',
+    montantRGM: loadMoney(l.montantRGM),
+    changeEntrant: loadMoney(l.changeEntrant),
+    changeSortant: loadMoney(l.changeSortant),
     observations: l.observations ?? '',
   }
 }

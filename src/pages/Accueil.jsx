@@ -21,9 +21,15 @@ function formatEur(value) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)
 }
 
-function formatTime(val) {
-  if (!val) return '-'
-  return val
+function formatLastModif(date, time) {
+  if (!time) return '-'
+  if (!date) return time
+  const jour = workDay()
+  const hier = workDayYesterday()
+  if (date === jour) return time
+  if (date === hier) return `hier à ${time}`
+  const [, m, d] = date.split('-')
+  return `${d}/${m} à ${time}`
 }
 
 function SearchIcon() {
@@ -53,7 +59,7 @@ function EyeIcon() {
 }
 
 function isOver2000(f) {
-  return ((f.totalEntrant || 0) + (f.totalSortant || 0)) >= 2000
+  return (Number(f.totalEntrant) || 0) >= 2000 || (Number(f.totalSortant) || 0) >= 2000
 }
 
 function FicheCard({ f, navigate, showDate, highlight }) {
@@ -62,9 +68,9 @@ function FicheCard({ f, navigate, showDate, highlight }) {
   const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
 
   return (
-    <div className={`fiche-card${highlight ? ' fiche-card-alert' : ''}`}
+    <div className={`fiche-card${highlight ? ' fiche-card-alert' : ''}`}>
       <div className="fiche-card-name" title={f.clientLibelle}>
-        {f.clientLibelle}
+        <span className="fiche-card-name-text">{f.clientLibelle}</span>
         {showDate && <span className="fiche-card-date">{f.date ? formatDateFr(f.date) : ''}</span>}
       </div>
       {isToday ? (
@@ -90,7 +96,7 @@ function FicheCard({ f, navigate, showDate, highlight }) {
       </div>
       <div className="fiche-card-footer">
         <span className="fiche-card-footer-time">
-          Dernière modification : {formatTime(f.derniereModif)}
+          Dernière modification : {formatLastModif(f.date, f.derniereModif)}
         </span>
         <div className="fiche-card-footer-actions">
           <button className="btn-icon" title="Modifier" onClick={() => navigate(`/fiches/${f.id}/modifier`)}>

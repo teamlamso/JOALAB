@@ -1,83 +1,54 @@
-import { useState, useRef, useEffect } from 'react'
-
-const API_URL = 'https://api-adresse.data.gouv.fr/search/'
+import { useState } from 'react'
+import Autocomplete from './Autocomplete.jsx'
 
 /**
- * Champ d'autocompletion d'adresse via l'API adresse.data.gouv.fr.
- * - onSelect({ rue, codePostal, ville, pays }) : appele quand l'utilisateur choisit une suggestion
- * - initialValue : texte initial affiche dans le champ
+ * Recherche d'adresse internationale via Nominatim (OpenStreetMap).
+ *
+ * @param {(addr: { rue, codePostal, ville, pays }) => void} onSelect
  */
-export default function AddressSearch({ onSelect, initialValue }) {
-  const [query, setQuery] = useState(initialValue || '')
-  const [suggestions, setSuggestions] = useState([])
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-  const timerRef = useRef(null)
+export default function AddressSearch({ onSelect }) {
+  const [query, setQuery] = useState('')
 
-  useEffect(() => {
-    function handler(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  const search = (q) => {
-    setQuery(q)
-    if (timerRef.current) clearTimeout(timerRef.current)
-    if (q.length < 3) {
-      setSuggestions([])
-      setOpen(false)
-      return
-    }
-    timerRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`${API_URL}?q=${encodeURIComponent(q)}&limit=5`)
-        const data = await res.json()
-        const items = (data.features || []).map((f) => ({
-          label: f.properties.label,
-          rue: f.properties.name,
-          codePostal: f.properties.postcode,
-          ville: f.properties.city,
-        }))
-        setSuggestions(items)
-        setOpen(items.length > 0)
-      } catch {
-        setSuggestions([])
-        setOpen(false)
-      }
-    }, 300)
+  const fetchSuggestions = async (q, signal) => {
+    const url = new URL('https://nominatim.openstreetmap.org/search')
+    url.searchParams.set('q', q)
+    url.searchParams.set('format', 'json')
+    url.searchParams.set('addressdetails', '1')
+    url.searchParams.set('limit', '6')
+    url.searchParams.set('accept-language', 'fr')
+    const res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.map((d) => ({
+      label: d.display_name,
+      value: d.place_id,
+      data: d.address || {},
+    }))
   }
 
-  const select = (item) => {
+  const handleSelect = (item) => {
+    const a = item.data
+    const houseNumber = a.house_number ? `${a.house_number} ` : ''
+    const rue = `${houseNumber}${a.road || a.pedestrian || a.path || ''}`.trim()
+    const ville = a.city || a.town || a.village || a.municipality || ''
     setQuery(item.label)
-    setOpen(false)
-    setSuggestions([])
     onSelect({
-      rue: item.rue,
-      codePostal: item.codePostal,
-      ville: item.ville,
-      pays: 'France',
+      rue,
+      codePostal: a.postcode || '',
+      ville,
+      pays: a.country || '',
     })
   }
 
   return (
-    <div className="address-search" ref={ref}>
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => search(e.target.value)}
-        placeholder="Rechercher une adresse..."
-      />
-      {open && (
-        <ul className="address-suggestions">
-          {suggestions.map((s, i) => (
-            <li key={i} onClick={() => select(s)}>
-              {s.label}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <Autocomplete
+      value={query}
+      onChange={setQuery}
+      onSelect={handleSelect}
+      fetchSuggestions={fetchSuggestions}
+      minChars={3}
+      debounceMs={350}
+      placeholder="Rechercher une adresse (international)..."
+    />
   )
 }
