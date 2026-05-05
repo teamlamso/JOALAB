@@ -34,6 +34,12 @@ public class Client {
     @Column(name = "date_naissance")
     private LocalDate dateNaissance;
 
+    @Column(name = "lieu_naissance", length = 200)
+    private String lieuNaissance;
+
+    @Column(nullable = false)
+    private boolean ppe;
+
     @Column(length = 200)
     private String rue;
 
@@ -101,6 +107,12 @@ public class Client {
 
     public LocalDate getDateNaissance() { return dateNaissance; }
     public void setDateNaissance(LocalDate dateNaissance) { this.dateNaissance = dateNaissance; }
+
+    public String getLieuNaissance() { return lieuNaissance; }
+    public void setLieuNaissance(String lieuNaissance) { this.lieuNaissance = lieuNaissance; }
+
+    public boolean isPpe() { return ppe; }
+    public void setPpe(boolean ppe) { this.ppe = ppe; }
 
     public String getRue() { return rue; }
     public void setRue(String rue) { this.rue = rue; }

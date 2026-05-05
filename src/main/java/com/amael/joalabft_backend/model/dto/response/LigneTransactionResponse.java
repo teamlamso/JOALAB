@@ -13,11 +13,13 @@ public class LigneTransactionResponse {
     public BigDecimal changeEntrant;
     public BigDecimal changeSortant;
     public String observations;
+    public String caissier;
 
     public LigneTransactionResponse(Long id, String typeJeu, String typePaiement,
                                      String typeChange, Integer numeroSocle,
                                      BigDecimal montantRGM, BigDecimal changeEntrant,
-                                     BigDecimal changeSortant, String observations) {
+                                     BigDecimal changeSortant, String observations,
+                                     String caissier) {
         this.id            = id;
         this.typeJeu       = typeJeu;
         this.typePaiement  = typePaiement;
@@ -27,5 +29,6 @@ public class LigneTransactionResponse {
         this.changeEntrant = changeEntrant;
         this.changeSortant = changeSortant;
         this.observations  = observations;
+        this.caissier      = caissier;
     }
 }

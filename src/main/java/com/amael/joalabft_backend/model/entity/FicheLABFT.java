@@ -40,6 +40,7 @@ public class FicheLABFT {
     private LocalDateTime dateModification;
 
     @OneToMany(mappedBy = "fiche", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
     private List<LigneTransaction> lignes = new ArrayList<>();
 
     @PrePersist

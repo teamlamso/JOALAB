@@ -41,6 +41,7 @@ public class ClientService {
                             c.getDateNaissance() != null ? c.getDateNaissance().format(DATE_FMT) : null,
                             c.getVille(),
                             c.getPays(),
+                            c.isPpe(),
                             activite != null ? activite.format(DATE_FMT) : null
                     );
                 })
@@ -67,6 +68,8 @@ public class ClientService {
         dto.nom                 = c.getNom();
         dto.prenom              = c.getPrenom();
         dto.dateNaissance       = c.getDateNaissance() != null ? c.getDateNaissance().format(DATE_FMT) : null;
+        dto.lieuNaissance       = c.getLieuNaissance();
+        dto.ppe                 = c.isPpe();
         dto.rue                 = c.getRue();
         dto.complement          = c.getComplement();
         dto.codePostal          = c.getCodePostal();
@@ -107,6 +110,8 @@ public class ClientService {
         c.setNom(req.nom);
         c.setPrenom(req.prenom);
         c.setDateNaissance(req.dateNaissance != null ? LocalDate.parse(req.dateNaissance, DATE_FMT) : null);
+        c.setLieuNaissance(req.lieuNaissance);
+        c.setPpe(req.ppe);
         c.setRue(req.rue);
         c.setComplement(req.complement);
         c.setCodePostal(req.codePostal);

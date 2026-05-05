@@ -25,6 +25,10 @@ public class LigneTransaction {
     @JoinColumn(name = "fiche_id", nullable = false)
     private FicheLABFT fiche;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "caissier_id")
+    private Utilisateur caissier;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type_jeu", length = 10)
     private TypeJeu typeJeu;
@@ -63,6 +67,9 @@ public class LigneTransaction {
 
     public FicheLABFT getFiche() { return fiche; }
     public void setFiche(FicheLABFT fiche) { this.fiche = fiche; }
+
+    public Utilisateur getCaissier() { return caissier; }
+    public void setCaissier(Utilisateur caissier) { this.caissier = caissier; }
 
     public TypeJeu getTypeJeu() { return typeJeu; }
     public void setTypeJeu(TypeJeu typeJeu) { this.typeJeu = typeJeu; }

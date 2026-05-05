@@ -22,7 +22,9 @@ import jakarta.ws.rs.NotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Logique métier des fiches LAB-FT.
@@ -77,7 +79,7 @@ public class FicheService {
         fiche.setCreePar(creePar);
 
         if (req.lignes != null) {
-            req.lignes.forEach(l -> fiche.addLigne(buildLigne(l)));
+            req.lignes.forEach(l -> fiche.addLigne(buildLigne(l, creePar)));
         }
 
         ficheRepository.save(fiche);
@@ -97,8 +99,22 @@ public class FicheService {
         fiche.setDateModification(LocalDateTime.now());
 
         if (req.lignes != null) {
+            // Pour préserver le caissier d'origine des lignes existantes,
+            // on capture l'association (id ligne → caissier) avant remplacement.
+            Map<Long, Utilisateur> caissiersOrigine = new HashMap<>();
+            for (LigneTransaction l : fiche.getLignes()) {
+                if (l.getId() != null && l.getCaissier() != null) {
+                    caissiersOrigine.put(l.getId(), l.getCaissier());
+                }
+            }
+
             List<LigneTransaction> nouvelles = req.lignes.stream()
-                    .map(this::buildLigne)
+                    .map(reqLigne -> {
+                        Utilisateur caissier = (reqLigne.id != null && caissiersOrigine.containsKey(reqLigne.id))
+                                ? caissiersOrigine.get(reqLigne.id)
+                                : modifiePar;
+                        return buildLigne(reqLigne, caissier);
+                    })
                     .toList();
             fiche.replaceLignes(nouvelles);
         }
@@ -108,7 +124,7 @@ public class FicheService {
 
     // --- Helpers ---
 
-    private LigneTransaction buildLigne(LigneTransactionRequest req) {
+    private LigneTransaction buildLigne(LigneTransactionRequest req, Utilisateur caissier) {
         if (req.montantRGM != null && req.numeroSocle == null) {
             throw new BadRequestException("Le numéro de socle est obligatoire lorsqu'un montant RGM est renseigné");
         }
@@ -121,6 +137,7 @@ public class FicheService {
         l.setChangeEntrant(req.changeEntrant);
         l.setChangeSortant(req.changeSortant);
         l.setObservations(req.observations);
+        l.setCaissier(caissier);
         return l;
     }
 
@@ -146,7 +163,7 @@ public class FicheService {
 
         FicheDetailResponse dto = new FicheDetailResponse();
         dto.id                      = f.getId();
-        dto.date                    = f.getDateCreation() != null ? f.getDateCreation().format(DATETIME_FMT) : null;
+        dto.date                    = f.getDate() != null ? f.getDate().format(DATE_FMT) : null;
         dto.creePar                 = f.getCreePar().getNomComplet();
         dto.modifiePar              = f.getModifiePar() != null ? f.getModifiePar().getNomComplet() : null;
         dto.dateModification        = f.getDateModification() != null ? f.getDateModification().format(DATETIME_FMT) : null;
@@ -157,6 +174,8 @@ public class FicheService {
         dto.clientNom               = c.getNom();
         dto.clientPrenom            = c.getPrenom();
         dto.clientDateNaissance     = c.getDateNaissance() != null ? c.getDateNaissance().format(DATE_FMT) : null;
+        dto.clientLieuNaissance     = c.getLieuNaissance();
+        dto.clientPpe               = c.isPpe();
         dto.clientRue               = c.getRue();
         dto.clientCodePostal        = c.getCodePostal();
         dto.clientVille             = c.getVille();
@@ -182,7 +201,8 @@ public class FicheService {
                         l.getMontantRGM(),
                         l.getChangeEntrant(),
                         l.getChangeSortant(),
-                        l.getObservations()
+                        l.getObservations(),
+                        l.getCaissier() != null ? l.getCaissier().getNomComplet() : f.getCreePar().getNomComplet()
                 ))
                 .toList();
 
