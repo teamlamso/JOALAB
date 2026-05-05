@@ -30,6 +30,7 @@ function loadMoney(value) {
 function ligneFromResponse(l) {
   return {
     _id: l.id ?? Math.random(),
+    dbId: l.id ?? null,
     typeJeu: l.typeJeu ?? null,
     typePaiement: l.typePaiement ?? null,
     typeChange: l.typeChange ?? null,
@@ -239,6 +240,7 @@ export default function EditFiche() {
     try {
       await updateFiche(id, {
         lignes: lignes.map((l) => ({
+          id: l.dbId ?? null,
           typeJeu: l.typeJeu,
           typePaiement: l.typePaiement,
           typeChange: l.typeChange || null,

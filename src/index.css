@@ -963,6 +963,13 @@ tbody tr:hover {
   word-wrap: break-word;
 }
 
+.fp-table thead th {
+  white-space: nowrap;
+  word-break: keep-all;
+  hyphens: none;
+  overflow: visible;
+}
+
 /* --- En-tête (titre, casino, identité) — rendus en <div> au-dessus du tableau --- */
 .fp-titre-bar {
   display: grid;
@@ -1214,18 +1221,47 @@ tbody tr:hover {
     background: white;
     margin: 0;
     padding: 0;
+    height: auto;
   }
 
   .page {
     padding: 0;
     max-width: 100%;
     margin: 0;
+    height: auto;
+    min-height: 0;
   }
 
   .fiche-papier {
     border: none;
-    padding: 8mm;
+    padding: 6mm 8mm 0 8mm;
     font-size: 10px;
+  }
+
+  /* Espace en haut du thead → marge effective sur chaque page imprimée
+     (notamment la page 2 où l'identité ne se répète pas) */
+  .fp-table thead .fp-tr-cat th {
+    padding-top: 5mm;
+  }
+
+  /* Évite qu'un saut de page laisse la ligne Totaux orpheline en haut de la
+     page suivante : la ligne reste collée à ses prédécesseurs. */
+  .fp-tr-totaux,
+  .fp-tr-totaux td {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  /* Empêche le bloc Nota Bene de pousser une page vide supplémentaire. */
+  .fp-nota {
+    margin-top: 4px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Pas de marge bas qui forcerait un débordement → page vide. */
+  .fiche-papier > *:last-child {
+    margin-bottom: 0;
   }
 
   /* Le thead se répète automatiquement à chaque page imprimée */

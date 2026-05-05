@@ -144,11 +144,11 @@ export default function DetailFiche() {
 
         <table className="fp-table">
           <colgroup>
-            <col style={{ width: '5%' }} />     {/* CHANGE */}
-            <col style={{ width: '7%' }} />     {/* Alerte Montant */}
-            <col style={{ width: '4%' }} />     {/* Alerte N° appareil */}
-            <col style={{ width: '9%' }} />     {/* Entrant */}
-            <col style={{ width: '9%' }} />     {/* Sortant */}
+            <col style={{ width: '5.5%' }} />   {/* CHANGE */}
+            <col style={{ width: '6.5%' }} />   {/* Alerte Montant */}
+            <col style={{ width: '5.5%' }} />   {/* Alerte N° appareil */}
+            <col style={{ width: '8.5%' }} />   {/* Entrant */}
+            <col style={{ width: '8.5%' }} />   {/* Sortant */}
             <col style={{ width: '4.5%' }} />   {/* MAS */}
             <col style={{ width: '4.5%' }} />   {/* JTE */}
             <col style={{ width: '4.5%' }} />   {/* JTT */}
@@ -158,8 +158,8 @@ export default function DetailFiche() {
             <col style={{ width: '4.5%' }} />   {/* Jeton */}
             <col style={{ width: '4.5%' }} />   {/* Plaque */}
             <col style={{ width: '4.5%' }} />   {/* Ticket */}
-            <col style={{ width: '20.5%' }} />  {/* Observations */}
-            <col style={{ width: '5%' }} />     {/* Caissier */}
+            <col style={{ width: '17.5%' }} />  {/* Observations */}
+            <col style={{ width: '6.5%' }} />   {/* Caissier */}
           </colgroup>
           <thead>
             <tr className="fp-tr-cat">
