@@ -7,16 +7,18 @@ public class ClientSummaryResponse {
     public String dateNaissance;
     public String ville;
     public String pays;
+    public boolean ppe;
     /** Date de la dernière fiche (yyyy-MM-dd), ou {@code null} si aucune fiche. */
     public String derniereActivite;
 
     public ClientSummaryResponse(Long id, String libelle, String dateNaissance,
-                                  String ville, String pays, String derniereActivite) {
+                                  String ville, String pays, boolean ppe, String derniereActivite) {
         this.id               = id;
         this.libelle          = libelle;
         this.dateNaissance    = dateNaissance;
         this.ville            = ville;
         this.pays             = pays;
+        this.ppe              = ppe;
         this.derniereActivite = derniereActivite;
     }
 }

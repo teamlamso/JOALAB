@@ -12,6 +12,8 @@ public class ClientDetailResponse {
     public String nom;
     public String prenom;
     public String dateNaissance;
+    public String lieuNaissance;
+    public boolean ppe;
     public String rue;
     public String complement;
     public String codePostal;

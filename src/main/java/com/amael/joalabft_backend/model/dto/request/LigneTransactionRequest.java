@@ -5,6 +5,9 @@ import java.math.BigDecimal;
 /** Corps d'une ligne de transaction au sein d'une fiche. */
 public class LigneTransactionRequest {
 
+    /** Identifiant de la ligne existante (présent uniquement lors d'une mise à jour). */
+    public Long id;
+
     /** Valeurs : MAS, JTE, JT */
     public String typeJeu;
 

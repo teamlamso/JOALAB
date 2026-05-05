@@ -11,6 +11,8 @@ public class ClientRequest {
     public String prenom;
     /** Format ISO : yyyy-MM-dd */
     public String dateNaissance;
+    public String lieuNaissance;
+    public boolean ppe;
     public String rue;
     public String complement;
     public String codePostal;

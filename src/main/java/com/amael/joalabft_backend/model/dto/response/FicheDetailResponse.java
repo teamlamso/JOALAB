@@ -17,6 +17,8 @@ public class FicheDetailResponse {
     public String clientNom;
     public String clientPrenom;
     public String clientDateNaissance;
+    public String clientLieuNaissance;
+    public boolean clientPpe;
     public String clientRue;
     public String clientCodePostal;
     public String clientVille;
