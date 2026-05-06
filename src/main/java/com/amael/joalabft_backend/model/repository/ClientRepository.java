@@ -46,6 +46,28 @@ public class ClientRepository {
         return Optional.ofNullable(em.find(Client.class, id));
     }
 
+    /**
+     * Recherche les clients identifiés susceptibles de correspondre à un nouvel
+     * enregistrement, sur la base de :
+     *   - nom + prénom + date de naissance (correspondance exacte sur les 3),
+     *   - ou numéro de pièce d'identité (correspondance exacte).
+     * Permet de détecter les doublons potentiels.
+     */
+    public List<Client> findSimilar(String nom, String prenom, LocalDate dateNaissance, String numeroPiece) {
+        return em.createQuery(
+                "SELECT c FROM Client c WHERE c.identifie = true AND (" +
+                "  (LOWER(c.nom) = :nom AND LOWER(c.prenom) = :prenom AND c.dateNaissance = :dateNaissance) " +
+                "  OR (:numeroPiece IS NOT NULL AND c.numeroPiece = :numeroPiece) " +
+                ")",
+                Client.class
+        )
+        .setParameter("nom", nom != null ? nom.toLowerCase() : "")
+        .setParameter("prenom", prenom != null ? prenom.toLowerCase() : "")
+        .setParameter("dateNaissance", dateNaissance)
+        .setParameter("numeroPiece", numeroPiece != null && !numeroPiece.isBlank() ? numeroPiece : null)
+        .getResultList();
+    }
+
     /** Persiste un nouveau client et force la génération de l'ID. */
     public Client save(Client client) {
         em.persist(client);

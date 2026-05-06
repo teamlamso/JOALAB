@@ -150,6 +150,18 @@ public class TestInsert {
         fiche5.setDateCreation(LocalDateTime.now().minusDays(1));
         fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "900.00", null,      "725.00", "BP 546725 Socle 102"));
         fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
+        fiche5.addLigne(ligne(alexis, TypeJeu.MAS, TypePaiement.ESPECE, null,        102,   "725.00", null,      null, null));
         fiche5.addLigne(ligne(marie,  TypeJeu.JT,  TypePaiement.CB,     TypeChange.JETON, null, null,      "2150.00",      null, "CB JT"));
         ficheRepository.save(fiche5);
 

@@ -149,6 +149,7 @@ public class FicheService {
         return new FicheSummaryResponse(
                 f.getId(),
                 f.getClient().getLibelle(),
+                f.getClient().isPpe(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
                 f.getTotalRGM(),
