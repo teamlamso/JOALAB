@@ -1179,6 +1179,14 @@ tbody tr:hover {
 .fp-tr-totaux td {
   background: #f4eef6;
   font-weight: 700;
+  border-bottom: 1px solid #111 !important;
+}
+
+/* Bordure inférieure forcée sur la toute dernière ligne du tbody : avec
+   border-collapse, le tfoot spacer adjacent (border: none) peut effacer
+   par fusion la border-bottom de Totaux ou de la dernière ligne de données. */
+.fp-table tbody tr:last-child td {
+  border-bottom: 1px solid #111 !important;
 }
 
 .fp-nota {
