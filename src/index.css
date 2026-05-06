@@ -392,15 +392,14 @@ tbody tr:hover {
   background: transparent;
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .tab-switch-btn.active {
   background: var(--surface);
   color: var(--primary);
-  font-weight: 700;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
