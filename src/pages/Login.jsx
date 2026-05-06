@@ -2,20 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth.js'
 import { useAuth } from '../context/AuthContext.jsx'
-
-function JoaLogo() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="23" stroke="#1a1a1a" strokeWidth="2" fill="white"/>
-      <circle cx="24" cy="24" r="18" stroke="#1a1a1a" strokeWidth="1.5" fill="white"/>
-      <circle cx="24" cy="16" r="5" fill="#1a1a1a"/>
-      <circle cx="24" cy="32" r="5" fill="#1a1a1a"/>
-      <circle cx="16" cy="24" r="5" fill="#1a1a1a"/>
-      <circle cx="32" cy="24" r="5" fill="#1a1a1a"/>
-      <circle cx="24" cy="24" r="4" fill="#1a1a1a"/>
-    </svg>
-  )
-}
+import logoJOA from '../assets/logoJOA.svg'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -44,7 +31,7 @@ export default function Login() {
     <div className="login-page">
       <header className="login-header">
         <div className="login-header-logo">
-          <JoaLogo />
+          <img src={logoJOA} alt="JOA" width="48" height="48" />
         </div>
         <span className="login-title">JOA LAB-FT</span>
       </header>

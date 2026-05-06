@@ -1,21 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-
-function JoaLogo() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="23" stroke="#1a1a1a" strokeWidth="2" fill="white"/>
-      <circle cx="24" cy="24" r="18" stroke="#1a1a1a" strokeWidth="1.5" fill="white"/>
-      {/* 4-petal flower (club-like) */}
-      <circle cx="24" cy="16" r="5" fill="#1a1a1a"/>
-      <circle cx="24" cy="32" r="5" fill="#1a1a1a"/>
-      <circle cx="16" cy="24" r="5" fill="#1a1a1a"/>
-      <circle cx="32" cy="24" r="5" fill="#1a1a1a"/>
-      <circle cx="24" cy="24" r="4" fill="#1a1a1a"/>
-    </svg>
-  )
-}
+import logoJOA from '../assets/logoJOA.svg'
 
 function formatRole(role) {
   switch (role) {
@@ -50,7 +36,7 @@ export default function Header() {
   return (
     <header className="header">
       <Link to="/accueil" className="header-logo" style={{ textDecoration: 'none' }}>
-        <JoaLogo />
+        <img src={logoJOA} alt="JOA" width="48" height="48" />
       </Link>
 
       <Link to="/accueil" className="header-title" style={{ textDecoration: 'none', color: 'inherit' }}>JOA LAB-FT</Link>
