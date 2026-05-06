@@ -953,6 +953,11 @@ tbody tr:hover {
   border: 1px solid #111;
 }
 
+/* Spacer caché en visualisation, visible uniquement à l'impression */
+.fp-tr-spacer {
+  display: none;
+}
+
 .fp-table th,
 .fp-table td {
   border: 1px solid #111;
@@ -964,10 +969,30 @@ tbody tr:hover {
 }
 
 .fp-table thead th {
-  white-space: nowrap;
   word-break: keep-all;
   hyphens: none;
-  overflow: visible;
+  line-height: 1.15;
+}
+
+/* Les sous-en-têtes (Montant, MAS, Espèces, ...) doivent tenir sur 1 ligne */
+.fp-tr-sub th {
+  white-space: nowrap;
+}
+
+/* Les en-têtes courts en rowspan=2 doivent aussi tenir sur 1 ligne */
+.fp-th-change,
+.fp-th-caissier {
+  white-space: nowrap;
+}
+
+/* Les en-têtes longs (MONTANT DU CHANGE ENTRANT/SORTANT, etc.) peuvent
+   se présenter sur plusieurs lignes pour ne pas se chevaucher. */
+.fp-th-vert,
+.fp-th-obs,
+.fp-tr-cat .fp-th-alerte,
+.fp-tr-cat .fp-th-jeu,
+.fp-tr-cat .fp-th-mode {
+  white-space: normal;
 }
 
 /* --- En-tête (titre, casino, identité) — rendus en <div> au-dessus du tableau --- */
@@ -1238,10 +1263,21 @@ tbody tr:hover {
     font-size: 10px;
   }
 
-  /* Espace en haut du thead → marge effective sur chaque page imprimée
-     (notamment la page 2 où l'identité ne se répète pas) */
-  .fp-table thead .fp-tr-cat th {
-    padding-top: 5mm;
+  /* Sur les pages 2+, l'identité n'est pas répétée mais le thead l'est :
+     on supprime le padding-top du fiche-papier pour ne pas doubler la marge ;
+     le spacer du thead suffit. */
+
+  /* Row de spacer en tête du thead : se répète à chaque page et garantit
+     un espace entre le bord supérieur et l'en-tête de colonnes. */
+  .fp-tr-spacer {
+    display: table-row;
+  }
+
+  .fp-tr-spacer td {
+    height: 6mm;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
   }
 
   /* Évite qu'un saut de page laisse la ligne Totaux orpheline en haut de la
@@ -1250,6 +1286,14 @@ tbody tr:hover {
   .fp-tr-totaux td {
     page-break-before: avoid;
     break-before: avoid;
+  }
+
+  /* Garantit qu'au moins une ligne de données accompagne la ligne Totaux
+     en cas de saut de page (pas de Totaux seule en haut d'une nouvelle page). */
+  .fp-table tbody tr:nth-last-child(2),
+  .fp-table tbody tr:nth-last-child(2) td {
+    page-break-after: avoid;
+    break-after: avoid;
   }
 
   /* Empêche le bloc Nota Bene de pousser une page vide supplémentaire. */

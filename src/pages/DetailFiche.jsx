@@ -162,6 +162,9 @@ export default function DetailFiche() {
             <col style={{ width: '6.5%' }} />   {/* Caissier */}
           </colgroup>
           <thead>
+            <tr className="fp-tr-spacer" aria-hidden="true">
+              <td colSpan={16}></td>
+            </tr>
             <tr className="fp-tr-cat">
               <th rowSpan={2} className="fp-th-change">CHANGE</th>
               <th colSpan={2} className="fp-th-alerte">ALERTE SYSTEME ONLINE</th>
