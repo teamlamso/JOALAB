@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { createClient } from '../api/clients.js'
+import { createClient, matchClient, updateClient } from '../api/clients.js'
 import DateInput from '../components/DateInput.jsx'
 import AddressSearch from '../components/AddressSearch.jsx'
 import PlaceSearch from '../components/PlaceSearch.jsx'
 import CountrySearch from '../components/CountrySearch.jsx'
 import PrefectureSearch from '../components/PrefectureSearch.jsx'
+import ClientMatchDialog from '../components/ClientMatchDialog.jsx'
+import { useNotify } from '../context/NotificationContext.jsx'
 
 const TYPES_PIECE = [
   'CNIe',
@@ -43,11 +45,11 @@ export default function NouveauClient() {
   const location = useLocation()
   const returnTo = location.state?.returnTo
 
-  const [mode, setMode] = useState('identifie')
+  const notify = useNotify()
   const [form, setForm] = useState(EMPTY_IDENTIFIED)
-  const [description, setDescription] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [matches, setMatches] = useState(null) // null = pas vérifié, [] = vérifié sans candidat
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
   const setField = (field, value) => setForm((f) => ({ ...f, [field]: value }))
@@ -62,29 +64,70 @@ export default function NouveauClient() {
     }))
   }
 
+  const goToTarget = (newId) => {
+    if (returnTo === 'fiche') {
+      navigate('/fiches/identification', {
+        state: { preselectClient: { id: newId, libelle: `${form.prenom} ${form.nom}` } },
+      })
+    } else {
+      navigate(`/clients/${newId}`)
+    }
+  }
+
+  const performCreate = async () => {
+    const payload = { identifie: true, ...form }
+    const res = await createClient(payload)
+    const newId = res?.id
+    if (!newId) throw new Error('Impossible de créer le client')
+    notify('Client créé', 'success')
+    goToTarget(newId)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      let payload
-      if (mode === 'identifie') {
-        payload = { identifie: true, ...form }
-      } else {
-        payload = { identifie: false, descriptionPhysique: description }
+      const payload = { identifie: true, ...form }
+      const candidates = await matchClient(payload)
+      if (candidates && candidates.length > 0) {
+        setMatches(candidates)
+        setLoading(false)
+        return
       }
-      const res = await createClient(payload)
-      const newId = res?.id
-      if (!newId) throw new Error('Impossible de créer le client')
-      if (returnTo === 'fiche') {
-        navigate('/fiches/identification', {
-          state: { preselectClient: { id: newId, libelle: mode === 'identifie' ? `${form.prenom} ${form.nom}` : description } },
-        })
-      } else {
-        navigate(`/clients/${newId}`)
-      }
+      await performCreate()
     } catch (e) {
       setError(e.message)
+      notify(`Erreur : ${e.message}`, 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMerge = async (candidate) => {
+    setMatches(null)
+    setLoading(true)
+    try {
+      const payload = { identifie: true, ...form }
+      await updateClient(candidate.id, payload)
+      notify('Client mis à jour', 'success')
+      goToTarget(candidate.id)
+    } catch (e) {
+      setError(e.message)
+      notify(`Erreur : ${e.message}`, 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleContinueAnyway = async () => {
+    setMatches(null)
+    setLoading(true)
+    try {
+      await performCreate()
+    } catch (e) {
+      setError(e.message)
+      notify(`Erreur : ${e.message}`, 'error')
     } finally {
       setLoading(false)
     }
@@ -103,31 +146,10 @@ export default function NouveauClient() {
         </div>
       </div>
 
-      {/* Mode toggle */}
-      <div style={{ marginBottom: '20px' }}>
-        <div className="tab-switch">
-          <button
-            type="button"
-            className={`tab-switch-btn ${mode === 'identifie' ? 'active' : ''}`}
-            onClick={() => setMode('identifie')}
-          >
-            Client identifi&eacute;
-          </button>
-          <button
-            type="button"
-            className={`tab-switch-btn ${mode === 'non-identifie' ? 'active' : ''}`}
-            onClick={() => setMode('non-identifie')}
-          >
-            Client non-identifi&eacute;
-          </button>
-        </div>
-      </div>
-
       {error && <div className="alert-error">{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        {mode === 'identifie' ? (
-          <div className="form-grid-2">
+        <div className="form-grid-2">
             {/* Informations personnelles */}
             <div className="form-section">
               <div className="form-section-title">Informations personnelles :</div>
@@ -234,21 +256,6 @@ export default function NouveauClient() {
               )}
             </div>
           </div>
-        ) : (
-          <div className="form-section" style={{ maxWidth: '600px' }}>
-            <div className="form-section-title">Description physique :</div>
-            <div className="form-group">
-              <label>Description :</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex : Homme, blond, tatouage bras droit, environ 40 ans..."
-                rows={4}
-                required
-              />
-            </div>
-          </div>
-        )}
 
         <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
           <button type="submit" className="btn btn-primary" disabled={loading}>
@@ -256,6 +263,16 @@ export default function NouveauClient() {
           </button>
         </div>
       </form>
+
+      {matches && matches.length > 0 && (
+        <ClientMatchDialog
+          candidates={matches}
+          newData={form}
+          onMerge={handleMerge}
+          onContinue={handleContinueAnyway}
+          onCancel={() => setMatches(null)}
+        />
+      )}
     </div>
   )
 }

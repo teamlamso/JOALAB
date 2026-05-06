@@ -59,7 +59,7 @@ export default function DetailClient() {
           <p>Détail des informations et historique des fiches.</p>
         </div>
         <div className="page-header-actions no-print">
-          <button className="btn btn-secondary" onClick={() => navigate('/clients')}>
+          <button className="btn btn-secondary" onClick={() => navigate(-1)}>
             Retour
           </button>
           <button

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { createClient } from '../api/clients.js'
 import { createFiche } from '../api/fiches.js'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import { useNotify } from '../context/NotificationContext.jsx'
 
 const JEUX = ['MAS', 'JTE', 'JT']
 const PAIEMENTS = ['ESPECE', 'CHEQUE', 'CB']
@@ -151,7 +153,14 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
   )
 }
 
-function validateLignes(lignes) {
+function isLigneVide(l) {
+  return !l.montantRGM && !l.changeEntrant && !l.changeSortant
+    && !l.numeroSocle && !l.typeJeu && !l.typePaiement && !l.typeChange && !l.observations
+}
+
+function validateLignes(lignes, options = {}) {
+  const { allowAllEmpty = false } = options
+  if (allowAllEmpty && lignes.every(isLigneVide)) return null
   for (let i = 0; i < lignes.length; i++) {
     const l = lignes[i]
     const hasRGM = !!l.montantRGM
@@ -183,11 +192,13 @@ function validateLignes(lignes) {
 export default function AjoutFiche() {
   const navigate = useNavigate()
   const location = useLocation()
+  const notify = useNotify()
   const clientData = location.state?.clientData
 
   const [lignes, setLignes] = useState([newLigne()])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState(null)
 
   if (!clientData) {
     navigate('/fiches/identification')
@@ -197,15 +208,21 @@ export default function AjoutFiche() {
   const updateLigne = (idx, val) =>
     setLignes((ls) => ls.map((l, i) => (i === idx ? val : l)))
 
-  const removeLigne = (idx) =>
-    setLignes((ls) => ls.filter((_, i) => i !== idx))
+  const requestRemoveLigne = (idx) => setConfirmDeleteIdx(idx)
+
+  const confirmRemoveLigne = () => {
+    if (confirmDeleteIdx == null) return
+    setLignes((ls) => ls.filter((_, i) => i !== confirmDeleteIdx))
+    notify('Ligne supprimée', 'success')
+    setConfirmDeleteIdx(null)
+  }
 
   const addLigne = () => setLignes((ls) => [...ls, newLigne()])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    const validationError = validateLignes(lignes)
+    const validationError = validateLignes(lignes, { allowAllEmpty: !!clientData.ppe })
     if (validationError) {
       setError(validationError)
       return
@@ -224,24 +241,28 @@ export default function AjoutFiche() {
         if (!clientId) throw new Error('Impossible de créer le client')
       }
 
+      const lignesPayload = lignes.filter((l) => !isLigneVide(l)).map((l) => ({
+        typeJeu: l.typeJeu,
+        typePaiement: l.typePaiement,
+        typeChange: l.typeChange || null,
+        numeroSocle: l.numeroSocle || null,
+        montantRGM: l.montantRGM ? parseFloat(l.montantRGM) : null,
+        changeEntrant: l.changeEntrant ? parseFloat(l.changeEntrant) : null,
+        changeSortant: l.changeSortant ? parseFloat(l.changeSortant) : null,
+        observations: l.observations || null,
+      }))
+
       const payload = {
         clientId: Number(clientId),
-        lignes: lignes.map((l) => ({
-          typeJeu: l.typeJeu,
-          typePaiement: l.typePaiement,
-          typeChange: l.typeChange || null,
-          numeroSocle: l.numeroSocle || null,
-          montantRGM: l.montantRGM ? parseFloat(l.montantRGM) : null,
-          changeEntrant: l.changeEntrant ? parseFloat(l.changeEntrant) : null,
-          changeSortant: l.changeSortant ? parseFloat(l.changeSortant) : null,
-          observations: l.observations || null,
-        })),
+        lignes: lignesPayload,
       }
 
       await createFiche(payload)
+      notify('Fiche enregistrée', 'success')
       navigate('/accueil')
     } catch (e) {
       setError(e.message)
+      notify(`Erreur : ${e.message}`, 'error')
     } finally {
       setLoading(false)
     }
@@ -272,7 +293,7 @@ export default function AjoutFiche() {
             key={l._id}
             ligne={l}
             onChange={(val) => updateLigne(i, val)}
-            onRemove={() => removeLigne(i)}
+            onRemove={() => requestRemoveLigne(i)}
             canRemove={lignes.length > 1}
           />
         ))}
@@ -287,6 +308,16 @@ export default function AjoutFiche() {
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        open={confirmDeleteIdx !== null}
+        title="Supprimer la ligne ?"
+        message="Cette ligne sera retir\u00e9e de la fiche. \u00cates-vous s\u00fbr ?"
+        confirmLabel="Supprimer"
+        variant="danger"
+        onConfirm={confirmRemoveLigne}
+        onCancel={() => setConfirmDeleteIdx(null)}
+      />
     </div>
   )
 }

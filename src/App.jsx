@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { NotificationProvider } from './context/NotificationContext.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
 import Login from './pages/Login.jsx'
 import Accueil from './pages/Accueil.jsx'
@@ -14,6 +15,7 @@ import EditFiche from './pages/EditFiche.jsx'
 export default function App() {
   return (
     <AuthProvider>
+      <NotificationProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
@@ -30,6 +32,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </NotificationProvider>
     </AuthProvider>
   )
 }

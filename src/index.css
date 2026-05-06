@@ -1471,3 +1471,130 @@ tbody tr:hover {
   padding: 48px;
   font-size: 0.95rem;
 }
+
+/* ===================== TOAST / NOTIFICATIONS ===================== */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 380px;
+}
+
+.toast {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  padding: 12px 18px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  border-left: 4px solid #888;
+  animation: toast-in 0.2s ease;
+}
+
+.toast-success { border-left-color: #2e7d32; }
+.toast-error   { border-left-color: #c0392b; background: #fdecea; }
+.toast-info    { border-left-color: #1565c0; }
+.toast-warning { border-left-color: #e67e22; background: #fff7ee; }
+
+@keyframes toast-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* ===================== MODAL ===================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 22px 26px;
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.modal-body {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-danger {
+  background: #c0392b;
+  color: white;
+  border: 1px solid #c0392b;
+}
+
+.btn-danger:hover {
+  background: #a93226;
+}
+
+/* ===================== CLIENT MATCH MODAL ===================== */
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.match-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  background: #fafafa;
+}
+
+.match-card-name {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.match-diff-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 0.84rem;
+}
+
+.match-diff-row .match-label {
+  color: var(--text-muted);
+}
+
+.match-diff-changed .match-old {
+  color: #c0392b;
+  text-decoration: line-through;
+}
+
+.match-diff-changed .match-new {
+  color: #2e7d32;
+  font-weight: 600;
+}

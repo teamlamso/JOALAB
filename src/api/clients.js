@@ -22,3 +22,15 @@ export function updateClient(id, data) {
     body: JSON.stringify(data),
   })
 }
+
+/**
+ * Recherche les clients existants potentiellement similaires (mêmes nom+prénom
+ * +date de naissance, ou même numéro de pièce). Retourne la liste des
+ * candidats détectés (peut être vide).
+ */
+export function matchClient(data) {
+  return request('/clients/match', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}

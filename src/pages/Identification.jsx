@@ -59,7 +59,7 @@ export default function Identification() {
 
   const selectClient = (c) => {
     navigate('/fiches/nouveau', {
-      state: { clientData: { id: c.id, libelle: c.libelle, identifie: true } },
+      state: { clientData: { id: c.id, libelle: c.libelle, identifie: true, ppe: c.ppe } },
     })
   }
 
@@ -124,7 +124,10 @@ export default function Identification() {
                   results.map((c) => (
                     <div key={c.id} className="search-result-item">
                       <div className="search-result-item-info">
-                        <strong>{c.libelle}</strong>
+                        <strong>
+                          {c.libelle}
+                          {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+                        </strong>
                         {c.dateNaissance && <p>Né(e) le {formatDate(c.dateNaissance)}</p>}
                       </div>
                       <div className="search-result-item-actions">

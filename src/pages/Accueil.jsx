@@ -70,7 +70,10 @@ function FicheCard({ f, navigate, showDate, highlight }) {
   return (
     <div className={`fiche-card${highlight ? ' fiche-card-alert' : ''}`}>
       <div className="fiche-card-name" title={f.clientLibelle}>
-        <span className="fiche-card-name-text">{f.clientLibelle}</span>
+        <span className="fiche-card-name-text">
+          {f.clientLibelle}
+          {f.clientPpe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+        </span>
         {showDate && <span className="fiche-card-date">{f.date ? formatDateFr(f.date) : ''}</span>}
       </div>
       {isToday ? (
