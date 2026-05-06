@@ -953,8 +953,9 @@ tbody tr:hover {
   border: 1px solid #111;
 }
 
-/* Spacer caché en visualisation, visible uniquement à l'impression */
-.fp-tr-spacer {
+/* Spacers cachés en visualisation, visibles uniquement à l'impression */
+.fp-tr-spacer,
+.fp-tfoot-spacer {
   display: none;
 }
 
@@ -1280,6 +1281,19 @@ tbody tr:hover {
     padding: 0 !important;
   }
 
+  /* Pied de tableau spacer : tfoot se répète automatiquement en bas de chaque
+     page imprimée → garantit une marge en bas pour ne pas coller au bord. */
+  .fp-tfoot-spacer {
+    display: table-footer-group;
+  }
+
+  .fp-tfoot-spacer td {
+    height: 6mm;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
   /* Évite qu'un saut de page laisse la ligne Totaux orpheline en haut de la
      page suivante : la ligne reste collée à ses prédécesseurs. */
   .fp-tr-totaux,
@@ -1288,10 +1302,12 @@ tbody tr:hover {
     break-before: avoid;
   }
 
-  /* Garantit qu'au moins une ligne de données accompagne la ligne Totaux
-     en cas de saut de page (pas de Totaux seule en haut d'une nouvelle page). */
-  .fp-table tbody tr:nth-last-child(2),
-  .fp-table tbody tr:nth-last-child(2) td {
+  /* Garantit qu'au moins quelques lignes de données accompagnent Totaux
+     en cas de saut de page (pas de Totaux seule en haut d'une nouvelle page).
+     On applique avoid sur les 3 dernières lignes du tbody : navigateurs qui
+     respectent la directive grouperont au moins 2 lignes + Totaux ensemble. */
+  .fp-table tbody tr:nth-last-child(-n+3),
+  .fp-table tbody tr:nth-last-child(-n+3) td {
     page-break-after: avoid;
     break-after: avoid;
   }

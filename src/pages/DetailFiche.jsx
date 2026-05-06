@@ -219,6 +219,9 @@ export default function DetailFiche() {
               <td colSpan={11}></td>
             </tr>
           </tbody>
+          <tfoot className="fp-tfoot-spacer" aria-hidden="true">
+            <tr><td colSpan={16}></td></tr>
+          </tfoot>
         </table>
 
         <div className="fp-nota">
