@@ -328,9 +328,9 @@ export default function EditFiche() {
 
       <ConfirmDialog
         open={confirmDeleteIdx !== null}
-        title="Supprimer la ligne ?"
-        message="Cette ligne sera retir\u00e9e de la fiche. \u00cates-vous s\u00fbr ?"
-        confirmLabel="Supprimer"
+        title={'Supprimer la ligne ?'}
+        message={'Cette ligne sera retir\u00e9e de la fiche. \u00cates-vous s\u00fbr ?'}
+        confirmLabel={'Supprimer'}
         variant="danger"
         onConfirm={confirmRemoveLigne}
         onCancel={() => setConfirmDeleteIdx(null)}
