@@ -85,6 +85,18 @@ public class ClientService {
         return dto;
     }
 
+    /**
+     * Recherche les clients existants susceptibles d'être un doublon du client
+     * en cours de saisie (mêmes nom+prénom+date de naissance, ou même numéro
+     * de pièce). Retourne la liste des candidats sous forme de DTO détaillé.
+     */
+    public List<ClientDetailResponse> findSimilar(ClientRequest req) {
+        LocalDate dateNaissance = req.dateNaissance != null ? LocalDate.parse(req.dateNaissance, DATE_FMT) : null;
+        return clientRepository.findSimilar(req.nom, req.prenom, dateNaissance, req.numeroPiece).stream()
+                .map(c -> getClient(c.getId()))
+                .toList();
+    }
+
     /** Crée un nouveau client et retourne son identifiant. */
     public Long createClient(ClientRequest req) {
         Client c = applyRequest(new Client(), req);
@@ -133,6 +145,7 @@ public class ClientService {
         return new FicheSummaryResponse(
                 f.getId(),
                 f.getClient().getLibelle(),
+                f.getClient().isPpe(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
                 f.getTotalRGM(),

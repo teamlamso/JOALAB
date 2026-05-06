@@ -54,6 +54,18 @@ public class ClientResource {
                 .build();
     }
 
+    /**
+     * Recherche les clients déjà existants susceptibles de correspondre à un
+     * nouvel enregistrement (mêmes nom+prénom+date de naissance, ou même
+     * numéro de pièce). Utilisé par le frontend avant de créer un client pour
+     * proposer à l'utilisateur de fusionner ou modifier l'existant.
+     */
+    @POST
+    @Path("/match")
+    public Response matchClient(ClientRequest req) {
+        return Response.ok(clientService.findSimilar(req)).build();
+    }
+
     /** Met à jour un client existant. */
     @PUT
     @Path("/{id}")
