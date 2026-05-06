@@ -25,6 +25,29 @@ function Check({ on }) {
   return on ? <span className="fp-check">×</span> : null
 }
 
+/** Construit le nom de fichier proposé lors d'une impression en PDF :
+ *  NOM_PRENOM_DD.MM.YYYY (ou un libellé alternatif pour un client non identifié). */
+function buildPrintTitle(fiche) {
+  const date = fiche.date ? fiche.date.split('-').reverse().join('.') : ''
+  if (fiche.clientIdentifie) {
+    const nom = (fiche.clientNom || '').toUpperCase().replace(/\s+/g, '-')
+    const prenom = (fiche.clientPrenom || '').replace(/\s+/g, '-')
+    return `${nom}_${prenom}_${date}`
+  }
+  return `ANONYME_${date}`
+}
+
+function imprimerFiche(fiche) {
+  const previous = document.title
+  document.title = buildPrintTitle(fiche)
+  const restore = () => {
+    document.title = previous
+    window.removeEventListener('afterprint', restore)
+  }
+  window.addEventListener('afterprint', restore)
+  window.print()
+}
+
 export default function DetailFiche() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -82,7 +105,7 @@ export default function DetailFiche() {
           <button className="btn btn-secondary" onClick={() => navigate(`/fiches/${id}/modifier`)}>
             Compléter la fiche
           </button>
-          <button className="btn btn-primary" onClick={() => window.print()}>
+          <button className="btn btn-primary" onClick={() => imprimerFiche(fiche)}>
             Imprimer
           </button>
         </div>

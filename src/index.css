@@ -950,7 +950,6 @@ tbody tr:hover {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  border: 1px solid #111;
 }
 
 /* Spacers cachés en visualisation, visibles uniquement à l'impression */
@@ -973,6 +972,26 @@ tbody tr:hover {
   word-break: keep-all;
   hyphens: none;
   line-height: 1.15;
+}
+
+/* Force la bordure inférieure sur chaque ligne du tbody : avec border-collapse,
+   certains navigateurs n'affichent pas la bordure de la dernière ligne d'une
+   page imprimée — la déclarer explicitement la rend toujours dessinable. */
+.fp-table tbody td {
+  border-bottom: 1px solid #111;
+}
+
+.fp-table tbody tr:first-child td {
+  border-top: 1px solid #111;
+}
+
+/* Garantit aussi le bord vertical externe sur chaque rangée tbody. */
+.fp-table tbody td:first-child {
+  border-left: 1px solid #111;
+}
+
+.fp-table tbody td:last-child {
+  border-right: 1px solid #111;
 }
 
 /* Les sous-en-têtes (Montant, MAS, Espèces, ...) doivent tenir sur 1 ligne */
