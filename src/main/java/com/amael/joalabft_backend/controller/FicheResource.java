@@ -10,9 +10,10 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Ressource JAX-RS pour la gestion des fiches LAB-FT.
@@ -61,14 +62,14 @@ public class FicheResource {
     }
 
     /**
-     * Crée une nouvelle fiche pour l'utilisateur connecté.
-     * Retourne 201 Created avec l'URI de la nouvelle fiche.
+     * Crée une ou plusieurs fiches pour l'utilisateur connecté (1 fiche par type de jeu
+     * présent dans la requête). Retourne 201 Created avec la liste des identifiants créés.
      */
     @POST
     public Response createFiche(FicheRequest req, @Context ContainerRequestContext ctx) {
         Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
-        Long id = ficheService.createFiche(req, utilisateur);
-        return Response.created(URI.create("/api/fiches/" + id)).build();
+        List<Long> ids = ficheService.createFiche(req, utilisateur);
+        return Response.status(Response.Status.CREATED).entity(Map.of("ids", ids)).build();
     }
 
     /**
