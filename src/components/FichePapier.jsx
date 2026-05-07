@@ -26,13 +26,25 @@ function Check({ on }) {
  * Rendu de la fiche LAB-FT au format papier officiel.
  * Utilisé à la fois dans DetailFiche (consultation/impression unique)
  * et dans ImprimerFiches (impression groupée de plusieurs fiches).
+ *
+ * Si {@code typeFiltre} est fourni, seules les lignes de ce type sont affichées
+ * et les totaux sont recalculés en conséquence (utilisé pour rendre une sous-fiche
+ * par type de jeu présent).
  */
-export default function FichePapier({ fiche, pageBreakBefore = false }) {
-  const lignes = fiche.lignes ?? []
+export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre = null }) {
+  const toutesLignes = fiche.lignes ?? []
+  const lignes = typeFiltre
+    ? toutesLignes.filter((l) => l.typeJeu === typeFiltre)
+    : toutesLignes
   const lignesAffichees = [...lignes]
   while (lignesAffichees.length < NB_LIGNES_MIN) lignesAffichees.push(null)
 
-  const totalEntrantPlusRGM = (Number(fiche.totalRGM) || 0) + (Number(fiche.totalEntrant) || 0)
+  // Si filtré, on recalcule les totaux à partir des lignes filtrées.
+  const sommer = (champ) => lignes.reduce((s, l) => s + (Number(l[champ]) || 0), 0)
+  const totalRGM      = typeFiltre ? sommer('montantRGM')    : (Number(fiche.totalRGM)     || 0)
+  const totalEntrant  = typeFiltre ? sommer('changeEntrant') : (Number(fiche.totalEntrant) || 0)
+  const totalSortant  = typeFiltre ? sommer('changeSortant') : (Number(fiche.totalSortant) || 0)
+  const totalEntrantPlusRGM = totalRGM + totalEntrant
 
   const adresseLignes = [
     fiche.clientRue,
@@ -176,7 +188,7 @@ export default function FichePapier({ fiche, pageBreakBefore = false }) {
             <td className="fp-td-change"><strong>Totaux</strong></td>
             <td colSpan={2}></td>
             <td className="fp-td-num"><strong>{formatEur(totalEntrantPlusRGM)}</strong></td>
-            <td className="fp-td-num"><strong>{formatEur(fiche.totalSortant)}</strong></td>
+            <td className="fp-td-num"><strong>{formatEur(totalSortant)}</strong></td>
             <td colSpan={11}></td>
           </tr>
         </tbody>

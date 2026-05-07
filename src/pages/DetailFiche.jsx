@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
-import FichePapier from '../components/FichePapier.jsx'
+import FichePapierMulti from '../components/FichePapierMulti.jsx'
 
 function formatDateFr(str) {
   if (!str) return ''
@@ -76,7 +76,7 @@ export default function DetailFiche() {
         </div>
       </div>
 
-      <FichePapier fiche={fiche} />
+      <FichePapierMulti fiche={fiche} />
     </div>
   )
 }

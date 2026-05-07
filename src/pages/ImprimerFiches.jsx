@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
-import FichePapier from '../components/FichePapier.jsx'
+import FichePapierMulti from '../components/FichePapierMulti.jsx'
 
 /** Page d'impression groupée. Reçoit `?ids=1,2,3`, charge toutes les fiches
  *  et déclenche l'impression dès que le rendu est prêt. */
@@ -70,7 +70,7 @@ export default function ImprimerFiches() {
       </div>
 
       {fiches.map((f, i) => (
-        <FichePapier key={f.id} fiche={f} pageBreakBefore={i > 0} />
+        <FichePapierMulti key={f.id} fiche={f} pageBreakBefore={i > 0} />
       ))}
     </div>
   )

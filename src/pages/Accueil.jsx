@@ -63,14 +63,20 @@ function isOver2000(f) {
   return (Number(f.totalEntrant) || 0) >= 2000 || (Number(f.totalSortant) || 0) >= 2000
 }
 
-function BadgeJeu({ type }) {
-  if (!type) return null
-  const cls = type === 'MAS' ? 'badge-jeu-mas'
-            : type === 'JTE' ? 'badge-jeu-jte'
-            : type === 'JT'  ? 'badge-jeu-jt'
-            : ''
-  const label = type === 'JT' ? 'JT' : type
-  return <span className={`badge-jeu ${cls}`}>{label}</span>
+// Affiche dans un ordre fixe (MAS → JTE → JT) un badge par type présent.
+function BadgesJeu({ types }) {
+  if (!types || types.length === 0) return null
+  const ordre = ['MAS', 'JTE', 'JT']
+  return (
+    <>
+      {ordre.filter((t) => types.includes(t)).map((t) => {
+        const cls = t === 'MAS' ? 'badge-jeu-mas'
+                  : t === 'JTE' ? 'badge-jeu-jte'
+                  : 'badge-jeu-jt'
+        return <span key={t} className={`badge-jeu ${cls}`}>{t}</span>
+      })}
+    </>
+  )
 }
 
 function FicheCard({ f, navigate, showDate, highlight }) {
@@ -83,7 +89,7 @@ function FicheCard({ f, navigate, showDate, highlight }) {
       <div className="fiche-card-name" title={f.clientLibelle}>
         <span className="fiche-card-name-text">
           {f.clientLibelle}
-          <BadgeJeu type={f.typeJeu} />
+          <BadgesJeu types={f.typesJeu} />
           {f.clientPpe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
         </span>
         {showDate && <span className="fiche-card-date">{f.date ? formatDateFr(f.date) : ''}</span>}

@@ -965,6 +965,11 @@ tbody tr:hover {
   print-color-adjust: exact;
 }
 
+/* Espace vertical entre sous-fiches d'une même fiche (visu écran). */
+.fiche-papier + .fiche-papier {
+  margin-top: 24px;
+}
+
 .fp-table {
   width: 100%;
   border-collapse: collapse;
