@@ -9,8 +9,9 @@ const ORDRE_TYPES = ['MAS', 'JTE', 'JT']
  * par type (dans l'ordre MAS → JTE → JT). Si la fiche n'a aucune ligne avec
  * type de jeu (cas d'une fiche vide pour client PPE), on rend une seule fiche.
  *
- * <p>{@code pageBreakBefore} ne s'applique qu'à la première sous-fiche : entre
- * sous-fiches d'une même fiche en BDD on laisse le flux vertical naturel.
+ * <p>Chaque sous-fiche démarre sur une nouvelle page à l'impression pour ne pas
+ * être coupée. {@code pageBreakBefore} contrôle uniquement le saut avant la
+ * toute première sous-fiche (utile entre fiches en BDD distinctes — déjà géré).
  */
 export default function FichePapierMulti({ fiche, pageBreakBefore = false }) {
   const lignes = fiche.lignes ?? []
@@ -27,7 +28,7 @@ export default function FichePapierMulti({ fiche, pageBreakBefore = false }) {
           key={t}
           fiche={fiche}
           typeFiltre={t}
-          pageBreakBefore={i === 0 ? pageBreakBefore : false}
+          pageBreakBefore={i === 0 ? pageBreakBefore : true}
         />
       ))}
     </>

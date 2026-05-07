@@ -88,7 +88,7 @@ function FicheCard({ f, navigate, showDate, highlight }) {
     <div className={`fiche-card${highlight ? ' fiche-card-alert' : ''}`}>
       <div className="fiche-card-name" title={f.clientLibelle}>
         <span className="fiche-card-name-text">
-          {f.clientLibelle}
+          <span className="fiche-card-libelle">{f.clientLibelle}</span>
           <BadgesJeu types={f.typesJeu} />
           {f.clientPpe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
         </span>
@@ -147,7 +147,7 @@ function ClientCard({ c, navigate }) {
     <div className="fiche-card client-card-search" onClick={() => navigate(`/clients/${c.id}`)} style={{ cursor: 'pointer' }}>
       <div className="fiche-card-name" title={c.libelle}>
         <span className="fiche-card-name-text">
-          {c.libelle}
+          <span className="fiche-card-libelle">{c.libelle}</span>
           {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
         </span>
       </div>

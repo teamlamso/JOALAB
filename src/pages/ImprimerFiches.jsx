@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
 import FichePapierMulti from '../components/FichePapierMulti.jsx'
 
-/** Page d'impression groupée. Reçoit `?ids=1,2,3`, charge toutes les fiches
- *  et déclenche l'impression dès que le rendu est prêt. */
+/** Page de prévisualisation puis impression groupée. Reçoit `?ids=1,2,3`,
+ *  charge toutes les fiches et les affiche à la suite. L'utilisateur lance
+ *  l'impression manuellement via le bouton dédié. */
 export default function ImprimerFiches() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -14,7 +15,6 @@ export default function ImprimerFiches() {
   const [fiches, setFiches] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const printedRef = useRef(false)
 
   useEffect(() => {
     if (ids.length === 0) {
@@ -27,21 +27,16 @@ export default function ImprimerFiches() {
       .finally(() => setLoading(false))
   }, [idsParam])
 
-  // Lance l'impression une fois tout chargé (une seule fois).
-  useEffect(() => {
-    if (!loading && fiches.length > 0 && !printedRef.current) {
-      printedRef.current = true
-      const previous = document.title
-      document.title = `Fiches_${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}`
-      const restore = () => {
-        document.title = previous
-        window.removeEventListener('afterprint', restore)
-      }
-      window.addEventListener('afterprint', restore)
-      // Petite tempo pour laisser le navigateur peindre toutes les fiches
-      setTimeout(() => window.print(), 200)
+  const lancerImpression = () => {
+    const previous = document.title
+    document.title = `Fiches_${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}`
+    const restore = () => {
+      document.title = previous
+      window.removeEventListener('afterprint', restore)
     }
-  }, [loading, fiches])
+    window.addEventListener('afterprint', restore)
+    window.print()
+  }
 
   if (loading) return <div className="loading">Chargement…</div>
   if (error) return <div className="page"><div className="alert-error">{error}</div></div>
@@ -57,14 +52,14 @@ export default function ImprimerFiches() {
     <div className="page imprimer-fiches">
       <div className="page-header no-print">
         <div className="page-header-left">
-          <h1>{`Impression de ${fiches.length} fiche${fiches.length > 1 ? 's' : ''}`}</h1>
+          <h1>{`Aperçu avant impression — ${fiches.length} fiche${fiches.length > 1 ? 's' : ''}`}</h1>
         </div>
         <div className="page-header-actions">
           <button className="btn btn-secondary" onClick={() => navigate('/accueil')}>
             Retour
           </button>
-          <button className="btn btn-primary" onClick={() => window.print()}>
-            Relancer l'impression
+          <button className="btn btn-primary" onClick={lancerImpression}>
+            Imprimer
           </button>
         </div>
       </div>
