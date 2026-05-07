@@ -74,6 +74,9 @@ export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre
         <span><strong>CASINO</strong> SLGV</span>
         <span className="fp-casino-right">
           <strong>Date :</strong> {formatDateFr(fiche.date)}
+          {typeFiltre && (
+            <span className={`fp-badge-jeu fp-badge-jeu-${typeFiltre.toLowerCase()}`}>{typeFiltre}</span>
+          )}
           {fiche.clientPpe && <span className="fp-ppe">PPE</span>}
         </span>
       </div>

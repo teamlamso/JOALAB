@@ -285,7 +285,7 @@ export default function Accueil() {
                     navigate(`/fiches/imprimer?ids=${ids}`)
                   }}
                 >
-                  Imprimer toutes
+                  Visualiser toutes les fiches de la veille
                 </button>
               </div>
 

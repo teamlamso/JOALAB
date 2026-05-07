@@ -1147,18 +1147,22 @@ tbody tr:hover {
   color: #888;
 }
 
-.fp-ppe {
+.fp-ppe,
+.fp-badge-jeu {
   display: inline-block;
-  background: #c0392b;
   color: white;
   font-size: 9px;
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 3px;
-  margin-left: 6px;
   letter-spacing: 0.5px;
   vertical-align: middle;
 }
+
+.fp-ppe         { background: #e67e22; }
+.fp-badge-jeu-mas { background: #5dade2; }
+.fp-badge-jeu-jte { background: #c0392b; }
+.fp-badge-jeu-jt  { background: #27ae60; }
 
 /* --- En-tête colonnes du tableau --- */
 .fp-tr-cat th,
@@ -1439,6 +1443,7 @@ tbody tr:hover {
   .fp-tr-cat th,
   .fp-tr-sub th,
   .fp-ppe,
+  .fp-badge-jeu,
   .fp-tr-totaux td {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
