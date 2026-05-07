@@ -257,8 +257,12 @@ export default function AjoutFiche() {
         lignes: lignesPayload,
       }
 
-      await createFiche(payload)
-      notify('Fiche enregistrée', 'success')
+      const result = await createFiche(payload)
+      const nbFiches = Array.isArray(result?.ids) ? result.ids.length : 1
+      const msg = nbFiches > 1
+        ? `${nbFiches} fiches enregistrées (une par type de jeu)`
+        : 'Fiche enregistrée'
+      notify(msg, 'success')
       navigate('/accueil')
     } catch (e) {
       setError(e.message)

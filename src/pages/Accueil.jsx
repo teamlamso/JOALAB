@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listFiches } from '../api/fiches.js'
+import { listClients } from '../api/clients.js'
 import DatePickerInput from '../components/DatePickerInput.jsx'
 
 /** Journée de travail courante (06h00→05h59 le lendemain). */
@@ -62,6 +63,16 @@ function isOver2000(f) {
   return (Number(f.totalEntrant) || 0) >= 2000 || (Number(f.totalSortant) || 0) >= 2000
 }
 
+function BadgeJeu({ type }) {
+  if (!type) return null
+  const cls = type === 'MAS' ? 'badge-jeu-mas'
+            : type === 'JTE' ? 'badge-jeu-jte'
+            : type === 'JT'  ? 'badge-jeu-jt'
+            : ''
+  const label = type === 'JT' ? 'JT' : type
+  return <span className={`badge-jeu ${cls}`}>{label}</span>
+}
+
 function FicheCard({ f, navigate, showDate, highlight }) {
   const jour = workDay()
   const isToday = f.date === jour
@@ -72,6 +83,7 @@ function FicheCard({ f, navigate, showDate, highlight }) {
       <div className="fiche-card-name" title={f.clientLibelle}>
         <span className="fiche-card-name-text">
           {f.clientLibelle}
+          <BadgeJeu type={f.typeJeu} />
           {f.clientPpe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
         </span>
         {showDate && <span className="fiche-card-date">{f.date ? formatDateFr(f.date) : ''}</span>}
@@ -124,12 +136,44 @@ function formatDateFr(iso) {
   }
 }
 
+function ClientCard({ c, navigate }) {
+  return (
+    <div className="fiche-card client-card-search" onClick={() => navigate(`/clients/${c.id}`)} style={{ cursor: 'pointer' }}>
+      <div className="fiche-card-name" title={c.libelle}>
+        <span className="fiche-card-name-text">
+          {c.libelle}
+          {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+        </span>
+      </div>
+      {c.dateNaissance && (
+        <div className="fiche-card-row">
+          <span>Né(e) le :</span>
+          <span>{formatDateFr(c.dateNaissance)}</span>
+        </div>
+      )}
+      {(c.ville || c.pays) && (
+        <div className="fiche-card-row">
+          <span>Localité :</span>
+          <span>{[c.ville, c.pays].filter(Boolean).join(', ')}</span>
+        </div>
+      )}
+      {c.derniereActivite && (
+        <div className="fiche-card-row">
+          <span>Dernière activité :</span>
+          <span>{formatDateFr(c.derniereActivite)}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Accueil() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [dateDebut, setDateDebut] = useState(workDayYesterday())
   const [dateFin, setDateFin] = useState(workDay())
   const [fiches, setFiches] = useState([])
+  const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -137,8 +181,11 @@ export default function Accueil() {
     setLoading(true)
     setError('')
     try {
-      const data = await listFiches({ dateDebut, dateFin, search })
-      setFiches(data)
+      const fichesPromise = listFiches({ dateDebut, dateFin, search })
+      const clientsPromise = search.trim() ? listClients(search) : Promise.resolve([])
+      const [fichesData, clientsData] = await Promise.all([fichesPromise, clientsPromise])
+      setFiches(fichesData)
+      setClients(clientsData)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -197,8 +244,10 @@ export default function Accueil() {
 
       {loading ? (
         <div className="loading">Chargement…</div>
-      ) : fiches.length === 0 ? (
-        <div className="empty-state">Aucune fiche pour cette période.</div>
+      ) : fiches.length === 0 && clients.length === 0 ? (
+        <div className="empty-state">
+          {search.trim() ? 'Aucune fiche ni client correspondant.' : 'Aucune fiche pour cette période.'}
+        </div>
       ) : (
         <>
           {/* ── Fiches du jour ── */}
@@ -218,9 +267,21 @@ export default function Accueil() {
           {/* ── Fiches de la veille / antérieures ── */}
           {fichesVeille.length > 0 && (
             <div className="fiches-section">
-              <h3 className="fiches-section-title">
-                {"Fiches de la veille (" + fichesVeille.length + ")"}
-              </h3>
+              <div className="fiches-section-title-row">
+                <h3 className="fiches-section-title">
+                  {"Fiches de la veille (" + fichesVeille.length + ")"}
+                </h3>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    const ids = fichesVeille.map((f) => f.id).join(',')
+                    navigate(`/fiches/imprimer?ids=${ids}`)
+                  }}
+                >
+                  Imprimer toutes
+                </button>
+              </div>
 
               {/* > 2000€ en haut */}
               {veilleOver.length > 0 && (
@@ -251,6 +312,20 @@ export default function Accueil() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* ── Clients correspondants à la recherche ── */}
+          {search.trim() && clients.length > 0 && (
+            <div className="fiches-section">
+              <h3 className="fiches-section-title">
+                {"Clients correspondants (" + clients.length + ")"}
+              </h3>
+              <div className="fiches-grid">
+                {clients.map((c) => (
+                  <ClientCard key={c.id} c={c} navigate={navigate} />
+                ))}
+              </div>
             </div>
           )}
         </>

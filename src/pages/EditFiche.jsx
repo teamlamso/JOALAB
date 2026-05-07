@@ -95,7 +95,7 @@ function formatOnBlur(val) {
   return n.toFixed(2)
 }
 
-function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
+function LigneEditor({ ligne, onChange, onRemove, canRemove, typeJeuFige }) {
   const set = (field) => (e) => onChange({ ...ligne, [field]: e.target.value })
   const setMoney = (field) => (e) => {
     const filtered = filterMoney(e.target.value)
@@ -112,7 +112,11 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
   const rgmWarnings = validateRGM(ligne.montantRGM)
 
   // Exclusion mutuelle : RGM ↔ JT
-  const disabledJeux = hasRGM ? ['JT'] : []
+  // Si la fiche a déjà un type de jeu fixé, on n'autorise que celui-là.
+  let disabledJeux = hasRGM ? ['JT'] : []
+  if (typeJeuFige) {
+    disabledJeux = JEUX.filter((j) => j !== typeJeuFige)
+  }
   const rgmDisabled = isJT
   const socleDisabled = isJT
 
@@ -245,7 +249,14 @@ export default function EditFiche() {
     setConfirmDeleteIdx(null)
   }
 
-  const addLigne = () => setLignes((ls) => [...ls, newLigne()])
+  // Type de jeu existant de la fiche : toutes les nouvelles lignes doivent partager ce type.
+  const typeJeuFige = lignes.map((l) => l.typeJeu).find((t) => !!t) || null
+
+  const addLigne = () => setLignes((ls) => {
+    const base = newLigne()
+    if (typeJeuFige) base.typeJeu = typeJeuFige
+    return [...ls, base]
+  })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -312,6 +323,7 @@ export default function EditFiche() {
             onChange={(val) => updateLigne(i, val)}
             onRemove={() => requestRemoveLigne(i)}
             canRemove={lignes.length > 1}
+            typeJeuFige={typeJeuFige}
           />
         ))}
 

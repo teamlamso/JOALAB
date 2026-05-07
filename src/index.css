@@ -696,6 +696,26 @@ tbody tr:hover {
   border-bottom: 1px solid var(--border);
 }
 
+.fiches-section-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.fiches-section-title-row .fiches-section-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.fiches-section-title-row .btn {
+  margin-bottom: 2px;
+}
+
 .fiches-section-title-alert {
   color: #b33a00;
 }
@@ -1214,18 +1234,23 @@ tbody tr:hover {
   cursor: pointer;
 }
 
-.badge-ppe {
+.badge-ppe,
+.badge-jeu {
   display: inline-block;
-  background: #c0392b;
   color: white;
   font-size: 0.7rem;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 3px;
-  margin-left: 10px;
+  margin-left: 6px;
   letter-spacing: 0.5px;
   vertical-align: middle;
 }
+
+.badge-ppe { background: #e67e22; }
+.badge-jeu-mas { background: #5dade2; }
+.badge-jeu-jte { background: #c0392b; }
+.badge-jeu-jt  { background: #27ae60; }
 
 /* ===================== DETAIL CLIENT ===================== */
 .client-info-card {
@@ -1288,6 +1313,12 @@ tbody tr:hover {
     border: none;
     padding: 6mm 8mm 0 8mm;
     font-size: 10px;
+  }
+
+  /* Saut de page entre deux fiches imprimées en lot. */
+  .fiche-papier-page-break {
+    page-break-before: always;
+    break-before: page;
   }
 
   /* Sur les pages 2+, l'identité n'est pas répétée mais le thead l'est :

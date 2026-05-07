@@ -11,6 +11,7 @@ import Identification from './pages/Identification.jsx'
 import AjoutFiche from './pages/AjoutFiche.jsx'
 import DetailFiche from './pages/DetailFiche.jsx'
 import EditFiche from './pages/EditFiche.jsx'
+import ImprimerFiches from './pages/ImprimerFiches.jsx'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/clients/:id" element={<DetailClient />} />
             <Route path="/fiches/identification" element={<Identification />} />
             <Route path="/fiches/nouveau" element={<AjoutFiche />} />
+            <Route path="/fiches/imprimer" element={<ImprimerFiches />} />
             <Route path="/fiches/:id" element={<DetailFiche />} />
             <Route path="/fiches/:id/modifier" element={<EditFiche />} />
           </Route>
