@@ -22,11 +22,11 @@ import jakarta.ws.rs.NotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Logique métier des fiches LAB-FT.
@@ -68,51 +68,31 @@ public class FicheService {
     }
 
     /**
-     * Crée une ou plusieurs fiches selon les types de jeu présents dans la requête :
-     * une fiche est créée par type (MAS / JTE / JT). Les lignes sans type de jeu
-     * (cas d'une fiche vide pour client PPE) sont placées sur une unique fiche.
+     * Crée une nouvelle fiche regroupant toutes les lignes (multi-types autorisé).
      *
      * @throws NotFoundException si le client référencé n'existe pas
-     * @return la liste des identifiants des fiches créées (1 ou plus)
      */
-    public List<Long> createFiche(FicheRequest req, Utilisateur creePar) {
+    public Long createFiche(FicheRequest req, Utilisateur creePar) {
         Client client = clientRepository.findById(req.clientId)
                 .orElseThrow(() -> new NotFoundException("Client introuvable : " + req.clientId));
 
-        // Cas spécial : aucune ligne (fiche vide pour client PPE)
-        if (req.lignes == null || req.lignes.isEmpty()) {
-            FicheLABFT fiche = new FicheLABFT();
-            fiche.setClient(client);
-            fiche.setCreePar(creePar);
-            ficheRepository.save(fiche);
-            return List.of(fiche.getId());
+        FicheLABFT fiche = new FicheLABFT();
+        fiche.setClient(client);
+        fiche.setCreePar(creePar);
+
+        if (req.lignes != null) {
+            req.lignes.forEach(l -> fiche.addLigne(buildLigne(l, creePar)));
         }
 
-        // Groupement des lignes par type de jeu (préserve l'ordre d'apparition)
-        Map<String, List<LigneTransactionRequest>> parType = new LinkedHashMap<>();
-        for (LigneTransactionRequest l : req.lignes) {
-            String key = l.typeJeu != null ? l.typeJeu : "_AUTRES_";
-            parType.computeIfAbsent(key, k -> new ArrayList<>()).add(l);
-        }
-
-        List<Long> ids = new ArrayList<>();
-        for (List<LigneTransactionRequest> lignesGroupe : parType.values()) {
-            FicheLABFT fiche = new FicheLABFT();
-            fiche.setClient(client);
-            fiche.setCreePar(creePar);
-            lignesGroupe.forEach(l -> fiche.addLigne(buildLigne(l, creePar)));
-            ficheRepository.save(fiche);
-            ids.add(fiche.getId());
-        }
-        return ids;
+        ficheRepository.save(fiche);
+        return fiche.getId();
     }
 
     /**
-     * Met à jour les lignes d'une fiche existante. Toutes les lignes doivent partager
-     * le même type de jeu que la fiche existante (invariant 1 fiche = 1 type de jeu).
+     * Met à jour les lignes d'une fiche existante. Plusieurs types de jeu sont autorisés
+     * sur la même fiche (l'affichage et l'impression séparent visuellement les blocs).
      *
-     * @throws NotFoundException   si la fiche n'existe pas
-     * @throws BadRequestException si une ligne a un type de jeu différent de celui de la fiche
+     * @throws NotFoundException si la fiche n'existe pas
      */
     public void updateFiche(Long id, FicheRequest req, Utilisateur modifiePar) {
         FicheLABFT fiche = ficheRepository.findById(id)
@@ -122,19 +102,6 @@ public class FicheService {
         fiche.setDateModification(LocalDateTime.now());
 
         if (req.lignes != null) {
-            // Invariant : 1 fiche = 1 type de jeu. Vérifie la cohérence du request.
-            String typeFiche = fiche.getLignes().stream()
-                    .map(LigneTransaction::getTypeJeu)
-                    .filter(t -> t != null)
-                    .findFirst()
-                    .map(Enum::name)
-                    .orElse(null);
-            for (LigneTransactionRequest reqLigne : req.lignes) {
-                if (reqLigne.typeJeu != null && typeFiche != null && !reqLigne.typeJeu.equals(typeFiche)) {
-                    throw new BadRequestException("Toutes les lignes d'une fiche doivent avoir le même type de jeu (" + typeFiche + ").");
-                }
-            }
-
             // Pour préserver le caissier d'origine des lignes existantes,
             // on capture l'association (id ligne → caissier) avant remplacement.
             Map<Long, Utilisateur> caissiersOrigine = new HashMap<>();
@@ -182,12 +149,12 @@ public class FicheService {
                 ? f.getDateModification()
                 : f.getDateCreation();
         String modif = derniere != null ? derniere.format(TIME_FMT) : null;
-        String typeJeu = f.getLignes().stream()
-                .map(LigneTransaction::getTypeJeu)
-                .filter(t -> t != null)
-                .findFirst()
-                .map(Enum::name)
-                .orElse(null);
+        // Set conserve l'ordre d'apparition (LinkedHashSet) — utile pour
+        // afficher les badges dans l'ordre de saisie sur l'accueil.
+        Set<String> typesJeu = new LinkedHashSet<>();
+        f.getLignes().forEach(l -> {
+            if (l.getTypeJeu() != null) typesJeu.add(l.getTypeJeu().name());
+        });
         return new FicheSummaryResponse(
                 f.getId(),
                 f.getClient().getLibelle(),
@@ -195,7 +162,7 @@ public class FicheService {
                 f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
-                typeJeu,
+                List.copyOf(typesJeu),
                 f.getTotalRGM(),
                 f.getTotalChangeEntrant(),
                 f.getTotalChangeSortant(),
@@ -231,13 +198,6 @@ public class FicheService {
         dto.clientPrefecture        = c.getPrefectureDelivrance();
         dto.clientPaysDelivrance    = c.getPaysDelivrance();
         dto.clientDescriptionPhysique = c.getDescriptionPhysique();
-
-        dto.typeJeu                 = f.getLignes().stream()
-                                          .map(LigneTransaction::getTypeJeu)
-                                          .filter(t -> t != null)
-                                          .findFirst()
-                                          .map(Enum::name)
-                                          .orElse(null);
 
         dto.totalRGM                = f.getTotalRGM();
         dto.totalEntrant            = f.getTotalChangeEntrant();

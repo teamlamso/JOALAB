@@ -142,12 +142,10 @@ public class ClientService {
         String derniereModif = f.getDateModification() != null
                 ? f.getDateModification().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
                 : null;
-        String typeJeu = f.getLignes().stream()
-                .map(com.amael.joalabft_backend.model.entity.LigneTransaction::getTypeJeu)
-                .filter(t -> t != null)
-                .findFirst()
-                .map(Enum::name)
-                .orElse(null);
+        java.util.Set<String> typesJeu = new java.util.LinkedHashSet<>();
+        f.getLignes().forEach(l -> {
+            if (l.getTypeJeu() != null) typesJeu.add(l.getTypeJeu().name());
+        });
         return new FicheSummaryResponse(
                 f.getId(),
                 f.getClient().getLibelle(),
@@ -155,7 +153,7 @@ public class ClientService {
                 f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
-                typeJeu,
+                java.util.List.copyOf(typesJeu),
                 f.getTotalRGM(),
                 f.getTotalChangeEntrant(),
                 f.getTotalChangeSortant(),
