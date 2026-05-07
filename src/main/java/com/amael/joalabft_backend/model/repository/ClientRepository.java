@@ -22,7 +22,10 @@ public class ClientRepository {
 
     /**
      * Retourne tous les clients identifiés, triés par nom puis prénom.
-     * Si {@code search} est fourni, filtre sur nom, prénom ou description physique.
+     * Si {@code search} est fourni, le terme est découpé en mots (séparés par des espaces) ;
+     * chaque mot doit matcher au moins l'un des champs nom, prénom ou description physique
+     * (combinaison AND entre mots, OR entre champs). Cela permet de retrouver "Alexis Duchat"
+     * ou "Duchat Alexis" indifféremment.
      */
     public List<Client> findAll(String search) {
         if (search == null || search.isBlank()) {
@@ -31,14 +34,21 @@ public class ClientRepository {
                     Client.class
             ).getResultList();
         }
-        String param = "%" + search.toLowerCase() + "%";
-        return em.createQuery(
-                "SELECT c FROM Client c WHERE " +
-                "LOWER(c.nom) LIKE :p OR LOWER(c.prenom) LIKE :p " +
-                "OR LOWER(c.descriptionPhysique) LIKE :p " +
-                "ORDER BY c.nom ASC, c.prenom ASC",
-                Client.class
-        ).setParameter("p", param).getResultList();
+        String[] tokens = search.trim().toLowerCase().split("\\s+");
+        StringBuilder jpql = new StringBuilder("SELECT c FROM Client c WHERE ");
+        for (int i = 0; i < tokens.length; i++) {
+            if (i > 0) jpql.append(" AND ");
+            jpql.append("(LOWER(c.nom) LIKE :p").append(i)
+                .append(" OR LOWER(c.prenom) LIKE :p").append(i)
+                .append(" OR LOWER(c.descriptionPhysique) LIKE :p").append(i)
+                .append(")");
+        }
+        jpql.append(" ORDER BY c.nom ASC, c.prenom ASC");
+        TypedQuery<Client> q = em.createQuery(jpql.toString(), Client.class);
+        for (int i = 0; i < tokens.length; i++) {
+            q.setParameter("p" + i, "%" + tokens[i] + "%");
+        }
+        return q.getResultList();
     }
 
     /** Retourne le client par son identifiant, ou {@link Optional#empty()} s'il n'existe pas. */

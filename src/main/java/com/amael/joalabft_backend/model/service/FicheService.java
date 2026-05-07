@@ -22,7 +22,9 @@ import jakarta.ws.rs.NotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,30 +68,51 @@ public class FicheService {
     }
 
     /**
-     * Crée une nouvelle fiche et retourne son identifiant.
+     * Crée une ou plusieurs fiches selon les types de jeu présents dans la requête :
+     * une fiche est créée par type (MAS / JTE / JT). Les lignes sans type de jeu
+     * (cas d'une fiche vide pour client PPE) sont placées sur une unique fiche.
      *
      * @throws NotFoundException si le client référencé n'existe pas
+     * @return la liste des identifiants des fiches créées (1 ou plus)
      */
-    public Long createFiche(FicheRequest req, Utilisateur creePar) {
+    public List<Long> createFiche(FicheRequest req, Utilisateur creePar) {
         Client client = clientRepository.findById(req.clientId)
                 .orElseThrow(() -> new NotFoundException("Client introuvable : " + req.clientId));
 
-        FicheLABFT fiche = new FicheLABFT();
-        fiche.setClient(client);
-        fiche.setCreePar(creePar);
-
-        if (req.lignes != null) {
-            req.lignes.forEach(l -> fiche.addLigne(buildLigne(l, creePar)));
+        // Cas spécial : aucune ligne (fiche vide pour client PPE)
+        if (req.lignes == null || req.lignes.isEmpty()) {
+            FicheLABFT fiche = new FicheLABFT();
+            fiche.setClient(client);
+            fiche.setCreePar(creePar);
+            ficheRepository.save(fiche);
+            return List.of(fiche.getId());
         }
 
-        ficheRepository.save(fiche);
-        return fiche.getId();
+        // Groupement des lignes par type de jeu (préserve l'ordre d'apparition)
+        Map<String, List<LigneTransactionRequest>> parType = new LinkedHashMap<>();
+        for (LigneTransactionRequest l : req.lignes) {
+            String key = l.typeJeu != null ? l.typeJeu : "_AUTRES_";
+            parType.computeIfAbsent(key, k -> new ArrayList<>()).add(l);
+        }
+
+        List<Long> ids = new ArrayList<>();
+        for (List<LigneTransactionRequest> lignesGroupe : parType.values()) {
+            FicheLABFT fiche = new FicheLABFT();
+            fiche.setClient(client);
+            fiche.setCreePar(creePar);
+            lignesGroupe.forEach(l -> fiche.addLigne(buildLigne(l, creePar)));
+            ficheRepository.save(fiche);
+            ids.add(fiche.getId());
+        }
+        return ids;
     }
 
     /**
-     * Met à jour les lignes d'une fiche existante.
+     * Met à jour les lignes d'une fiche existante. Toutes les lignes doivent partager
+     * le même type de jeu que la fiche existante (invariant 1 fiche = 1 type de jeu).
      *
-     * @throws NotFoundException si la fiche n'existe pas
+     * @throws NotFoundException   si la fiche n'existe pas
+     * @throws BadRequestException si une ligne a un type de jeu différent de celui de la fiche
      */
     public void updateFiche(Long id, FicheRequest req, Utilisateur modifiePar) {
         FicheLABFT fiche = ficheRepository.findById(id)
@@ -99,6 +122,19 @@ public class FicheService {
         fiche.setDateModification(LocalDateTime.now());
 
         if (req.lignes != null) {
+            // Invariant : 1 fiche = 1 type de jeu. Vérifie la cohérence du request.
+            String typeFiche = fiche.getLignes().stream()
+                    .map(LigneTransaction::getTypeJeu)
+                    .filter(t -> t != null)
+                    .findFirst()
+                    .map(Enum::name)
+                    .orElse(null);
+            for (LigneTransactionRequest reqLigne : req.lignes) {
+                if (reqLigne.typeJeu != null && typeFiche != null && !reqLigne.typeJeu.equals(typeFiche)) {
+                    throw new BadRequestException("Toutes les lignes d'une fiche doivent avoir le même type de jeu (" + typeFiche + ").");
+                }
+            }
+
             // Pour préserver le caissier d'origine des lignes existantes,
             // on capture l'association (id ligne → caissier) avant remplacement.
             Map<Long, Utilisateur> caissiersOrigine = new HashMap<>();
@@ -146,12 +182,20 @@ public class FicheService {
                 ? f.getDateModification()
                 : f.getDateCreation();
         String modif = derniere != null ? derniere.format(TIME_FMT) : null;
+        String typeJeu = f.getLignes().stream()
+                .map(LigneTransaction::getTypeJeu)
+                .filter(t -> t != null)
+                .findFirst()
+                .map(Enum::name)
+                .orElse(null);
         return new FicheSummaryResponse(
                 f.getId(),
                 f.getClient().getLibelle(),
                 f.getClient().isPpe(),
+                f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
+                typeJeu,
                 f.getTotalRGM(),
                 f.getTotalChangeEntrant(),
                 f.getTotalChangeSortant(),
@@ -187,6 +231,13 @@ public class FicheService {
         dto.clientPrefecture        = c.getPrefectureDelivrance();
         dto.clientPaysDelivrance    = c.getPaysDelivrance();
         dto.clientDescriptionPhysique = c.getDescriptionPhysique();
+
+        dto.typeJeu                 = f.getLignes().stream()
+                                          .map(LigneTransaction::getTypeJeu)
+                                          .filter(t -> t != null)
+                                          .findFirst()
+                                          .map(Enum::name)
+                                          .orElse(null);
 
         dto.totalRGM                = f.getTotalRGM();
         dto.totalEntrant            = f.getTotalChangeEntrant();

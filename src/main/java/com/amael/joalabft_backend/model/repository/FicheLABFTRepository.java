@@ -36,27 +36,28 @@ public class FicheLABFTRepository {
         LocalDateTime debut = LocalDateTime.of(from, DEBUT_JOURNEE);
         LocalDateTime fin   = LocalDateTime.of(to.plusDays(1), DEBUT_JOURNEE);
 
-        String jpql;
-        TypedQuery<FicheLABFT> q;
+        StringBuilder jpql = new StringBuilder(
+                "SELECT f FROM FicheLABFT f JOIN f.client c " +
+                "WHERE f.dateCreation >= :debut AND f.dateCreation < :fin");
 
-        if (search == null || search.isBlank()) {
-            jpql = "SELECT f FROM FicheLABFT f " +
-                   "WHERE f.dateCreation >= :debut AND f.dateCreation < :fin " +
-                   "ORDER BY COALESCE(f.dateModification, f.dateCreation) DESC";
-            q = em.createQuery(jpql, FicheLABFT.class);
-        } else {
-            String param = "%" + search.toLowerCase() + "%";
-            jpql = "SELECT f FROM FicheLABFT f JOIN f.client c " +
-                   "WHERE f.dateCreation >= :debut AND f.dateCreation < :fin " +
-                   "AND (LOWER(c.nom) LIKE :p OR LOWER(c.prenom) LIKE :p " +
-                   "OR LOWER(c.descriptionPhysique) LIKE :p) " +
-                   "ORDER BY COALESCE(f.dateModification, f.dateCreation) DESC";
-            q = em.createQuery(jpql, FicheLABFT.class);
-            q.setParameter("p", param);
+        String[] tokens = (search == null || search.isBlank())
+                ? new String[0]
+                : search.trim().toLowerCase().split("\\s+");
+
+        for (int i = 0; i < tokens.length; i++) {
+            jpql.append(" AND (LOWER(c.nom) LIKE :p").append(i)
+                .append(" OR LOWER(c.prenom) LIKE :p").append(i)
+                .append(" OR LOWER(c.descriptionPhysique) LIKE :p").append(i)
+                .append(")");
         }
+        jpql.append(" ORDER BY COALESCE(f.dateModification, f.dateCreation) DESC");
 
+        TypedQuery<FicheLABFT> q = em.createQuery(jpql.toString(), FicheLABFT.class);
         q.setParameter("debut", debut);
         q.setParameter("fin", fin);
+        for (int i = 0; i < tokens.length; i++) {
+            q.setParameter("p" + i, "%" + tokens[i] + "%");
+        }
         return q.getResultList();
     }
 

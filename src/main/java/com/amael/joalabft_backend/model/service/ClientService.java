@@ -142,12 +142,20 @@ public class ClientService {
         String derniereModif = f.getDateModification() != null
                 ? f.getDateModification().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
                 : null;
+        String typeJeu = f.getLignes().stream()
+                .map(com.amael.joalabft_backend.model.entity.LigneTransaction::getTypeJeu)
+                .filter(t -> t != null)
+                .findFirst()
+                .map(Enum::name)
+                .orElse(null);
         return new FicheSummaryResponse(
                 f.getId(),
                 f.getClient().getLibelle(),
                 f.getClient().isPpe(),
+                f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
+                typeJeu,
                 f.getTotalRGM(),
                 f.getTotalChangeEntrant(),
                 f.getTotalChangeSortant(),
