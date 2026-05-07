@@ -31,9 +31,6 @@ public class FicheDetailResponse {
     public String clientDescriptionPhysique;
     public boolean clientIdentifie;
 
-    /** Type de jeu de la fiche (MAS, JTE ou JT) ; {@code null} si la fiche est vide. */
-    public String typeJeu;
-
     // --- Totaux ---
     public BigDecimal totalRGM;
     public BigDecimal totalEntrant;
