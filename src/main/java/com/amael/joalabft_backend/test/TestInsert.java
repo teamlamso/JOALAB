@@ -17,9 +17,7 @@ import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import com.amael.joalabft_backend.model.service.PasswordHasher;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -194,7 +192,7 @@ public class TestInsert {
     private Utilisateur utilisateur(String identifiant, String nom, String prenom, RoleUtilisateur role) {
         Utilisateur u = new Utilisateur();
         u.setIdentifiant(identifiant);
-        u.setMotDePasse(sha256("password"));
+        u.setMotDePasse(PasswordHasher.hash("password"));
         u.setNom(nom);
         u.setPrenom(prenom);
         u.setRole(role);
@@ -218,15 +216,4 @@ public class TestInsert {
         return l;
     }
 
-    private String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder(64);
-            for (byte b : hash) hex.append(String.format("%02x", b));
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 non disponible", e);
-        }
-    }
 }
