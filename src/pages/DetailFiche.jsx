@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
-import FichePapierMulti from '../components/FichePapierMulti.jsx'
+import FichePapier from '../components/FichePapier.jsx'
 import { buildPrintTitle } from '../utils/printTitle.js'
+
+const ORDRE_TYPES = ['MAS', 'JTE', 'JT']
 
 function formatDateFr(str) {
   if (!str) return ''
@@ -11,11 +13,17 @@ function formatDateFr(str) {
   return `${d}/${m}/${y}`
 }
 
-function imprimerFiche(fiche) {
+/** Imprime soit toute la fiche (typeFiltre=null), soit la seule sous-fiche
+ *  correspondant au type donné en ajoutant une classe au body pour masquer
+ *  les autres sous-fiches via CSS @media print. */
+function imprimerSousFiche(fiche, typeFiltre) {
   const previous = document.title
-  document.title = buildPrintTitle(fiche)
+  const className = typeFiltre ? `print-filter-${typeFiltre.toLowerCase()}` : null
+  document.title = buildPrintTitle(fiche, typeFiltre)
+  if (className) document.body.classList.add(className)
   const restore = () => {
     document.title = previous
+    if (className) document.body.classList.remove(className)
     window.removeEventListener('afterprint', restore)
   }
   window.addEventListener('afterprint', restore)
@@ -40,6 +48,9 @@ export default function DetailFiche() {
   if (error) return <div className="page"><div className="alert-error">{error}</div></div>
   if (!fiche) return null
 
+  const lignes = fiche.lignes ?? []
+  const typesPresents = ORDRE_TYPES.filter((t) => lignes.some((l) => l.typeJeu === t))
+
   return (
     <div className="page">
       <div className="page-header no-print">
@@ -59,13 +70,30 @@ export default function DetailFiche() {
           <button className="btn btn-secondary" onClick={() => navigate(`/fiches/${id}/modifier`)}>
             Compléter la fiche
           </button>
-          <button className="btn btn-primary" onClick={() => imprimerFiche(fiche)}>
-            Imprimer
-          </button>
         </div>
       </div>
 
-      <FichePapierMulti fiche={fiche} />
+      {typesPresents.length === 0 ? (
+        <>
+          <FichePapier fiche={fiche} />
+          <div className="no-print fiche-detail-print-actions">
+            <button className="btn btn-primary" onClick={() => imprimerSousFiche(fiche, null)}>
+              Imprimer cette fiche
+            </button>
+          </div>
+        </>
+      ) : (
+        typesPresents.map((t, i) => (
+          <Fragment key={t}>
+            <FichePapier fiche={fiche} typeFiltre={t} pageBreakBefore={i > 0} />
+            <div className="no-print fiche-detail-print-actions">
+              <button className="btn btn-primary" onClick={() => imprimerSousFiche(fiche, t)}>
+                Imprimer cette fiche
+              </button>
+            </div>
+          </Fragment>
+        ))
+      )}
     </div>
   )
 }

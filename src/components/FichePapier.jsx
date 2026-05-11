@@ -61,7 +61,10 @@ export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre
   ].filter(Boolean)
 
   return (
-    <div className={`fiche-papier${pageBreakBefore ? ' fiche-papier-page-break' : ''}`}>
+    <div
+      className={`fiche-papier${pageBreakBefore ? ' fiche-papier-page-break' : ''}`}
+      data-type={typeFiltre || undefined}
+    >
       <div className="fp-titre-bar">
         <div className="fp-titre-tag">LAB-FT 1</div>
         <div className="fp-titre-main">FICHE DE SUIVI INFORMEL DES CHANGES MULTIPLES</div>

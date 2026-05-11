@@ -985,6 +985,13 @@ tbody tr:hover {
   margin-top: 24px;
 }
 
+/* Bouton d'impression sous chaque sous-fiche dans DetailFiche. */
+.fiche-detail-print-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 12px 0 24px;
+}
+
 .fp-table {
   width: 100%;
   border-collapse: collapse;
@@ -1343,6 +1350,22 @@ tbody tr:hover {
   .fiche-papier-page-break {
     page-break-before: always;
     break-before: page;
+  }
+
+  /* Impression filtrée par type : sur DetailFiche, le bouton « Imprimer cette
+     fiche » sous une sous-fiche pose une classe sur body pour masquer les
+     autres sous-fiches et neutraliser leur saut de page. */
+  body.print-filter-mas .fiche-papier:not([data-type="MAS"]),
+  body.print-filter-jte .fiche-papier:not([data-type="JTE"]),
+  body.print-filter-jt  .fiche-papier:not([data-type="JT"]) {
+    display: none !important;
+  }
+
+  body.print-filter-mas .fiche-papier[data-type="MAS"],
+  body.print-filter-jte .fiche-papier[data-type="JTE"],
+  body.print-filter-jt  .fiche-papier[data-type="JT"] {
+    page-break-before: auto !important;
+    break-before: auto !important;
   }
 
   /* Sur les pages 2+, l'identité n'est pas répétée mais le thead l'est :
