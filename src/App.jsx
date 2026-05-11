@@ -12,6 +12,8 @@ import AjoutFiche from './pages/AjoutFiche.jsx'
 import DetailFiche from './pages/DetailFiche.jsx'
 import EditFiche from './pages/EditFiche.jsx'
 import ImprimerFiches from './pages/ImprimerFiches.jsx'
+import ListeUtilisateurs from './pages/ListeUtilisateurs.jsx'
+import NouveauUtilisateur from './pages/NouveauUtilisateur.jsx'
 
 export default function App() {
   return (
@@ -30,6 +32,8 @@ export default function App() {
             <Route path="/fiches/imprimer" element={<ImprimerFiches />} />
             <Route path="/fiches/:id" element={<DetailFiche />} />
             <Route path="/fiches/:id/modifier" element={<EditFiche />} />
+            <Route path="/utilisateurs" element={<ListeUtilisateurs />} />
+            <Route path="/utilisateurs/nouveau" element={<NouveauUtilisateur />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -52,6 +52,11 @@ export default function Header() {
           </span>
           {open && (
             <div className="header-dropdown">
+              {(user.role === 'MCD' || user.role === 'RESPONSABLE_CAISSE') && (
+                <button onClick={() => { setOpen(false); navigate('/utilisateurs') }}>
+                  Utilisateurs
+                </button>
+              )}
               <button onClick={handleLogout}>Se déconnecter</button>
             </div>
           )}
