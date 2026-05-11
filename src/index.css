@@ -1347,9 +1347,11 @@ tbody tr:hover {
 }
 
 @media print {
+  /* Tout ce qui n'est pas la fiche papier disparaît à l'impression. */
   .header,
   .no-print,
-  .toast-container {
+  .toast-container,
+  .modal-overlay {
     display: none !important;
   }
 
@@ -1357,134 +1359,37 @@ tbody tr:hover {
     background: white;
     margin: 0;
     padding: 0;
-    height: auto;
-    min-height: 0;
   }
 
   .page {
     padding: 0;
     max-width: 100%;
     margin: 0;
-    height: auto;
-    min-height: 0;
   }
 
   .fiche-papier {
     border: none;
-    padding: 6mm 8mm 0 8mm;
+    padding: 6mm 8mm 6mm 8mm;
     font-size: 10px;
   }
 
-  /* Saut de page entre deux fiches imprimées en lot. */
+  /* Saut de page entre deux fiches successives (lot ou multi-types). */
   .fiche-papier-page-break {
     page-break-before: always;
     break-before: page;
   }
 
-  /* L'isolation d'une sous-fiche à l'impression est désormais faite côté JS
-     dans utils/print.js (style.display = 'none' sur les autres .fiche-papier
-     + neutralisation inline du page-break sur la cible). */
-
-  /* Sur les pages 2+, l'identité n'est pas répétée mais le thead l'est :
-     on supprime le padding-top du fiche-papier pour ne pas doubler la marge ;
-     le spacer du thead suffit. */
-
-  /* Row de spacer en tête du thead : se répète à chaque page et garantit
-     un espace entre le bord supérieur et l'en-tête de colonnes. */
-  .fp-tr-spacer {
-    display: table-row;
-  }
-
-  .fp-tr-spacer td {
-    height: 6mm;
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-  }
-
-  /* Pied de tableau spacer : tfoot se répète automatiquement en bas de chaque
-     page imprimée → garantit une marge en bas pour ne pas coller au bord. */
-  .fp-tfoot-spacer {
-    display: table-footer-group;
-  }
-
-  .fp-tfoot-spacer td {
-    height: 6mm;
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-  }
-
-  /* Évite qu'un saut de page laisse la ligne Totaux orpheline en haut de la
-     page suivante : la ligne reste collée à ses prédécesseurs. */
-  .fp-tr-totaux,
-  .fp-tr-totaux td {
-    page-break-before: avoid;
-    break-before: avoid;
-  }
-
-  /* Garantit qu'au moins quelques lignes de données accompagnent Totaux
-     en cas de saut de page (pas de Totaux seule en haut d'une nouvelle page).
-     On applique avoid sur les 3 dernières lignes du tbody : navigateurs qui
-     respectent la directive grouperont au moins 2 lignes + Totaux ensemble. */
-  .fp-table tbody tr:nth-last-child(-n+3),
-  .fp-table tbody tr:nth-last-child(-n+3) td {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  /* Empêche le bloc Nota Bene de pousser une page vide supplémentaire. */
-  .fp-nota {
-    margin-top: 4px;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  /* Pas de marge bas qui forcerait un débordement → page vide. */
-  .fiche-papier > *:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Le thead se répète automatiquement à chaque page imprimée */
-  .fp-table thead {
-    display: table-header-group;
-  }
-
-  .fp-table tfoot {
-    display: table-footer-group;
-  }
-
-  .fp-table tr {
-    page-break-inside: avoid;
-  }
-
-  /* L'en-tête (titre + casino + identité) reste solidaire sur une page */
+  /* Couleurs imprimées telles qu'à l'écran. */
   .fp-titre-bar,
-  .fp-casino-bar,
-  .fp-identite-grid {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .fp-identite-grid {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  .fp-table th,
-  .fp-table td {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
   .fp-titre-tag,
   .fp-titre-main,
-  .fp-titre-logo,
   .fp-tr-cat th,
   .fp-tr-sub th,
   .fp-ppe,
   .fp-badge-jeu,
-  .fp-tr-totaux td {
+  .fp-tr-totaux td,
+  .fp-table th,
+  .fp-table td {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
