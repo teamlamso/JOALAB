@@ -9,7 +9,9 @@ import com.amael.joalabft_backend.model.entity.Client;
 import com.amael.joalabft_backend.model.entity.FicheLABFT;
 import com.amael.joalabft_backend.model.entity.LigneTransaction;
 import com.amael.joalabft_backend.model.entity.Utilisateur;
+import com.amael.joalabft_backend.model.enums.TypeActionJournal;
 import com.amael.joalabft_backend.model.enums.TypeChange;
+import com.amael.joalabft_backend.model.enums.TypeEntiteJournal;
 import com.amael.joalabft_backend.model.enums.TypeJeu;
 import com.amael.joalabft_backend.model.enums.TypePaiement;
 import com.amael.joalabft_backend.model.repository.ClientRepository;
@@ -46,6 +48,9 @@ public class FicheService {
 
     @Inject
     private PermissionService permissionService;
+
+    @Inject
+    private JournalService journalService;
 
     /**
      * Retourne la liste des fiches filtrées par plage de dates et terme de recherche.
@@ -88,6 +93,14 @@ public class FicheService {
         }
 
         ficheRepository.save(fiche);
+
+        journalService.log(
+                creePar,
+                TypeActionJournal.CREATION,
+                TypeEntiteJournal.FICHE,
+                fiche.getId(),
+                client.getLibelle(),
+                descriptionFiche(fiche, "Création"));
         return fiche.getId();
     }
 
@@ -130,6 +143,14 @@ public class FicheService {
         }
 
         ficheRepository.update(fiche);
+
+        journalService.log(
+                modifiePar,
+                TypeActionJournal.MODIFICATION,
+                TypeEntiteJournal.FICHE,
+                fiche.getId(),
+                fiche.getClient().getLibelle(),
+                descriptionFiche(fiche, "Modification"));
     }
 
     /**
@@ -142,10 +163,32 @@ public class FicheService {
         permissionService.ensurePeutSupprimerFiche(utilisateur);
         FicheLABFT fiche = ficheRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Fiche introuvable : " + id));
+        String libelle = fiche.getClient().getLibelle();
+        String description = descriptionFiche(fiche, "Suppression");
         ficheRepository.delete(fiche);
+
+        journalService.log(
+                utilisateur,
+                TypeActionJournal.SUPPRESSION,
+                TypeEntiteJournal.FICHE,
+                id,
+                libelle,
+                description);
     }
 
     // --- Helpers ---
+
+    /** Description courte d'une fiche pour l'audit (nb lignes + types + total entrant + sortant). */
+    private String descriptionFiche(FicheLABFT fiche, String verbe) {
+        Set<String> types = new LinkedHashSet<>();
+        fiche.getLignes().forEach(l -> {
+            if (l.getTypeJeu() != null) types.add(l.getTypeJeu().name());
+        });
+        String typesStr = types.isEmpty() ? "—" : String.join(", ", types);
+        return verbe + " — " + fiche.getLignes().size() + " ligne(s) [" + typesStr + "] "
+                + "; entrant " + fiche.getTotalChangeEntrant()
+                + " ; sortant " + fiche.getTotalChangeSortant();
+    }
 
     private LigneTransaction buildLigne(LigneTransactionRequest req, Utilisateur caissier) {
         if (req.montantRGM != null && req.numeroSocle == null) {

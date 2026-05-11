@@ -8,6 +8,8 @@ import com.amael.joalabft_backend.model.dto.response.FicheSummaryResponse;
 import com.amael.joalabft_backend.model.entity.Client;
 import com.amael.joalabft_backend.model.entity.FicheLABFT;
 import com.amael.joalabft_backend.model.entity.Utilisateur;
+import com.amael.joalabft_backend.model.enums.TypeActionJournal;
+import com.amael.joalabft_backend.model.enums.TypeEntiteJournal;
 import com.amael.joalabft_backend.model.repository.ClientRepository;
 import com.amael.joalabft_backend.model.repository.FicheLABFTRepository;
 import jakarta.ejb.Stateless;
@@ -35,6 +37,9 @@ public class ClientService {
 
     @Inject
     private PermissionService permissionService;
+
+    @Inject
+    private JournalService journalService;
 
     /** Retourne la liste des clients avec un résumé, filtrée optionnellement par recherche. */
     public List<ClientSummaryResponse> listClients(String search) {
@@ -104,9 +109,16 @@ public class ClientService {
     }
 
     /** Crée un nouveau client et retourne son identifiant. */
-    public Long createClient(ClientRequest req) {
+    public Long createClient(ClientRequest req, Utilisateur utilisateur) {
         Client c = applyRequest(new Client(), req);
         clientRepository.save(c);
+        journalService.log(
+                utilisateur,
+                TypeActionJournal.CREATION,
+                TypeEntiteJournal.CLIENT,
+                c.getId(),
+                c.getLibelle(),
+                "Création client " + (c.isIdentifie() ? "identifié" : "non identifié"));
         return c.getId();
     }
 
@@ -122,6 +134,13 @@ public class ClientService {
         Client c = clientRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Client introuvable : " + id));
         clientRepository.update(applyRequest(c, req));
+        journalService.log(
+                utilisateur,
+                TypeActionJournal.MODIFICATION,
+                TypeEntiteJournal.CLIENT,
+                c.getId(),
+                c.getLibelle(),
+                "Modification de l'identité complète");
     }
 
     /**
@@ -130,7 +149,7 @@ public class ClientService {
      *
      * @throws NotFoundException si le client n'existe pas
      */
-    public void updateClientIdentification(Long id, ClientIdentificationRequest req) {
+    public void updateClientIdentification(Long id, ClientIdentificationRequest req, Utilisateur utilisateur) {
         Client c = clientRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Client introuvable : " + id));
 
@@ -149,6 +168,13 @@ public class ClientService {
         c.setPaysDelivrance(req.paysDelivrance);
 
         clientRepository.update(c);
+        journalService.log(
+                utilisateur,
+                TypeActionJournal.MODIFICATION,
+                TypeEntiteJournal.CLIENT,
+                c.getId(),
+                c.getLibelle(),
+                "Modification de l'adresse ou de la pièce d'identité");
     }
 
     /**
@@ -170,7 +196,15 @@ public class ClientService {
                     "Ce client a " + nbFiches + " fiche(s) associée(s) : "
                   + "il faut les supprimer avant de pouvoir supprimer le client.");
         }
+        String libelle = c.getLibelle();
         clientRepository.delete(c);
+        journalService.log(
+                utilisateur,
+                TypeActionJournal.SUPPRESSION,
+                TypeEntiteJournal.CLIENT,
+                id,
+                libelle,
+                "Suppression du client");
     }
 
     // --- Helpers ---

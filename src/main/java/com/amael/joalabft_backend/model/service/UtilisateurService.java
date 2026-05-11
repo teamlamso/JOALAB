@@ -4,6 +4,8 @@ import com.amael.joalabft_backend.model.dto.request.UtilisateurRequest;
 import com.amael.joalabft_backend.model.dto.response.UtilisateurResponse;
 import com.amael.joalabft_backend.model.entity.Utilisateur;
 import com.amael.joalabft_backend.model.enums.RoleUtilisateur;
+import com.amael.joalabft_backend.model.enums.TypeActionJournal;
+import com.amael.joalabft_backend.model.enums.TypeEntiteJournal;
 import com.amael.joalabft_backend.model.repository.UtilisateurRepository;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -25,6 +27,9 @@ public class UtilisateurService {
 
     @Inject
     private PermissionService permissionService;
+
+    @Inject
+    private JournalService journalService;
 
     /**
      * Retourne la liste des utilisateurs applicatifs.
@@ -76,6 +81,13 @@ public class UtilisateurService {
         u.setRole(role);
 
         utilisateurRepository.save(u);
+        journalService.log(
+                createur,
+                TypeActionJournal.CREATION,
+                TypeEntiteJournal.UTILISATEUR,
+                u.getId(),
+                u.getIdentifiant(),
+                "Création de l'utilisateur " + u.getIdentifiant() + " (" + role.name() + ")");
         return toResponse(u);
     }
 
