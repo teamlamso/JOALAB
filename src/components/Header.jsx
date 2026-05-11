@@ -57,6 +57,11 @@ export default function Header() {
                   Utilisateurs
                 </button>
               )}
+              {user.role === 'MCD' && (
+                <button onClick={() => { setOpen(false); navigate('/journal') }}>
+                  Journal d'audit
+                </button>
+              )}
               <button onClick={handleLogout}>Se déconnecter</button>
             </div>
           )}
