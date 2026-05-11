@@ -1,8 +1,12 @@
 import { Fragment, useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getFiche } from '../api/fiches.js'
+import { getFiche, deleteFiche } from '../api/fiches.js'
 import FichePapier from '../components/FichePapier.jsx'
 import HistoriqueFicheDialog from '../components/HistoriqueFicheDialog.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useNotify } from '../context/NotificationContext.jsx'
+import { peutModifierFiche, peutSupprimerFiche } from '../utils/permissions.js'
 import { imprimerSousFiche, ORDRE_TYPES_JEU } from '../utils/print.js'
 
 function formatDateFr(str) {
@@ -15,10 +19,14 @@ function formatDateFr(str) {
 export default function DetailFiche() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const notify = useNotify()
+  const { user } = useAuth()
   const [fiche, setFiche] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [historiqueOuvert, setHistoriqueOuvert] = useState(false)
+  const [confirmSuppr, setConfirmSuppr] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     getFiche(id)
@@ -27,12 +35,27 @@ export default function DetailFiche() {
       .finally(() => setLoading(false))
   }, [id])
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await deleteFiche(id)
+      notify('Fiche supprimée', 'success')
+      navigate('/accueil')
+    } catch (e) {
+      notify(`Erreur : ${e.message}`, 'error')
+      setDeleting(false)
+      setConfirmSuppr(false)
+    }
+  }
+
   if (loading) return <div className="loading">Chargement…</div>
   if (error) return <div className="page"><div className="alert-error">{error}</div></div>
   if (!fiche) return null
 
   const lignes = fiche.lignes ?? []
   const typesPresents = ORDRE_TYPES_JEU.filter((t) => lignes.some((l) => l.typeJeu === t))
+  const peutModifier  = peutModifierFiche(user?.role, fiche.date)
+  const peutSupprimer = peutSupprimerFiche(user?.role)
 
   return (
     <div className="page">
@@ -53,9 +76,16 @@ export default function DetailFiche() {
           <button className="btn btn-secondary" onClick={() => setHistoriqueOuvert(true)}>
             Historique
           </button>
-          <button className="btn btn-secondary" onClick={() => navigate(`/fiches/${id}/modifier`)}>
-            Compléter la fiche
-          </button>
+          {peutModifier && (
+            <button className="btn btn-secondary" onClick={() => navigate(`/fiches/${id}/modifier`)}>
+              Compléter la fiche
+            </button>
+          )}
+          {peutSupprimer && (
+            <button className="btn btn-danger" onClick={() => setConfirmSuppr(true)}>
+              Supprimer
+            </button>
+          )}
         </div>
       </div>
 
@@ -84,6 +114,22 @@ export default function DetailFiche() {
       {historiqueOuvert && (
         <HistoriqueFicheDialog ficheId={id} onClose={() => setHistoriqueOuvert(false)} />
       )}
+
+      <ConfirmDialog
+        open={confirmSuppr}
+        title="Supprimer cette fiche ?"
+        message={
+          <>
+            La fiche n°{id} de <strong>{fiche.clientLibelle}</strong> sera définitivement supprimée
+            (lignes incluses). Cette action est tracée dans le journal.
+          </>
+        }
+        confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setConfirmSuppr(false)}
+      />
     </div>
   )
 }

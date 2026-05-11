@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { listFiches } from '../api/fiches.js'
 import { listClients } from '../api/clients.js'
 import DatePickerInput from '../components/DatePickerInput.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { peutModifierFiche } from '../utils/permissions.js'
 
 /** Journée de travail courante (06h00→05h59 le lendemain). */
 function workDay() {
@@ -79,10 +81,11 @@ function BadgesJeu({ types }) {
   )
 }
 
-function FicheCard({ f, navigate, showDate, highlight }) {
+function FicheCard({ f, navigate, showDate, highlight, role }) {
   const jour = workDay()
   const isToday = f.date === jour
   const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
+  const peutModifier = peutModifierFiche(role, f.date)
 
   return (
     <div className={`fiche-card${highlight ? ' fiche-card-alert' : ''}`}>
@@ -120,9 +123,11 @@ function FicheCard({ f, navigate, showDate, highlight }) {
           Dernière modification : {formatLastModif(f.date, f.derniereModif)}
         </span>
         <div className="fiche-card-footer-actions">
-          <button className="btn-icon" title="Modifier" onClick={() => navigate(`/fiches/${f.id}/modifier`)}>
-            <EditIcon />
-          </button>
+          {peutModifier && (
+            <button className="btn-icon" title="Modifier" onClick={() => navigate(`/fiches/${f.id}/modifier`)}>
+              <EditIcon />
+            </button>
+          )}
           <button className="btn-icon" title="Voir le détail" onClick={() => navigate(`/fiches/${f.id}`)}>
             <EyeIcon />
           </button>
@@ -175,6 +180,7 @@ function ClientCard({ c, navigate }) {
 
 export default function Accueil() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [dateDebut, setDateDebut] = useState(workDayYesterday())
   const [dateFin, setDateFin] = useState(workDay())
@@ -264,7 +270,7 @@ export default function Accueil() {
               </h3>
               <div className="fiches-grid">
                 {fichesJour.map((f) => (
-                  <FicheCard key={f.id} f={f} navigate={navigate} showDate={false} />
+                  <FicheCard key={f.id} f={f} navigate={navigate} showDate={false} role={user?.role} />
                 ))}
               </div>
             </div>
@@ -297,7 +303,7 @@ export default function Accueil() {
                   </h4>
                   <div className="fiches-grid">
                     {veilleOver.map((f) => (
-                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} highlight />
+                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} highlight role={user?.role} />
                     ))}
                   </div>
                 </>
@@ -313,7 +319,7 @@ export default function Accueil() {
                   )}
                   <div className="fiches-grid">
                     {veilleUnder.map((f) => (
-                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} />
+                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} role={user?.role} />
                     ))}
                   </div>
                 </>

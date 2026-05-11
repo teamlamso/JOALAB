@@ -24,6 +24,25 @@ export function updateClient(id, data) {
 }
 
 /**
+ * Met à jour uniquement l'adresse et la pièce d'identité d'un client.
+ * Endpoint accessible à tous les rôles (y compris CAISSIER).
+ *
+ * @param {number} id
+ * @param {object} data — sous-ensemble adresse + pièce d'identité.
+ */
+export function updateClientIdentification(id, data) {
+  return request(`/clients/${id}/identification`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+/** Supprime un client. Réservé aux MCD ; le backend refuse si fiches associées. */
+export function deleteClient(id) {
+  return request(`/clients/${id}`, { method: 'DELETE' })
+}
+
+/**
  * Recherche les clients existants potentiellement similaires (mêmes nom+prénom
  * +date de naissance, ou même numéro de pièce). Retourne la liste des
  * candidats détectés (peut être vide).

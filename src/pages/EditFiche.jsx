@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getFiche, updateFiche } from '../api/fiches.js'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
+import { peutModifierFiche } from '../utils/permissions.js'
 
 const JEUX = ['MAS', 'JTE', 'JT']
 const PAIEMENTS = ['ESPECE', 'CHEQUE', 'CB']
@@ -214,6 +216,7 @@ export default function EditFiche() {
   const { id } = useParams()
   const navigate = useNavigate()
   const notify = useNotify()
+  const { user } = useAuth()
   const [clientLibelle, setClientLibelle] = useState('')
   const [clientPpe, setClientPpe] = useState(false)
   const [lignes, setLignes] = useState([])
@@ -225,13 +228,20 @@ export default function EditFiche() {
   useEffect(() => {
     getFiche(id)
       .then((fiche) => {
+        // Garde-fou client : si l'utilisateur ne peut pas modifier cette fiche
+        // (rôle / ancienneté), on bascule vers la page de consultation.
+        if (!peutModifierFiche(user?.role, fiche.date)) {
+          notify("Vous n'avez pas le droit de modifier cette fiche.", 'warning')
+          navigate(`/fiches/${id}`, { replace: true })
+          return
+        }
         setClientLibelle(fiche.client?.libelle ?? fiche.clientLibelle ?? '')
         setClientPpe(!!fiche.clientPpe)
         setLignes(fiche.lignes?.length ? fiche.lignes.map(ligneFromResponse) : [newLigne()])
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id, user, navigate, notify])
 
   const updateLigne = (idx, val) =>
     setLignes((ls) => ls.map((l, i) => (i === idx ? val : l)))

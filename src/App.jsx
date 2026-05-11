@@ -7,6 +7,7 @@ import Accueil from './pages/Accueil.jsx'
 import ListeClients from './pages/ListeClients.jsx'
 import DetailClient from './pages/DetailClient.jsx'
 import NouveauClient from './pages/NouveauClient.jsx'
+import EditClient from './pages/EditClient.jsx'
 import Identification from './pages/Identification.jsx'
 import AjoutFiche from './pages/AjoutFiche.jsx'
 import DetailFiche from './pages/DetailFiche.jsx'
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/clients" element={<ListeClients />} />
             <Route path="/clients/nouveau" element={<NouveauClient />} />
             <Route path="/clients/:id" element={<DetailClient />} />
+            <Route path="/clients/:id/modifier" element={<EditClient />} />
             <Route path="/fiches/identification" element={<Identification />} />
             <Route path="/fiches/nouveau" element={<AjoutFiche />} />
             <Route path="/fiches/imprimer" element={<ImprimerFiches />} />

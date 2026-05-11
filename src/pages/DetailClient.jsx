@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getClient } from '../api/clients.js'
+import { getClient, deleteClient } from '../api/clients.js'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useNotify } from '../context/NotificationContext.jsx'
+import { peutSupprimerClient } from '../utils/permissions.js'
 
 function EyeIcon() {
   return (
@@ -29,9 +33,13 @@ function formatEur(value) {
 export default function DetailClient() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const notify = useNotify()
+  const { user } = useAuth()
   const [client, setClient] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [confirmSuppr, setConfirmSuppr] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     getClient(id)
@@ -40,9 +48,24 @@ export default function DetailClient() {
       .finally(() => setLoading(false))
   }, [id])
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await deleteClient(id)
+      notify('Client supprimé', 'success')
+      navigate('/clients')
+    } catch (e) {
+      notify(`Erreur : ${e.message}`, 'error')
+      setDeleting(false)
+      setConfirmSuppr(false)
+    }
+  }
+
   if (loading) return <div className="loading">Chargement…</div>
   if (error) return <div className="page"><div className="alert-error">{error}</div></div>
   if (!client) return null
+
+  const peutSupprimer = peutSupprimerClient(user?.role)
 
   const adresseLines = [
     client.rue,
@@ -62,6 +85,14 @@ export default function DetailClient() {
           <button className="btn btn-secondary" onClick={() => navigate(-1)}>
             Retour
           </button>
+          <button className="btn btn-secondary" onClick={() => navigate(`/clients/${id}/modifier`)}>
+            Modifier
+          </button>
+          {peutSupprimer && (
+            <button className="btn btn-danger" onClick={() => setConfirmSuppr(true)}>
+              Supprimer
+            </button>
+          )}
           <button
             className="btn btn-primary"
             onClick={() => navigate('/fiches/identification', { state: { preselectClient: { id: client.id, libelle: client.libelle } } })}
@@ -141,6 +172,23 @@ export default function DetailClient() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={confirmSuppr}
+        title="Supprimer ce client ?"
+        message={
+          <>
+            Le client <strong>{client.libelle}</strong> sera définitivement supprimé.
+            {' '}
+            <br />Cette action échoue si le client a des fiches associées : il faut les supprimer avant.
+          </>
+        }
+        confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setConfirmSuppr(false)}
+      />
     </div>
   )
 }

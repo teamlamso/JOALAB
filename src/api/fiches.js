@@ -26,3 +26,8 @@ export function updateFiche(id, data) {
     body: JSON.stringify(data),
   })
 }
+
+/** Supprime une fiche. Réservé aux MCD côté backend. */
+export function deleteFiche(id) {
+  return request(`/fiches/${id}`, { method: 'DELETE' })
+}
