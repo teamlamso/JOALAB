@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
-import FichePapierMulti from '../components/FichePapierMulti.jsx'
-import { buildPrintTitle } from '../utils/printTitle.js'
+import FichePapier from '../components/FichePapier.jsx'
+import { buildPrintTitle, imprimerSousFiche, ORDRE_TYPES_JEU } from '../utils/print.js'
 
 /** Page de prévisualisation puis impression groupée. Reçoit `?ids=1,2,3`,
- *  charge toutes les fiches et les affiche à la suite. L'utilisateur lance
- *  l'impression manuellement via le bouton dédié. */
+ *  charge toutes les fiches et les affiche à la suite — chacune éclatée par
+ *  type de jeu présent. L'utilisateur peut imprimer le tout via le bouton
+ *  principal, ou n'imprimer qu'une sous-fiche via le bouton placé sous elle. */
 export default function ImprimerFiches() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -51,6 +52,16 @@ export default function ImprimerFiches() {
     )
   }
 
+  // Aplatit (fiche, type | null) pour gérer simplement le saut de page entre
+  // toutes les sous-fiches (1er saut = false, suivants = true).
+  const items = []
+  fiches.forEach((f) => {
+    const lignes = f.lignes ?? []
+    const types = ORDRE_TYPES_JEU.filter((t) => lignes.some((l) => l.typeJeu === t))
+    if (types.length === 0) items.push({ fiche: f, type: null })
+    else types.forEach((t) => items.push({ fiche: f, type: t }))
+  })
+
   return (
     <div className="page imprimer-fiches">
       <div className="page-header no-print">
@@ -67,8 +78,15 @@ export default function ImprimerFiches() {
         </div>
       </div>
 
-      {fiches.map((f, i) => (
-        <FichePapierMulti key={f.id} fiche={f} pageBreakBefore={i > 0} />
+      {items.map(({ fiche, type }, i) => (
+        <Fragment key={`${fiche.id}-${type ?? 'all'}`}>
+          <FichePapier fiche={fiche} typeFiltre={type} pageBreakBefore={i > 0} />
+          <div className="no-print fiche-detail-print-actions">
+            <button className="btn btn-primary" onClick={() => imprimerSousFiche(fiche, type)}>
+              Imprimer cette fiche
+            </button>
+          </div>
+        </Fragment>
       ))}
     </div>
   )

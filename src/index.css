@@ -1352,18 +1352,16 @@ tbody tr:hover {
     break-before: page;
   }
 
-  /* Impression filtrée par type : sur DetailFiche, le bouton « Imprimer cette
-     fiche » sous une sous-fiche pose une classe sur body pour masquer les
-     autres sous-fiches et neutraliser leur saut de page. */
-  body.print-filter-mas .fiche-papier:not([data-type="MAS"]),
-  body.print-filter-jte .fiche-papier:not([data-type="JTE"]),
-  body.print-filter-jt  .fiche-papier:not([data-type="JT"]) {
+  /* Impression d'une sous-fiche isolée : le bouton « Imprimer cette fiche »
+     pose la classe .print-target sur l'élément ciblé et .print-only-target
+     sur body, ce qui masque toutes les autres .fiche-papier et neutralise le
+     saut de page de la sous-fiche restante. Fonctionne aussi bien sur
+     DetailFiche (1 fiche, N sous-fiches) que sur ImprimerFiches (N fiches). */
+  body.print-only-target .fiche-papier:not(.print-target) {
     display: none !important;
   }
 
-  body.print-filter-mas .fiche-papier[data-type="MAS"],
-  body.print-filter-jte .fiche-papier[data-type="JTE"],
-  body.print-filter-jt  .fiche-papier[data-type="JT"] {
+  body.print-only-target .fiche-papier.print-target {
     page-break-before: auto !important;
     break-before: auto !important;
   }

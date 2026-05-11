@@ -2,32 +2,13 @@ import { Fragment, useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
 import FichePapier from '../components/FichePapier.jsx'
-import { buildPrintTitle } from '../utils/printTitle.js'
-
-const ORDRE_TYPES = ['MAS', 'JTE', 'JT']
+import { imprimerSousFiche, ORDRE_TYPES_JEU } from '../utils/print.js'
 
 function formatDateFr(str) {
   if (!str) return ''
   if (str.includes('/')) return str.slice(0, 10)
   const [y, m, d] = str.slice(0, 10).split('-')
   return `${d}/${m}/${y}`
-}
-
-/** Imprime soit toute la fiche (typeFiltre=null), soit la seule sous-fiche
- *  correspondant au type donné en ajoutant une classe au body pour masquer
- *  les autres sous-fiches via CSS @media print. */
-function imprimerSousFiche(fiche, typeFiltre) {
-  const previous = document.title
-  const className = typeFiltre ? `print-filter-${typeFiltre.toLowerCase()}` : null
-  document.title = buildPrintTitle(fiche, typeFiltre)
-  if (className) document.body.classList.add(className)
-  const restore = () => {
-    document.title = previous
-    if (className) document.body.classList.remove(className)
-    window.removeEventListener('afterprint', restore)
-  }
-  window.addEventListener('afterprint', restore)
-  window.print()
 }
 
 export default function DetailFiche() {
@@ -49,7 +30,7 @@ export default function DetailFiche() {
   if (!fiche) return null
 
   const lignes = fiche.lignes ?? []
-  const typesPresents = ORDRE_TYPES.filter((t) => lignes.some((l) => l.typeJeu === t))
+  const typesPresents = ORDRE_TYPES_JEU.filter((t) => lignes.some((l) => l.typeJeu === t))
 
   return (
     <div className="page">
