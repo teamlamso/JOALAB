@@ -1384,6 +1384,17 @@ tbody tr:hover {
     break-before: page;
   }
 
+  /* Impression d'une seule sous-fiche : utils/print.js pose .print-target
+     sur la cible et .print-isolated sur body. On masque tout le reste et
+     on neutralise le saut de page de la cible. */
+  body.print-isolated .fiche-papier:not(.print-target) {
+    display: none !important;
+  }
+  body.print-isolated .fiche-papier.print-target {
+    page-break-before: auto !important;
+    break-before: auto !important;
+  }
+
   /* En-tête de tableau répété en haut de chaque page imprimée si le tableau
      déborde — sans ça la page 2 n'a plus de colonnes nommées. */
   .fp-table thead {

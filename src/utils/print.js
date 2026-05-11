@@ -47,39 +47,33 @@ export function imprimerSousFiche(fiche, typeFiltre) {
 
   try {
     const ficheId = String(fiche.id)
-    const allPapiers = Array.from(document.querySelectorAll('.fiche-papier'))
-    const target = allPapiers.find((el) => {
-      if (el.dataset.ficheId !== ficheId) return false
-      if (typeFiltre) return el.dataset.type === typeFiltre
-      return !el.dataset.type
-    })
+    const target = document.querySelector(
+      typeFiltre
+        ? `.fiche-papier[data-fiche-id="${ficheId}"][data-type="${typeFiltre}"]`
+        : `.fiche-papier[data-fiche-id="${ficheId}"]:not([data-type])`
+    )
 
     if (target) {
       const previous = document.title
       document.title = buildPrintTitle(fiche, typeFiltre)
 
-      const hidden = []
-      allPapiers.forEach((el) => {
-        if (el !== target) {
-          hidden.push({ el, prev: el.style.display })
-          el.style.display = 'none'
-        }
-      })
-      const hadPageBreak = target.classList.contains('fiche-papier-page-break')
-      if (hadPageBreak) target.classList.remove('fiche-papier-page-break')
+      // Approche purement CSS : on marque la cible et on pose un drapeau
+      // sur body. La règle CSS @media print { body.print-isolated
+      // .fiche-papier:not(.print-target) { display: none } } fait le reste.
+      // Pas de modification d'inline style, plus fiable sur les navigateurs
+      // qui batchent agressivement les mutations (Zen).
+      target.classList.add('print-target')
+      document.body.classList.add('print-isolated')
 
-      // Force le navigateur à appliquer immédiatement les changements de
-      // style/classe avant window.print(). Lire offsetHeight oblige un
-      // reflow synchrone : le moteur d'impression voit alors la version
-      // finale du layout sans qu'on ait à différer print() (ce qui
-      // romprait le contexte d'action utilisateur sur les navigateurs au
-      // mode privacy strict, comme Zen).
+      // Reflow synchrone : oblige le moteur à valider le nouvel état avant
+      // window.print() — qu'on appelle dans le même tick pour préserver le
+      // contexte d'action utilisateur (privacy mode strict).
       void target.offsetHeight
 
       restoreFn = () => {
         document.title = previous
-        hidden.forEach(({ el, prev }) => { el.style.display = prev })
-        if (hadPageBreak) target.classList.add('fiche-papier-page-break')
+        target.classList.remove('print-target')
+        document.body.classList.remove('print-isolated')
       }
       const onAfter = () => {
         try { restoreFn() } catch { /* ignore */ }
@@ -96,9 +90,5 @@ export function imprimerSousFiche(fiche, typeFiltre) {
     }
   }
 
-  // Appel synchrone depuis le handler de clic pour préserver le contexte
-  // d'action utilisateur — requis par certains navigateurs (Zen, Firefox
-  // en mode privacy strict) qui bloquent silencieusement window.print()
-  // s'il est appelé depuis un setTimeout/rAF.
   window.print()
 }
