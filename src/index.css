@@ -1381,19 +1381,9 @@ tbody tr:hover {
     break-before: page;
   }
 
-  /* Impression d'une sous-fiche isolée : le bouton « Imprimer cette fiche »
-     pose la classe .print-target sur l'élément ciblé et .print-only-target
-     sur body, ce qui masque toutes les autres .fiche-papier et neutralise le
-     saut de page de la sous-fiche restante. Fonctionne aussi bien sur
-     DetailFiche (1 fiche, N sous-fiches) que sur ImprimerFiches (N fiches). */
-  body.print-only-target .fiche-papier:not(.print-target) {
-    display: none !important;
-  }
-
-  body.print-only-target .fiche-papier.print-target {
-    page-break-before: auto !important;
-    break-before: auto !important;
-  }
+  /* L'isolation d'une sous-fiche à l'impression est désormais faite côté JS
+     dans utils/print.js (style.display = 'none' sur les autres .fiche-papier
+     + neutralisation inline du page-break sur la cible). */
 
   /* Sur les pages 2+, l'identité n'est pas répétée mais le thead l'est :
      on supprime le padding-top du fiche-papier pour ne pas doubler la marge ;

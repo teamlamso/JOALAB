@@ -34,35 +34,51 @@ export function buildPrintTitle(fiche, typeOverride = null) {
 export const ORDRE_TYPES_JEU = ORDRE_TYPES
 
 /**
- * Imprime une sous-fiche unique en isolant temporairement son élément DOM
- * (classe {@code print-target}) pour que le filtre CSS @media print masque
- * toutes les autres .fiche-papier — utile aussi bien dans DetailFiche
- * (plusieurs sous-fiches d'une seule fiche) que dans ImprimerFiches (plusieurs
- * fiches consécutives, chacune avec ses sous-fiches).
+ * Imprime une sous-fiche unique. On masque toutes les autres .fiche-papier
+ * de la page via {@code style.display = 'none'} pendant le dialogue d'impression,
+ * puis on restaure à la fermeture (afterprint). Cette approche par style inline
+ * est plus robuste que de poser une classe sur body + filtrer en CSS, qui
+ * dépendait du moment où le style est rafraîchi par le moteur d'impression.
  *
  * Si {@code typeFiltre} est null, c'est l'unique sous-fiche (fiche sans lignes
- * typées) qui est imprimée — la classe est posée sur l'élément ayant le bon
- * fiche-id et pas de data-type.
+ * typées) qui est imprimée.
  */
 export function imprimerSousFiche(fiche, typeFiltre) {
-  const sel = typeFiltre
-    ? `.fiche-papier[data-fiche-id="${fiche.id}"][data-type="${typeFiltre}"]`
-    : `.fiche-papier[data-fiche-id="${fiche.id}"]:not([data-type])`
-  const target = document.querySelector(sel)
+  const ficheId = String(fiche.id)
+  const allPapiers = Array.from(document.querySelectorAll('.fiche-papier'))
+  const target = allPapiers.find((el) => {
+    if (el.dataset.ficheId !== ficheId) return false
+    if (typeFiltre) return el.dataset.type === typeFiltre
+    return !el.dataset.type
+  })
+
   if (!target) {
+    // Sécurité : on lance quand même l'impression globale plutôt que de ne
+    // rien faire (mieux vaut imprimer trop que rien).
     window.print()
     return
   }
 
   const previous = document.title
   document.title = buildPrintTitle(fiche, typeFiltre)
-  target.classList.add('print-target')
-  document.body.classList.add('print-only-target')
+
+  const hidden = []
+  allPapiers.forEach((el) => {
+    if (el !== target) {
+      hidden.push({ el, prev: el.style.display })
+      el.style.display = 'none'
+    }
+  })
+  const prevBreakBefore = target.style.pageBreakBefore
+  const prevBreakBefore2 = target.style.breakBefore
+  target.style.pageBreakBefore = 'auto'
+  target.style.breakBefore = 'auto'
 
   const restore = () => {
     document.title = previous
-    target.classList.remove('print-target')
-    document.body.classList.remove('print-only-target')
+    hidden.forEach(({ el, prev }) => { el.style.display = prev })
+    target.style.pageBreakBefore = prevBreakBefore
+    target.style.breakBefore = prevBreakBefore2
     window.removeEventListener('afterprint', restore)
   }
   window.addEventListener('afterprint', restore)

@@ -56,7 +56,11 @@ export default function HistoriqueFicheDialog({ ficheId, onClose }) {
                       {e.utilisateurNom || 'utilisateur inconnu'}
                     </span>
                   </div>
-                  {e.description && <div className="historique-item-desc">{e.description}</div>}
+                  {e.description && (
+                    <div className="historique-item-desc" style={{ whiteSpace: 'pre-line' }}>
+                      {e.description}
+                    </div>
+                  )}
                 </li>
               ))}
             </ol>

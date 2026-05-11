@@ -59,3 +59,11 @@ export function peutListerUtilisateurs(role) {
 export function peutLireJournal(role) {
   return role === 'MCD'
 }
+
+/**
+ * Historique d'une fiche : RESPONSABLE_CAISSE et MCD. Les CAISSIER n'ont pas
+ * accès à l'historique des actions effectuées sur une fiche.
+ */
+export function peutLireHistoriqueFiche(role) {
+  return role === 'RESPONSABLE_CAISSE' || role === 'MCD'
+}

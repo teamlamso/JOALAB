@@ -6,7 +6,11 @@ import HistoriqueFicheDialog from '../components/HistoriqueFicheDialog.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
-import { peutModifierFiche, peutSupprimerFiche } from '../utils/permissions.js'
+import {
+  peutModifierFiche,
+  peutSupprimerFiche,
+  peutLireHistoriqueFiche,
+} from '../utils/permissions.js'
 import { imprimerSousFiche, ORDRE_TYPES_JEU } from '../utils/print.js'
 
 function formatDateFr(str) {
@@ -54,8 +58,9 @@ export default function DetailFiche() {
 
   const lignes = fiche.lignes ?? []
   const typesPresents = ORDRE_TYPES_JEU.filter((t) => lignes.some((l) => l.typeJeu === t))
-  const peutModifier  = peutModifierFiche(user?.role, fiche.date)
-  const peutSupprimer = peutSupprimerFiche(user?.role)
+  const peutModifier   = peutModifierFiche(user?.role, fiche.date)
+  const peutSupprimer  = peutSupprimerFiche(user?.role)
+  const peutHistorique = peutLireHistoriqueFiche(user?.role)
 
   return (
     <div className="page">
@@ -73,9 +78,11 @@ export default function DetailFiche() {
           <button className="btn btn-secondary" onClick={() => navigate('/accueil')}>
             Retour
           </button>
-          <button className="btn btn-secondary" onClick={() => setHistoriqueOuvert(true)}>
-            Historique
-          </button>
+          {peutHistorique && (
+            <button className="btn btn-secondary" onClick={() => setHistoriqueOuvert(true)}>
+              Historique
+            </button>
+          )}
           {peutModifier && (
             <button className="btn btn-secondary" onClick={() => navigate(`/fiches/${id}/modifier`)}>
               Compléter la fiche

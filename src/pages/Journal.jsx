@@ -105,7 +105,7 @@ export default function Journal() {
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{e.libelleEntite}</div>
                       )}
                     </td>
-                    <td>{e.description || '—'}</td>
+                    <td style={{ whiteSpace: 'pre-line' }}>{e.description || '—'}</td>
                   </tr>
                 ))
               )}
