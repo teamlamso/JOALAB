@@ -68,6 +68,14 @@ export function imprimerSousFiche(fiche, typeFiltre) {
       const hadPageBreak = target.classList.contains('fiche-papier-page-break')
       if (hadPageBreak) target.classList.remove('fiche-papier-page-break')
 
+      // Force le navigateur à appliquer immédiatement les changements de
+      // style/classe avant window.print(). Lire offsetHeight oblige un
+      // reflow synchrone : le moteur d'impression voit alors la version
+      // finale du layout sans qu'on ait à différer print() (ce qui
+      // romprait le contexte d'action utilisateur sur les navigateurs au
+      // mode privacy strict, comme Zen).
+      void target.offsetHeight
+
       restoreFn = () => {
         document.title = previous
         hidden.forEach(({ el, prev }) => { el.style.display = prev })
@@ -88,8 +96,9 @@ export function imprimerSousFiche(fiche, typeFiltre) {
     }
   }
 
-  // Laisse le navigateur appliquer les changements de style avant la
-  // bascule en mode print — sinon Firefox peut rester bloqué sur l'état
-  // de layout intermédiaire et faire tourner la prévisualisation à vide.
-  requestAnimationFrame(() => requestAnimationFrame(() => window.print()))
+  // Appel synchrone depuis le handler de clic pour préserver le contexte
+  // d'action utilisateur — requis par certains navigateurs (Zen, Firefox
+  // en mode privacy strict) qui bloquent silencieusement window.print()
+  // s'il est appelé depuis un setTimeout/rAF.
+  window.print()
 }
