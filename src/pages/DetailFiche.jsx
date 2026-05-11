@@ -2,24 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
 import FichePapierMulti from '../components/FichePapierMulti.jsx'
+import { buildPrintTitle } from '../utils/printTitle.js'
 
 function formatDateFr(str) {
   if (!str) return ''
   if (str.includes('/')) return str.slice(0, 10)
   const [y, m, d] = str.slice(0, 10).split('-')
   return `${d}/${m}/${y}`
-}
-
-/** Construit le nom de fichier proposé lors d'une impression en PDF :
- *  YYYY.MM.DD_NOM_Prenom (ou un libellé alternatif pour un client non identifié). */
-function buildPrintTitle(fiche) {
-  const date = fiche.date ? fiche.date.replace(/-/g, '.') : ''
-  if (fiche.clientIdentifie) {
-    const nom = (fiche.clientNom || '').toUpperCase().replace(/\s+/g, '-')
-    const prenom = (fiche.clientPrenom || '').replace(/\s+/g, '-')
-    return `${date}_${nom}_${prenom}`
-  }
-  return `${date}_ANONYME`
 }
 
 function imprimerFiche(fiche) {

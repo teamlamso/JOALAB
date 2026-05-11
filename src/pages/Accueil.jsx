@@ -59,6 +59,16 @@ function EyeIcon() {
   )
 }
 
+function PrinterIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 9V2h12v7"/>
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+      <rect x="6" y="14" width="12" height="8"/>
+    </svg>
+  )
+}
+
 function isOver2000(f) {
   return (Number(f.totalEntrant) || 0) >= 2000 || (Number(f.totalSortant) || 0) >= 2000
 }
@@ -79,7 +89,7 @@ function BadgesJeu({ types }) {
   )
 }
 
-function FicheCard({ f, navigate, showDate, highlight }) {
+function FicheCard({ f, navigate, showDate, highlight, showPrint }) {
   const jour = workDay()
   const isToday = f.date === jour
   const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
@@ -126,6 +136,11 @@ function FicheCard({ f, navigate, showDate, highlight }) {
           <button className="btn-icon" title="Voir le détail" onClick={() => navigate(`/fiches/${f.id}`)}>
             <EyeIcon />
           </button>
+          {showPrint && (
+            <button className="btn-icon" title="Imprimer" onClick={() => navigate(`/fiches/imprimer?ids=${f.id}`)}>
+              <PrinterIcon />
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -273,21 +288,9 @@ export default function Accueil() {
           {/* ── Fiches de la veille / antérieures ── */}
           {fichesVeille.length > 0 && (
             <div className="fiches-section">
-              <div className="fiches-section-title-row">
-                <h3 className="fiches-section-title">
-                  {"Fiches de la veille (" + fichesVeille.length + ")"}
-                </h3>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    const ids = fichesVeille.map((f) => f.id).join(',')
-                    navigate(`/fiches/imprimer?ids=${ids}`)
-                  }}
-                >
-                  Visualiser toutes les fiches de la veille
-                </button>
-              </div>
+              <h3 className="fiches-section-title">
+                {"Fiches de la veille (" + fichesVeille.length + ")"}
+              </h3>
 
               {/* > 2000€ en haut */}
               {veilleOver.length > 0 && (
@@ -297,7 +300,7 @@ export default function Accueil() {
                   </h4>
                   <div className="fiches-grid">
                     {veilleOver.map((f) => (
-                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} highlight />
+                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} highlight showPrint />
                     ))}
                   </div>
                 </>
@@ -313,7 +316,7 @@ export default function Accueil() {
                   )}
                   <div className="fiches-grid">
                     {veilleUnder.map((f) => (
-                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} />
+                      <FicheCard key={f.id} f={f} navigate={navigate} showDate={f.date !== hier} showPrint />
                     ))}
                   </div>
                 </>

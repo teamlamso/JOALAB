@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
 import FichePapierMulti from '../components/FichePapierMulti.jsx'
+import { buildPrintTitle } from '../utils/printTitle.js'
 
 /** Page de prévisualisation puis impression groupée. Reçoit `?ids=1,2,3`,
  *  charge toutes les fiches et les affiche à la suite. L'utilisateur lance
@@ -29,7 +30,9 @@ export default function ImprimerFiches() {
 
   const lancerImpression = () => {
     const previous = document.title
-    document.title = `Fiches_${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}`
+    document.title = fiches.length === 1
+      ? buildPrintTitle(fiches[0])
+      : `Fiches_${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}`
     const restore = () => {
       document.title = previous
       window.removeEventListener('afterprint', restore)
