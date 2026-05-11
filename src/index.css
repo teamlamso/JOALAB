@@ -1321,7 +1321,8 @@ tbody tr:hover {
 
 @media print {
   .header,
-  .no-print {
+  .no-print,
+  .toast-container {
     display: none !important;
   }
 
@@ -1330,6 +1331,7 @@ tbody tr:hover {
     margin: 0;
     padding: 0;
     height: auto;
+    min-height: 0;
   }
 
   .page {
