@@ -57,8 +57,9 @@ public class ClientResource {
 
     /** Crée un nouveau client. Retourne 201 Created avec l'ID du nouveau client. */
     @POST
-    public Response createClient(ClientRequest req) {
-        Long id = clientService.createClient(req);
+    public Response createClient(ClientRequest req, @Context ContainerRequestContext ctx) {
+        Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
+        Long id = clientService.createClient(req, utilisateur);
         return Response.created(URI.create("/api/clients/" + id))
                 .entity(Map.of("id", id))
                 .build();
@@ -96,8 +97,10 @@ public class ClientResource {
     @PATCH
     @Path("/{id}/identification")
     public Response updateIdentification(@PathParam("id") Long id,
-                                         ClientIdentificationRequest req) {
-        clientService.updateClientIdentification(id, req);
+                                         ClientIdentificationRequest req,
+                                         @Context ContainerRequestContext ctx) {
+        Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
+        clientService.updateClientIdentification(id, req, utilisateur);
         return Response.noContent().build();
     }
 

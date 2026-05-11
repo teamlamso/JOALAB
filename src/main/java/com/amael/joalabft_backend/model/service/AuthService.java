@@ -1,6 +1,8 @@
 package com.amael.joalabft_backend.model.service;
 
 import com.amael.joalabft_backend.model.entity.Utilisateur;
+import com.amael.joalabft_backend.model.enums.TypeActionJournal;
+import com.amael.joalabft_backend.model.enums.TypeEntiteJournal;
 import com.amael.joalabft_backend.model.repository.UtilisateurRepository;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -20,6 +22,9 @@ public class AuthService {
     @Inject
     private SessionStore sessionStore;
 
+    @Inject
+    private JournalService journalService;
+
     /**
      * Tente d'authentifier un utilisateur.
      *
@@ -32,7 +37,15 @@ public class AuthService {
         Utilisateur u = opt.get();
         if (!u.getMotDePasse().equals(PasswordHasher.hash(motDePasse))) return null;
 
-        return sessionStore.createSession(u);
+        String token = sessionStore.createSession(u);
+        journalService.log(
+                u,
+                TypeActionJournal.CONNEXION,
+                TypeEntiteJournal.UTILISATEUR,
+                u.getId(),
+                u.getIdentifiant(),
+                "Connexion réussie");
+        return token;
     }
 
     /** Retourne l'utilisateur associé au token, ou {@code null}. */
@@ -42,6 +55,16 @@ public class AuthService {
 
     /** Invalide la session du token. */
     public void logout(String token) {
+        Utilisateur u = sessionStore.getUtilisateur(token);
         sessionStore.invalidate(token);
+        if (u != null) {
+            journalService.log(
+                    u,
+                    TypeActionJournal.DECONNEXION,
+                    TypeEntiteJournal.UTILISATEUR,
+                    u.getId(),
+                    u.getIdentifiant(),
+                    "Déconnexion");
+        }
     }
 }

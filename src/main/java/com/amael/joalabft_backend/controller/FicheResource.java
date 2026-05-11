@@ -3,6 +3,7 @@ package com.amael.joalabft_backend.controller;
 import com.amael.joalabft_backend.model.dto.request.FicheRequest;
 import com.amael.joalabft_backend.model.entity.Utilisateur;
 import com.amael.joalabft_backend.model.service.FicheService;
+import com.amael.joalabft_backend.model.service.JournalService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -18,11 +19,12 @@ import java.time.format.DateTimeFormatter;
  * Ressource JAX-RS pour la gestion des fiches LAB-FT.
  *
  * <ul>
- *   <li>{@code GET    /api/fiches}      — liste filtrée (accueil)</li>
- *   <li>{@code GET    /api/fiches/{id}} — détail d'une fiche</li>
- *   <li>{@code POST   /api/fiches}      — création</li>
- *   <li>{@code PUT    /api/fiches/{id}} — mise à jour des lignes (fenêtre de jours selon le rôle)</li>
- *   <li>{@code DELETE /api/fiches/{id}} — suppression (MCD uniquement)</li>
+ *   <li>{@code GET    /api/fiches}                  — liste filtrée (accueil)</li>
+ *   <li>{@code GET    /api/fiches/{id}}             — détail d'une fiche</li>
+ *   <li>{@code GET    /api/fiches/{id}/historique}  — entrées du journal liées à la fiche</li>
+ *   <li>{@code POST   /api/fiches}                  — création</li>
+ *   <li>{@code PUT    /api/fiches/{id}}             — mise à jour des lignes (fenêtre selon le rôle)</li>
+ *   <li>{@code DELETE /api/fiches/{id}}             — suppression (MCD uniquement)</li>
  * </ul>
  */
 @Path("/fiches")
@@ -34,6 +36,9 @@ public class FicheResource {
 
     @Inject
     private FicheService ficheService;
+
+    @Inject
+    private JournalService journalService;
 
     /**
      * Retourne la liste des fiches filtrées.
@@ -59,6 +64,13 @@ public class FicheResource {
     @Path("/{id}")
     public Response getFiche(@PathParam("id") Long id) {
         return Response.ok(ficheService.getFiche(id)).build();
+    }
+
+    /** Retourne l'historique d'audit pour une fiche (toutes les actions liées). */
+    @GET
+    @Path("/{id}/historique")
+    public Response getHistorique(@PathParam("id") Long id) {
+        return Response.ok(journalService.listHistoriqueFiche(id)).build();
     }
 
     /**

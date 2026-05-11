@@ -157,4 +157,17 @@ public class PermissionService {
                   + roleCible + ".");
         }
     }
+
+    /** Indique si {@code utilisateur} peut consulter le journal global (MCD uniquement). */
+    public boolean peutLireJournal(Utilisateur utilisateur) {
+        return utilisateur != null && utilisateur.getRole() == RoleUtilisateur.MCD;
+    }
+
+    /** Lève 403 si {@code utilisateur} ne peut pas consulter le journal global. */
+    public void ensurePeutLireJournal(Utilisateur utilisateur) {
+        if (!peutLireJournal(utilisateur)) {
+            throw new ForbiddenException(
+                    "Seul un MCD peut consulter le journal d'audit.");
+        }
+    }
 }
