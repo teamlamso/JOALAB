@@ -170,4 +170,22 @@ public class PermissionService {
                     "Seul un MCD peut consulter le journal d'audit.");
         }
     }
+
+    /**
+     * Indique si {@code utilisateur} peut consulter l'historique d'une fiche
+     * (RESPONSABLE_CAISSE ou MCD). Les CAISSIER ne voient pas l'historique.
+     */
+    public boolean peutLireHistoriqueFiche(Utilisateur utilisateur) {
+        if (utilisateur == null) return false;
+        return utilisateur.getRole() == RoleUtilisateur.RESPONSABLE_CAISSE
+                || utilisateur.getRole() == RoleUtilisateur.MCD;
+    }
+
+    /** Lève 403 si {@code utilisateur} ne peut pas consulter l'historique d'une fiche. */
+    public void ensurePeutLireHistoriqueFiche(Utilisateur utilisateur) {
+        if (!peutLireHistoriqueFiche(utilisateur)) {
+            throw new ForbiddenException(
+                    "Votre rôle ne vous autorise pas à consulter l'historique des fiches.");
+        }
+    }
 }

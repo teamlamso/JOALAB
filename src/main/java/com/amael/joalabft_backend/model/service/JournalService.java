@@ -68,9 +68,13 @@ public class JournalService {
     /**
      * Retourne l'historique des actions effectuées sur une fiche précise
      * (toutes les actions ayant touché à cet identifiant de fiche, du plus
-     * récent au plus ancien). Accessible à tout utilisateur authentifié.
+     * récent au plus ancien). Réservé aux RESPONSABLE_CAISSE et MCD : les
+     * CAISSIER n'ont pas accès à l'historique.
+     *
+     * @throws jakarta.ws.rs.ForbiddenException si le rôle ne le permet pas
      */
-    public List<JournalActionResponse> listHistoriqueFiche(Long ficheId) {
+    public List<JournalActionResponse> listHistoriqueFiche(Long ficheId, Utilisateur demandeur) {
+        permissionService.ensurePeutLireHistoriqueFiche(demandeur);
         return repository.findByEntite(TypeEntiteJournal.FICHE, ficheId).stream()
                 .map(this::toResponse)
                 .toList();

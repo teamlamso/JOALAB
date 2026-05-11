@@ -44,7 +44,7 @@ public class JournalAction {
     @Column(name = "libelle_entite", length = 200)
     private String libelleEntite;
 
-    @Column(length = 500)
+    @Column(length = 2000)
     private String description;
 
     @Column(nullable = false, updatable = false)

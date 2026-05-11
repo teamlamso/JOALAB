@@ -24,6 +24,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -178,16 +179,46 @@ public class FicheService {
 
     // --- Helpers ---
 
-    /** Description courte d'une fiche pour l'audit (nb lignes + types + total entrant + sortant). */
+    /**
+     * Description détaillée d'une fiche pour l'audit : une ligne par
+     * LigneTransaction, avec type de jeu, n° de socle, RGM, paiement, change
+     * entrant/sortant. {@code verbe} précède la description sur la première
+     * ligne (Création / Modification / Suppression).
+     */
     private String descriptionFiche(FicheLABFT fiche, String verbe) {
-        Set<String> types = new LinkedHashSet<>();
-        fiche.getLignes().forEach(l -> {
-            if (l.getTypeJeu() != null) types.add(l.getTypeJeu().name());
-        });
-        String typesStr = types.isEmpty() ? "—" : String.join(", ", types);
-        return verbe + " — " + fiche.getLignes().size() + " ligne(s) [" + typesStr + "] "
-                + "; entrant " + fiche.getTotalChangeEntrant()
-                + " ; sortant " + fiche.getTotalChangeSortant();
+        StringBuilder sb = new StringBuilder(verbe);
+        List<LigneTransaction> lignes = fiche.getLignes();
+        if (lignes.isEmpty()) {
+            sb.append(" — (aucune ligne)");
+            return sb.toString();
+        }
+        for (int i = 0; i < lignes.size(); i++) {
+            sb.append('\n').append("Ligne ").append(i + 1).append(" : ");
+            sb.append(formatLigne(lignes.get(i)));
+        }
+        return sb.toString();
+    }
+
+    private String formatLigne(LigneTransaction l) {
+        List<String> parts = new ArrayList<>();
+        if (l.getTypeJeu() != null) parts.add(l.getTypeJeu().name());
+        if (l.getNumeroSocle() != null) parts.add("socle " + l.getNumeroSocle());
+        if (l.getMontantRGM() != null && l.getMontantRGM().signum() != 0) {
+            parts.add("RGM " + formatMontant(l.getMontantRGM()));
+        }
+        if (l.getTypePaiement() != null) parts.add(l.getTypePaiement().name());
+        if (l.getChangeEntrant() != null && l.getChangeEntrant().signum() != 0) {
+            parts.add("entrant " + formatMontant(l.getChangeEntrant()));
+        }
+        if (l.getChangeSortant() != null && l.getChangeSortant().signum() != 0) {
+            parts.add("sortant " + formatMontant(l.getChangeSortant()));
+        }
+        if (l.getTypeChange() != null) parts.add(l.getTypeChange().name());
+        return String.join(", ", parts);
+    }
+
+    private String formatMontant(java.math.BigDecimal value) {
+        return String.format(java.util.Locale.FRANCE, "%,.2f €", value);
     }
 
     private LigneTransaction buildLigne(LigneTransactionRequest req, Utilisateur caissier) {
