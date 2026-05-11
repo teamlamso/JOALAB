@@ -66,11 +66,15 @@ public class FicheResource {
         return Response.ok(ficheService.getFiche(id)).build();
     }
 
-    /** Retourne l'historique d'audit pour une fiche (toutes les actions liées). */
+    /**
+     * Retourne l'historique d'audit pour une fiche (toutes les actions liées).
+     * Réservé aux RESPONSABLE_CAISSE et MCD.
+     */
     @GET
     @Path("/{id}/historique")
-    public Response getHistorique(@PathParam("id") Long id) {
-        return Response.ok(journalService.listHistoriqueFiche(id)).build();
+    public Response getHistorique(@PathParam("id") Long id, @Context ContainerRequestContext ctx) {
+        Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
+        return Response.ok(journalService.listHistoriqueFiche(id, utilisateur)).build();
     }
 
     /**
