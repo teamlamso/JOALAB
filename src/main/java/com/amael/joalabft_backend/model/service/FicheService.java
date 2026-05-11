@@ -44,6 +44,9 @@ public class FicheService {
     @Inject
     private ClientRepository clientRepository;
 
+    @Inject
+    private PermissionService permissionService;
+
     /**
      * Retourne la liste des fiches filtrées par plage de dates et terme de recherche.
      * Si {@code from} ou {@code to} est {@code null}, la date du jour est utilisée.
@@ -92,11 +95,15 @@ public class FicheService {
      * Met à jour les lignes d'une fiche existante. Plusieurs types de jeu sont autorisés
      * sur la même fiche (l'affichage et l'impression séparent visuellement les blocs).
      *
-     * @throws NotFoundException si la fiche n'existe pas
+     * @throws NotFoundException     si la fiche n'existe pas
+     * @throws jakarta.ws.rs.ForbiddenException si le rôle de l'utilisateur ne lui permet pas
+     *         de modifier une fiche aussi ancienne
      */
     public void updateFiche(Long id, FicheRequest req, Utilisateur modifiePar) {
         FicheLABFT fiche = ficheRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Fiche introuvable : " + id));
+
+        permissionService.ensurePeutModifierFiche(modifiePar, fiche);
 
         fiche.setModifiePar(modifiePar);
         fiche.setDateModification(LocalDateTime.now());
@@ -123,6 +130,19 @@ public class FicheService {
         }
 
         ficheRepository.update(fiche);
+    }
+
+    /**
+     * Supprime une fiche. Réservé aux utilisateurs MCD.
+     *
+     * @throws NotFoundException                si la fiche n'existe pas
+     * @throws jakarta.ws.rs.ForbiddenException si {@code utilisateur} n'est pas MCD
+     */
+    public void deleteFiche(Long id, Utilisateur utilisateur) {
+        permissionService.ensurePeutSupprimerFiche(utilisateur);
+        FicheLABFT fiche = ficheRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Fiche introuvable : " + id));
+        ficheRepository.delete(fiche);
     }
 
     // --- Helpers ---
