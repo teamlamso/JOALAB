@@ -34,53 +34,62 @@ export function buildPrintTitle(fiche, typeOverride = null) {
 export const ORDRE_TYPES_JEU = ORDRE_TYPES
 
 /**
- * Imprime une sous-fiche unique. On masque toutes les autres .fiche-papier
- * de la page via {@code style.display = 'none'} pendant le dialogue d'impression,
- * puis on restaure à la fermeture (afterprint). Cette approche par style inline
- * est plus robuste que de poser une classe sur body + filtrer en CSS, qui
- * dépendait du moment où le style est rafraîchi par le moteur d'impression.
+ * Imprime une sous-fiche unique. Masque toutes les autres .fiche-papier
+ * de la page via {@code style.display = 'none'} pendant l'impression, puis
+ * restaure à la fermeture (événement afterprint).
  *
- * Si {@code typeFiltre} est null, c'est l'unique sous-fiche (fiche sans lignes
- * typées) qui est imprimée.
+ * Toute la mécanique est encadrée d'un try/catch : si quoi que ce soit
+ * échoue, on appelle quand même {@code window.print()} pour que l'utilisateur
+ * obtienne au moins une impression (même non filtrée) plutôt que rien.
  */
 export function imprimerSousFiche(fiche, typeFiltre) {
-  const ficheId = String(fiche.id)
-  const allPapiers = Array.from(document.querySelectorAll('.fiche-papier'))
-  const target = allPapiers.find((el) => {
-    if (el.dataset.ficheId !== ficheId) return false
-    if (typeFiltre) return el.dataset.type === typeFiltre
-    return !el.dataset.type
-  })
+  let restoreFn = null
 
-  if (!target) {
-    // Sécurité : on lance quand même l'impression globale plutôt que de ne
-    // rien faire (mieux vaut imprimer trop que rien).
-    window.print()
-    return
-  }
+  try {
+    const ficheId = String(fiche.id)
+    const allPapiers = Array.from(document.querySelectorAll('.fiche-papier'))
+    const target = allPapiers.find((el) => {
+      if (el.dataset.ficheId !== ficheId) return false
+      if (typeFiltre) return el.dataset.type === typeFiltre
+      return !el.dataset.type
+    })
 
-  const previous = document.title
-  document.title = buildPrintTitle(fiche, typeFiltre)
+    if (target) {
+      const previous = document.title
+      document.title = buildPrintTitle(fiche, typeFiltre)
 
-  const hidden = []
-  allPapiers.forEach((el) => {
-    if (el !== target) {
-      hidden.push({ el, prev: el.style.display })
-      el.style.display = 'none'
+      const hidden = []
+      allPapiers.forEach((el) => {
+        if (el !== target) {
+          hidden.push({ el, prev: el.style.display })
+          el.style.display = 'none'
+        }
+      })
+      const prevBreakBefore  = target.style.pageBreakBefore
+      const prevBreakBefore2 = target.style.breakBefore
+      target.style.pageBreakBefore = 'auto'
+      target.style.breakBefore = 'auto'
+
+      restoreFn = () => {
+        document.title = previous
+        hidden.forEach(({ el, prev }) => { el.style.display = prev })
+        target.style.pageBreakBefore = prevBreakBefore
+        target.style.breakBefore = prevBreakBefore2
+      }
+      const onAfter = () => {
+        try { restoreFn() } catch { /* ignore */ }
+        window.removeEventListener('afterprint', onAfter)
+      }
+      window.addEventListener('afterprint', onAfter)
+    } else {
+      console.warn('[print] cible introuvable pour fiche', fiche?.id, 'type', typeFiltre)
     }
-  })
-  const prevBreakBefore = target.style.pageBreakBefore
-  const prevBreakBefore2 = target.style.breakBefore
-  target.style.pageBreakBefore = 'auto'
-  target.style.breakBefore = 'auto'
-
-  const restore = () => {
-    document.title = previous
-    hidden.forEach(({ el, prev }) => { el.style.display = prev })
-    target.style.pageBreakBefore = prevBreakBefore
-    target.style.breakBefore = prevBreakBefore2
-    window.removeEventListener('afterprint', restore)
+  } catch (err) {
+    console.error('[print] préparation échouée, impression non filtrée :', err)
+    if (restoreFn) {
+      try { restoreFn() } catch { /* ignore */ }
+    }
   }
-  window.addEventListener('afterprint', restore)
+
   window.print()
 }
