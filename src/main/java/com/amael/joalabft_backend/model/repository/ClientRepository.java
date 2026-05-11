@@ -90,6 +90,19 @@ public class ClientRepository {
         return em.merge(client);
     }
 
+    /** Supprime un client. L'appelant doit s'assurer que le client n'a pas de fiches associées. */
+    public void delete(Client client) {
+        em.remove(em.contains(client) ? client : em.merge(client));
+    }
+
+    /** Compte le nombre de fiches associées à un client (utile avant suppression). */
+    public long countFiches(Long clientId) {
+        return em.createQuery(
+                "SELECT COUNT(f) FROM FicheLABFT f WHERE f.client.id = :id",
+                Long.class
+        ).setParameter("id", clientId).getSingleResult();
+    }
+
     /**
      * Retourne la date de la dernière fiche créée pour un client,
      * ou {@code null} s'il n'en a aucune.

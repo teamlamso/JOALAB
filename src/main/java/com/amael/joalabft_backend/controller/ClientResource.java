@@ -1,9 +1,13 @@
 package com.amael.joalabft_backend.controller;
 
+import com.amael.joalabft_backend.model.dto.request.ClientIdentificationRequest;
 import com.amael.joalabft_backend.model.dto.request.ClientRequest;
+import com.amael.joalabft_backend.model.entity.Utilisateur;
 import com.amael.joalabft_backend.model.service.ClientService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -14,10 +18,16 @@ import java.util.Map;
  * Ressource JAX-RS pour la gestion des clients.
  *
  * <ul>
- *   <li>{@code GET    /api/clients}       — liste (avec recherche optionnelle)</li>
- *   <li>{@code GET    /api/clients/{id}}  — détail + historique fiches</li>
- *   <li>{@code POST   /api/clients}       — création</li>
- *   <li>{@code PUT    /api/clients/{id}}  — mise à jour</li>
+ *   <li>{@code GET    /api/clients}                      — liste (avec recherche optionnelle)</li>
+ *   <li>{@code GET    /api/clients/{id}}                 — détail + historique fiches</li>
+ *   <li>{@code POST   /api/clients}                      — création</li>
+ *   <li>{@code POST   /api/clients/match}                — recherche de doublons potentiels</li>
+ *   <li>{@code PUT    /api/clients/{id}}                 — mise à jour de l'identité complète
+ *                                                          (RESPONSABLE_CAISSE et MCD uniquement)</li>
+ *   <li>{@code PATCH  /api/clients/{id}/identification}  — mise à jour de l'adresse et de la
+ *                                                          pièce d'identité (tous rôles)</li>
+ *   <li>{@code DELETE /api/clients/{id}}                 — suppression (MCD uniquement,
+ *                                                          rejette si le client a des fiches)</li>
  * </ul>
  */
 @Path("/clients")
@@ -66,11 +76,38 @@ public class ClientResource {
         return Response.ok(clientService.findSimilar(req)).build();
     }
 
-    /** Met à jour un client existant. */
+    /**
+     * Met à jour l'identité complète d'un client (état civil, adresse, pièce,
+     * PPE, description physique). Réservé aux rôles RESPONSABLE_CAISSE et MCD.
+     */
     @PUT
     @Path("/{id}")
-    public Response updateClient(@PathParam("id") Long id, ClientRequest req) {
-        clientService.updateClient(id, req);
+    public Response updateClient(@PathParam("id") Long id, ClientRequest req,
+                                 @Context ContainerRequestContext ctx) {
+        Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
+        clientService.updateClient(id, req, utilisateur);
+        return Response.noContent().build();
+    }
+
+    /**
+     * Met à jour uniquement l'adresse et la pièce d'identité d'un client.
+     * Accessible à tous les rôles (y compris CAISSIER).
+     */
+    @PATCH
+    @Path("/{id}/identification")
+    public Response updateIdentification(@PathParam("id") Long id,
+                                         ClientIdentificationRequest req) {
+        clientService.updateClientIdentification(id, req);
+        return Response.noContent().build();
+    }
+
+    /** Supprime un client. Réservé aux MCD ; le client doit n'avoir aucune fiche. */
+    @DELETE
+    @Path("/{id}")
+    public Response deleteClient(@PathParam("id") Long id,
+                                 @Context ContainerRequestContext ctx) {
+        Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
+        clientService.deleteClient(id, utilisateur);
         return Response.noContent().build();
     }
 }

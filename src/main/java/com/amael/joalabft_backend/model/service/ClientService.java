@@ -1,15 +1,18 @@
 package com.amael.joalabft_backend.model.service;
 
+import com.amael.joalabft_backend.model.dto.request.ClientIdentificationRequest;
 import com.amael.joalabft_backend.model.dto.request.ClientRequest;
 import com.amael.joalabft_backend.model.dto.response.ClientDetailResponse;
 import com.amael.joalabft_backend.model.dto.response.ClientSummaryResponse;
 import com.amael.joalabft_backend.model.dto.response.FicheSummaryResponse;
 import com.amael.joalabft_backend.model.entity.Client;
 import com.amael.joalabft_backend.model.entity.FicheLABFT;
+import com.amael.joalabft_backend.model.entity.Utilisateur;
 import com.amael.joalabft_backend.model.repository.ClientRepository;
 import com.amael.joalabft_backend.model.repository.FicheLABFTRepository;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 
 import java.time.LocalDate;
@@ -29,6 +32,9 @@ public class ClientService {
 
     @Inject
     private FicheLABFTRepository ficheRepository;
+
+    @Inject
+    private PermissionService permissionService;
 
     /** Retourne la liste des clients avec un résumé, filtrée optionnellement par recherche. */
     public List<ClientSummaryResponse> listClients(String search) {
@@ -105,14 +111,66 @@ public class ClientService {
     }
 
     /**
-     * Met à jour un client existant.
+     * Met à jour l'identité complète d'un client. Réservé aux rôles
+     * {@code RESPONSABLE_CAISSE} et {@code MCD}.
      *
-     * @throws NotFoundException si le client n'existe pas
+     * @throws NotFoundException                si le client n'existe pas
+     * @throws jakarta.ws.rs.ForbiddenException si l'utilisateur n'a pas le rôle requis
      */
-    public void updateClient(Long id, ClientRequest req) {
+    public void updateClient(Long id, ClientRequest req, Utilisateur utilisateur) {
+        permissionService.ensurePeutModifierClientComplet(utilisateur);
         Client c = clientRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Client introuvable : " + id));
         clientRepository.update(applyRequest(c, req));
+    }
+
+    /**
+     * Met à jour uniquement l'adresse et la pièce d'identité d'un client.
+     * Accessible à tous les rôles (y compris {@code CAISSIER}).
+     *
+     * @throws NotFoundException si le client n'existe pas
+     */
+    public void updateClientIdentification(Long id, ClientIdentificationRequest req) {
+        Client c = clientRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Client introuvable : " + id));
+
+        // Adresse
+        c.setRue(req.rue);
+        c.setComplement(req.complement);
+        c.setCodePostal(req.codePostal);
+        c.setVille(req.ville);
+        c.setPays(req.pays);
+
+        // Pièce d'identité
+        c.setTypePiece(req.typePiece);
+        c.setNumeroPiece(req.numeroPiece);
+        c.setDateDelivrance(req.dateDelivrance != null ? LocalDate.parse(req.dateDelivrance, DATE_FMT) : null);
+        c.setPrefectureDelivrance(req.prefectureDelivrance);
+        c.setPaysDelivrance(req.paysDelivrance);
+
+        clientRepository.update(c);
+    }
+
+    /**
+     * Supprime un client. Réservé aux utilisateurs MCD. La suppression échoue
+     * si le client a au moins une fiche associée — il faut supprimer les fiches
+     * au préalable.
+     *
+     * @throws NotFoundException                si le client n'existe pas
+     * @throws jakarta.ws.rs.ForbiddenException si l'utilisateur n'est pas MCD
+     * @throws BadRequestException              si le client a encore des fiches
+     */
+    public void deleteClient(Long id, Utilisateur utilisateur) {
+        permissionService.ensurePeutSupprimerClient(utilisateur);
+        Client c = clientRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Client introuvable : " + id));
+        long nbFiches = clientRepository.countFiches(id);
+        if (nbFiches > 0) {
+            throw new BadRequestException(
+                    "Ce client a " + nbFiches + " fiche(s) associée(s) : "
+                  + "il faut les supprimer avant de pouvoir supprimer le client.");
+        }
+        clientRepository.delete(c);
     }
 
     // --- Helpers ---

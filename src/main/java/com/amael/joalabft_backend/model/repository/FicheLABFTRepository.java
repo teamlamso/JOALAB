@@ -84,4 +84,9 @@ public class FicheLABFTRepository {
     public FicheLABFT update(FicheLABFT fiche) {
         return em.merge(fiche);
     }
+
+    /** Supprime une fiche (les lignes sont supprimées en cascade). */
+    public void delete(FicheLABFT fiche) {
+        em.remove(em.contains(fiche) ? fiche : em.merge(fiche));
+    }
 }

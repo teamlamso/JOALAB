@@ -18,10 +18,11 @@ import java.time.format.DateTimeFormatter;
  * Ressource JAX-RS pour la gestion des fiches LAB-FT.
  *
  * <ul>
- *   <li>{@code GET  /api/fiches}      — liste filtrée (accueil)</li>
- *   <li>{@code GET  /api/fiches/{id}} — détail d'une fiche</li>
- *   <li>{@code POST /api/fiches}      — création</li>
- *   <li>{@code PUT  /api/fiches/{id}} — mise à jour des lignes</li>
+ *   <li>{@code GET    /api/fiches}      — liste filtrée (accueil)</li>
+ *   <li>{@code GET    /api/fiches/{id}} — détail d'une fiche</li>
+ *   <li>{@code POST   /api/fiches}      — création</li>
+ *   <li>{@code PUT    /api/fiches/{id}} — mise à jour des lignes (fenêtre de jours selon le rôle)</li>
+ *   <li>{@code DELETE /api/fiches/{id}} — suppression (MCD uniquement)</li>
  * </ul>
  */
 @Path("/fiches")
@@ -74,6 +75,7 @@ public class FicheResource {
     /**
      * Met à jour les lignes d'une fiche existante.
      * Enregistre l'utilisateur connecté comme modificateur.
+     * La fenêtre d'édition dépend du rôle (cf. {@code PermissionService}).
      */
     @PUT
     @Path("/{id}")
@@ -81,6 +83,16 @@ public class FicheResource {
                                 @Context ContainerRequestContext ctx) {
         Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
         ficheService.updateFiche(id, req, utilisateur);
+        return Response.noContent().build();
+    }
+
+    /** Supprime une fiche. Réservé aux MCD. */
+    @DELETE
+    @Path("/{id}")
+    public Response deleteFiche(@PathParam("id") Long id,
+                                @Context ContainerRequestContext ctx) {
+        Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
+        ficheService.deleteFiche(id, utilisateur);
         return Response.noContent().build();
     }
 }
