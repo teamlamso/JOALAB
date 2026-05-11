@@ -65,16 +65,13 @@ export function imprimerSousFiche(fiche, typeFiltre) {
           el.style.display = 'none'
         }
       })
-      const prevBreakBefore  = target.style.pageBreakBefore
-      const prevBreakBefore2 = target.style.breakBefore
-      target.style.pageBreakBefore = 'auto'
-      target.style.breakBefore = 'auto'
+      const hadPageBreak = target.classList.contains('fiche-papier-page-break')
+      if (hadPageBreak) target.classList.remove('fiche-papier-page-break')
 
       restoreFn = () => {
         document.title = previous
         hidden.forEach(({ el, prev }) => { el.style.display = prev })
-        target.style.pageBreakBefore = prevBreakBefore
-        target.style.breakBefore = prevBreakBefore2
+        if (hadPageBreak) target.classList.add('fiche-papier-page-break')
       }
       const onAfter = () => {
         try { restoreFn() } catch { /* ignore */ }
@@ -91,5 +88,8 @@ export function imprimerSousFiche(fiche, typeFiltre) {
     }
   }
 
-  window.print()
+  // Laisse le navigateur appliquer les changements de style avant la
+  // bascule en mode print — sinon Firefox peut rester bloqué sur l'état
+  // de layout intermédiaire et faire tourner la prévisualisation à vide.
+  requestAnimationFrame(() => requestAnimationFrame(() => window.print()))
 }

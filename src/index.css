@@ -1359,12 +1359,17 @@ tbody tr:hover {
     background: white;
     margin: 0;
     padding: 0;
+    min-height: 0;
+    /* Évite que Firefox se base sur 100vh d'écran pour la hauteur de page. */
+    height: auto;
   }
 
   .page {
     padding: 0;
     max-width: 100%;
     margin: 0;
+    min-height: 0;
+    height: auto;
   }
 
   .fiche-papier {
@@ -1377,6 +1382,31 @@ tbody tr:hover {
   .fiche-papier-page-break {
     page-break-before: always;
     break-before: page;
+  }
+
+  /* En-tête de tableau répété en haut de chaque page imprimée si le tableau
+     déborde — sans ça la page 2 n'a plus de colonnes nommées. */
+  .fp-table thead {
+    display: table-header-group;
+  }
+
+  /* L'identité du joueur reste collée au début du tableau (pas d'orphelin). */
+  .fp-titre-bar,
+  .fp-casino-bar,
+  .fp-identite-grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .fp-identite-grid {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* La ligne « Totaux » reste collée aux dernières lignes du tableau. */
+  .fp-tr-totaux,
+  .fp-tr-totaux td {
+    page-break-before: avoid;
+    break-before: avoid;
   }
 
   /* Couleurs imprimées telles qu'à l'écran. */
