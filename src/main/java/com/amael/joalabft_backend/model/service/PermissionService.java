@@ -116,4 +116,45 @@ public class PermissionService {
                     "Seul un MCD peut supprimer un client.");
         }
     }
+
+    /**
+     * Indique si {@code utilisateur} peut lister les utilisateurs applicatifs
+     * (RESPONSABLE_CAISSE et MCD seulement).
+     */
+    public boolean peutListerUtilisateurs(Utilisateur utilisateur) {
+        if (utilisateur == null) return false;
+        return utilisateur.getRole() == RoleUtilisateur.RESPONSABLE_CAISSE
+                || utilisateur.getRole() == RoleUtilisateur.MCD;
+    }
+
+    /** Lève 403 si {@code utilisateur} ne peut pas lister les utilisateurs. */
+    public void ensurePeutListerUtilisateurs(Utilisateur utilisateur) {
+        if (!peutListerUtilisateurs(utilisateur)) {
+            throw new ForbiddenException(
+                    "Votre rôle ne vous autorise pas à consulter la liste des utilisateurs.");
+        }
+    }
+
+    /**
+     * Indique si {@code createur} peut créer un utilisateur avec le rôle
+     * {@code roleCible}. Règles : MCD peut créer tous les rôles ;
+     * RESPONSABLE_CAISSE peut créer uniquement des CAISSIER.
+     */
+    public boolean peutCreerUtilisateur(Utilisateur createur, RoleUtilisateur roleCible) {
+        if (createur == null || roleCible == null) return false;
+        return switch (createur.getRole()) {
+            case MCD                -> true;
+            case RESPONSABLE_CAISSE -> roleCible == RoleUtilisateur.CAISSIER;
+            case CAISSIER           -> false;
+        };
+    }
+
+    /** Lève 403 si {@code createur} ne peut pas créer un utilisateur avec ce rôle. */
+    public void ensurePeutCreerUtilisateur(Utilisateur createur, RoleUtilisateur roleCible) {
+        if (!peutCreerUtilisateur(createur, roleCible)) {
+            throw new ForbiddenException(
+                    "Votre rôle ne vous autorise pas à créer un utilisateur avec le rôle "
+                  + roleCible + ".");
+        }
+    }
 }

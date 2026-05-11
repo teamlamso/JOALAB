@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,5 +35,22 @@ public class UtilisateurRepository {
     public Utilisateur save(Utilisateur utilisateur) {
         em.persist(utilisateur);
         return utilisateur;
+    }
+
+    /** Retourne tous les utilisateurs triés par rôle (MCD, RESPONSABLE_CAISSE, CAISSIER) puis nom + prénom. */
+    public List<Utilisateur> findAll() {
+        return em.createQuery(
+                "SELECT u FROM Utilisateur u ORDER BY u.role ASC, u.nom ASC, u.prenom ASC",
+                Utilisateur.class
+        ).getResultList();
+    }
+
+    /** Vrai si un utilisateur avec cet identifiant existe déjà. */
+    public boolean existsByIdentifiant(String identifiant) {
+        Long count = em.createQuery(
+                "SELECT COUNT(u) FROM Utilisateur u WHERE u.identifiant = :id",
+                Long.class
+        ).setParameter("id", identifiant).getSingleResult();
+        return count > 0;
     }
 }
