@@ -292,13 +292,38 @@ tbody tr:hover {
   border-color: var(--primary);
 }
 
-.search-bar svg {
+.search-bar > svg {
   position: absolute;
   left: 11px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
   pointer-events: none;
+}
+
+.search-bar input {
+  padding-right: 34px;
+}
+
+.search-bar-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  padding: 4px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-bar-clear:hover {
+  background: var(--surface-alt);
+  color: var(--text);
 }
 
 /* ===================== FORM ===================== */

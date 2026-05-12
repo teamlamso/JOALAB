@@ -43,6 +43,14 @@ function SearchIcon() {
   )
 }
 
+function ClearIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  )
+}
+
 function EditIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -120,7 +128,7 @@ function FicheCard({ f, navigate, showDate, highlight, role }) {
       </div>
       <div className="fiche-card-footer">
         <span className="fiche-card-footer-time">
-          Dernière modification : {formatLastModif(f.date, f.derniereModif)}
+          Dernière modification : {formatLastModif(f.derniereModifDate, f.derniereModif)}
         </span>
         <div className="fiche-card-footer-actions">
           {peutModifier && (
@@ -242,6 +250,16 @@ export default function Accueil() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {search && (
+            <button
+              type="button"
+              className="search-bar-clear"
+              title="Effacer la recherche"
+              onClick={() => setSearch('')}
+            >
+              <ClearIcon />
+            </button>
+          )}
         </div>
         <DatePickerInput value={dateDebut} onChange={setDateDebut} />
         <span className="date-separator">au</span>
