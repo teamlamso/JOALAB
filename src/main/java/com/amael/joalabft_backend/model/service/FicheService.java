@@ -122,24 +122,20 @@ public class FicheService {
         fiche.setModifiePar(modifiePar);
         fiche.setDateModification(LocalDateTime.now());
 
-        // Snapshot des lignes existantes pour produire un diff au journal.
+        // Une seule passe sur les lignes existantes : on capture à la fois
+        // l'état précédent (pour le diff journal) et le caissier d'origine
+        // (pour ne pas écraser la signature des lignes conservées).
         Map<Long, LigneSnapshot> avant = new HashMap<>();
+        Map<Long, Utilisateur> caissiersOrigine = new HashMap<>();
         for (LigneTransaction l : fiche.getLignes()) {
-            if (l.getId() != null) avant.put(l.getId(), snapshot(l));
+            if (l.getId() == null) continue;
+            avant.put(l.getId(), snapshot(l));
+            if (l.getCaissier() != null) caissiersOrigine.put(l.getId(), l.getCaissier());
         }
 
         List<LigneTransaction> nouvelles = new ArrayList<>();
         List<Long> idsRequete = new ArrayList<>();
         if (req.lignes != null) {
-            // Pour préserver le caissier d'origine des lignes existantes,
-            // on capture l'association (id ligne → caissier) avant remplacement.
-            Map<Long, Utilisateur> caissiersOrigine = new HashMap<>();
-            for (LigneTransaction l : fiche.getLignes()) {
-                if (l.getId() != null && l.getCaissier() != null) {
-                    caissiersOrigine.put(l.getId(), l.getCaissier());
-                }
-            }
-
             for (LigneTransactionRequest reqLigne : req.lignes) {
                 Utilisateur caissier = (reqLigne.id != null && caissiersOrigine.containsKey(reqLigne.id))
                         ? caissiersOrigine.get(reqLigne.id)
@@ -150,6 +146,11 @@ public class FicheService {
             fiche.replaceLignes(nouvelles);
         }
 
+        // Description calculée avant la persistance : on utilise des objets
+        // déjà en mémoire, pas besoin d'attendre que le merge soit terminé.
+        String libelle = fiche.getClient().getLibelle();
+        String description = descriptionDiffModification(nouvelles, idsRequete, avant);
+
         ficheRepository.update(fiche);
 
         journalService.log(
@@ -157,8 +158,8 @@ public class FicheService {
                 TypeActionJournal.MODIFICATION,
                 TypeEntiteJournal.FICHE,
                 fiche.getId(),
-                fiche.getClient().getLibelle(),
-                descriptionDiffModification(nouvelles, idsRequete, avant));
+                libelle,
+                description);
     }
 
     /**
