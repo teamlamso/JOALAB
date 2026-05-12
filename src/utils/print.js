@@ -80,11 +80,10 @@ export function imprimerSousFiche(fiche, typeFiltre) {
         window.removeEventListener('afterprint', onAfter)
       }
       window.addEventListener('afterprint', onAfter)
-    } else {
-      console.warn('[print] cible introuvable pour fiche', fiche?.id, 'type', typeFiltre)
     }
-  } catch (err) {
-    console.error('[print] préparation échouée, impression non filtrée :', err)
+  } catch {
+    // En cas d'erreur de préparation on retombe sur une impression non filtrée
+    // (cf. window.print() en bas), c'est la moins mauvaise option.
     if (restoreFn) {
       try { restoreFn() } catch { /* ignore */ }
     }
