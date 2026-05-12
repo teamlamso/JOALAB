@@ -251,20 +251,45 @@ public class ClientImportService {
     private void appliquerAdresse(Client c, String raw) {
         if (raw == null) return;
         String[] lines = raw.split("\\r?\\n");
-        if (lines.length >= 1) c.setRue(strip(lines[0]));
         if (lines.length >= 2) {
+            // Format multi-ligne « rue \n CP ville \n pays ».
+            c.setRue(strip(lines[0]));
             String l2 = strip(lines[1]);
-            // « 75001 Paris » → CP = 75001, ville = Paris.
             int sep = l2.indexOf(' ');
             if (sep > 0 && l2.substring(0, sep).matches("\\d{4,5}")) {
                 c.setCodePostal(l2.substring(0, sep));
                 c.setVille(l2.substring(sep + 1).trim());
             } else {
-                // Pas de CP reconnaissable : on met tout dans ville.
                 c.setVille(l2);
             }
+            if (lines.length >= 3) c.setPays(normaliserPays(strip(lines[2])));
+        } else {
+            // Cellule sur une seule ligne : on essaie de repérer le CP
+            // n'importe où dans la chaîne (5 chiffres consécutifs).
+            String single = strip(raw);
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\b(\\d{5})\\b").matcher(single);
+            if (m.find()) {
+                String cp     = m.group(1);
+                String avant  = single.substring(0, m.start()).trim().replaceAll("[,;]\\s*$", "");
+                String apres  = single.substring(m.end()).trim().replaceAll("^[,;]\\s*", "");
+                if (!avant.isEmpty()) c.setRue(avant);
+                c.setCodePostal(cp);
+                // « Paris, France » / « Paris FRANCE » → ville = Paris, pays = France.
+                java.util.regex.Matcher mp = java.util.regex.Pattern.compile(
+                        "(?i)^(.*?)[,\\s]+\\b(france|fr)\\b\\s*$").matcher(apres);
+                if (mp.matches()) {
+                    String v = mp.group(1).trim();
+                    if (!v.isEmpty()) c.setVille(v);
+                    c.setPays("France");
+                } else if (!apres.isEmpty()) {
+                    c.setVille(apres);
+                }
+            } else {
+                // Aucune structure reconnue : on met tout dans la rue. Le client
+                // sera marqué « À compléter » via Client.isComplet().
+                c.setRue(single);
+            }
         }
-        if (lines.length >= 3) c.setPays(normaliserPays(strip(lines[2])));
     }
 
     private boolean estDoublon(Client c) {
