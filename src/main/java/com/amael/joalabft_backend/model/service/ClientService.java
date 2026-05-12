@@ -231,8 +231,16 @@ public class ClientService {
     }
 
     private FicheSummaryResponse toFicheSummary(FicheLABFT f) {
-        String derniereModif = f.getDateModification() != null
-                ? f.getDateModification().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+        java.time.LocalDateTime derniere = f.getDateModification() != null
+                ? f.getDateModification()
+                : f.getDateCreation();
+        String derniereModif = derniere != null
+                ? derniere.format(DateTimeFormatter.ofPattern("HH:mm"))
+                : null;
+        String derniereModifDate = derniere != null
+                ? (derniere.getHour() < 6
+                        ? derniere.toLocalDate().minusDays(1).format(DATE_FMT)
+                        : derniere.toLocalDate().format(DATE_FMT))
                 : null;
         java.util.Set<String> typesJeu = new java.util.LinkedHashSet<>();
         f.getLignes().forEach(l -> {
@@ -249,7 +257,8 @@ public class ClientService {
                 f.getTotalRGM(),
                 f.getTotalChangeEntrant(),
                 f.getTotalChangeSortant(),
-                derniereModif
+                derniereModif,
+                derniereModifDate
         );
     }
 }
