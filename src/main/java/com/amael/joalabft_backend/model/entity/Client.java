@@ -161,4 +161,28 @@ public class Client {
         }
         return descriptionPhysique;
     }
+
+    /**
+     * Indique si la fiche client est complète : tous les champs nécessaires
+     * pour produire une fiche LAB-FT (état civil, pièce d'identité, adresse)
+     * sont renseignés. Utilisé pour afficher un avertissement « À compléter »
+     * sur les clients importés en masse depuis un Excel.
+     */
+    public boolean isComplet() {
+        if (!identifie) {
+            return notBlank(descriptionPhysique);
+        }
+        boolean identite = notBlank(nom) && notBlank(prenom)
+                        && dateNaissance != null && notBlank(lieuNaissance);
+        boolean piece    = notBlank(typePiece) && notBlank(numeroPiece)
+                        && dateDelivrance != null
+                        && (notBlank(paysDelivrance) || notBlank(prefectureDelivrance));
+        boolean adresse  = notBlank(rue) && notBlank(codePostal)
+                        && notBlank(ville) && notBlank(pays);
+        return identite && piece && adresse;
+    }
+
+    private static boolean notBlank(String s) {
+        return s != null && !s.isBlank();
+    }
 }
