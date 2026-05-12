@@ -19,6 +19,8 @@ public class FicheDetailResponse {
     public String clientDateNaissance;
     public String clientLieuNaissance;
     public boolean clientPpe;
+    /** {@code false} si le client a des champs manquants (à compléter). */
+    public boolean clientComplet;
     public String clientRue;
     public String clientCodePostal;
     public String clientVille;
