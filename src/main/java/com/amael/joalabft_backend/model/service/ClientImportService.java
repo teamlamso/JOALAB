@@ -217,24 +217,31 @@ public class ClientImportService {
         c.setPaysDelivrance(normaliserPays(cellString(row, columns, "PI Pays de délivrance", f)));
         c.setPrefectureDelivrance(cellString(row, columns, "PI Ville de délivrance", f));
 
-        // Adresse : on tente d'abord la résolution via la BAN (api-adresse.data.gouv.fr)
-        // qui structure proprement rue/CP/ville. Si la BAN ne trouve rien (adresse
-        // étrangère, libellé bizarre…), fallback au parsing maison sur les retours
-        // ligne.
+        // Adresse : on tente d'abord le parsing maison (rapide, déterministe).
+        // Quand la cellule est bien structurée (rue \n CP ville \n pays), ça
+        // donne directement le bon résultat. Si maison n'arrive pas à extraire
+        // CP+ville (cellule mono-ligne foireuse, format inattendu…), on
+        // appelle la BAN en dernier recours.
         String adresseRaw = cellString(row, columns, "Adresse 1", f);
         if (adresseRaw != null) {
-            AdresseService.Adresse a = adresseService.resoudre(adresseRaw);
-            if (a != null && a.rue() != null && a.ville() != null) {
-                c.setRue(a.rue());
-                c.setCodePostal(a.codePostal());
-                c.setVille(a.ville());
-                c.setPays(a.pays());
-            } else {
-                appliquerAdresse(c, adresseRaw);
+            appliquerAdresse(c, adresseRaw);
+            boolean adresseIncomplete = blank(c.getCodePostal()) || blank(c.getVille());
+            if (adresseIncomplete) {
+                AdresseService.Adresse a = adresseService.resoudre(adresseRaw);
+                if (a != null) {
+                    c.setRue(a.rue());
+                    c.setCodePostal(a.codePostal());
+                    c.setVille(a.ville());
+                    c.setPays(a.pays());
+                }
             }
         }
 
         return c;
+    }
+
+    private static boolean blank(String s) {
+        return s == null || s.isBlank();
     }
 
     private String resoudreLieuNaissance(String ville, String pays) {
