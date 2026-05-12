@@ -110,7 +110,7 @@ public class ClientService {
      * de pièce). Retourne la liste des candidats sous forme de DTO détaillé.
      */
     public List<ClientDetailResponse> findSimilar(ClientRequest req) {
-        LocalDate dateNaissance = req.dateNaissance != null ? LocalDate.parse(req.dateNaissance, DATE_FMT) : null;
+        LocalDate dateNaissance = parseDate(req.dateNaissance);
         return clientRepository.findSimilar(req.nom, req.prenom, dateNaissance, req.numeroPiece).stream()
                 .map(c -> getClient(c.getId()))
                 .toList();
@@ -171,7 +171,7 @@ public class ClientService {
         // Pièce d'identité
         c.setTypePiece(req.typePiece);
         c.setNumeroPiece(req.numeroPiece);
-        c.setDateDelivrance(req.dateDelivrance != null ? LocalDate.parse(req.dateDelivrance, DATE_FMT) : null);
+        c.setDateDelivrance(parseDate(req.dateDelivrance));
         c.setPrefectureDelivrance(req.prefectureDelivrance);
         c.setPaysDelivrance(req.paysDelivrance);
 
@@ -221,7 +221,7 @@ public class ClientService {
         c.setIdentifie(req.identifie);
         c.setNom(req.nom);
         c.setPrenom(req.prenom);
-        c.setDateNaissance(req.dateNaissance != null ? LocalDate.parse(req.dateNaissance, DATE_FMT) : null);
+        c.setDateNaissance(parseDate(req.dateNaissance));
         c.setLieuNaissance(req.lieuNaissance);
         c.setPpe(req.ppe);
         c.setRue(req.rue);
@@ -231,11 +231,16 @@ public class ClientService {
         c.setPays(req.pays);
         c.setTypePiece(req.typePiece);
         c.setNumeroPiece(req.numeroPiece);
-        c.setDateDelivrance(req.dateDelivrance != null ? LocalDate.parse(req.dateDelivrance, DATE_FMT) : null);
+        c.setDateDelivrance(parseDate(req.dateDelivrance));
         c.setPrefectureDelivrance(req.prefectureDelivrance);
         c.setPaysDelivrance(req.paysDelivrance);
         c.setDescriptionPhysique(req.descriptionPhysique);
         return c;
+    }
+
+    /** Parse une date au format ISO en tolérant null et chaîne vide / blanche. */
+    private static LocalDate parseDate(String s) {
+        return (s == null || s.isBlank()) ? null : LocalDate.parse(s, DATE_FMT);
     }
 
     private FicheSummaryResponse toFicheSummary(FicheLABFT f) {
