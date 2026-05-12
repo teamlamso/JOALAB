@@ -26,4 +26,7 @@ public class LigneTransactionRequest {
     public BigDecimal changeEntrant;
     public BigDecimal changeSortant;
     public String observations;
+
+    /** Vrai si le caissier a déjà reporté ce montant RGM dans FrontCage. */
+    public boolean enregistreFrontCage;
 }

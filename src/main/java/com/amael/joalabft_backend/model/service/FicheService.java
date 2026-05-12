@@ -195,6 +195,7 @@ public class FicheService {
         l.setChangeEntrant(req.changeEntrant);
         l.setChangeSortant(req.changeSortant);
         l.setObservations(req.observations);
+        l.setEnregistreFrontCage(req.enregistreFrontCage);
     }
 
     /**
@@ -273,7 +274,8 @@ public class FicheService {
             java.math.BigDecimal montantRGM,
             java.math.BigDecimal changeEntrant,
             java.math.BigDecimal changeSortant,
-            String observations
+            String observations,
+            boolean enregistreFrontCage
     ) {}
 
     private LigneSnapshot snapshot(LigneTransaction l) {
@@ -285,7 +287,8 @@ public class FicheService {
                 l.getMontantRGM(),
                 l.getChangeEntrant(),
                 l.getChangeSortant(),
-                l.getObservations()
+                l.getObservations(),
+                l.isEnregistreFrontCage()
         );
     }
 
@@ -303,7 +306,8 @@ public class FicheService {
             && sameMontant(a.montantRGM(),     b.getMontantRGM())
             && sameMontant(a.changeEntrant(),  b.getChangeEntrant())
             && sameMontant(a.changeSortant(),  b.getChangeSortant())
-            && java.util.Objects.equals(a.observations(), b.getObservations());
+            && java.util.Objects.equals(a.observations(), b.getObservations())
+            && a.enregistreFrontCage() == b.isEnregistreFrontCage();
     }
 
     private String formatSnapshot(LigneSnapshot s) {
@@ -378,6 +382,7 @@ public class FicheService {
         l.setChangeEntrant(req.changeEntrant);
         l.setChangeSortant(req.changeSortant);
         l.setObservations(req.observations);
+        l.setEnregistreFrontCage(req.enregistreFrontCage);
         l.setCaissier(caissier);
         return l;
     }
@@ -463,7 +468,8 @@ public class FicheService {
                         l.getChangeEntrant(),
                         l.getChangeSortant(),
                         l.getObservations(),
-                        l.getCaissier() != null ? l.getCaissier().getNomComplet() : f.getCreePar().getNomComplet()
+                        l.getCaissier() != null ? l.getCaissier().getNomComplet() : f.getCreePar().getNomComplet(),
+                        l.isEnregistreFrontCage()
                 ))
                 .toList();
 
