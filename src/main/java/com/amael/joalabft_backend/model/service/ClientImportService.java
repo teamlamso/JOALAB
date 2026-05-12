@@ -110,12 +110,33 @@ public class ClientImportService {
             }
             Map<String, Integer> columns = mapHeaders(headerRow);
             LOG.info("[IMPORT] Colonnes détectées dans l'Excel : " + columns.keySet());
+            // Diag : quelle colonne POI a-t-il indexée comme "adresse 1" ?
+            Integer idxAdresse = columns.get(normalize("Adresse 1"));
+            LOG.info("[IMPORT][DEBUG] index trouvé pour 'Adresse 1' = " + idxAdresse);
 
             DataFormatter formatter = new DataFormatter();
             int lastRow = sheet.getLastRowNum();
             for (int i = 1; i <= lastRow; i++) {
                 Row row = sheet.getRow(i);
                 if (row == null || isEmptyRow(row, formatter)) continue;
+                // Dump complet de la première ligne de données pour voir ce que
+                // POI restitue colonne par colonne.
+                if (i == 1) {
+                    LOG.info("[IMPORT][DEBUG] Dump complet ligne 2 (premières colonnes) :");
+                    int max = Math.min(row.getLastCellNum(), 40);
+                    for (int col = 0; col < max; col++) {
+                        Cell cell = row.getCell(col);
+                        String desc;
+                        if (cell == null) {
+                            desc = "null";
+                        } else {
+                            String v = formatter.formatCellValue(cell)
+                                    .replace("\n", "\\n").replace("\r", "\\r");
+                            desc = "type=" + cell.getCellType() + " val='" + v + "'";
+                        }
+                        LOG.info("  col " + col + " : " + desc);
+                    }
+                }
                 try {
                     Client c = parseRow(row, columns, formatter);
                     if (c == null) continue;
