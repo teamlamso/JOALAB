@@ -122,6 +122,14 @@ public class FicheService {
         fiche.setModifiePar(modifiePar);
         fiche.setDateModification(LocalDateTime.now());
 
+        // Snapshot des lignes existantes pour produire un diff au journal.
+        Map<Long, LigneSnapshot> avant = new HashMap<>();
+        for (LigneTransaction l : fiche.getLignes()) {
+            if (l.getId() != null) avant.put(l.getId(), snapshot(l));
+        }
+
+        List<LigneTransaction> nouvelles = new ArrayList<>();
+        List<Long> idsRequete = new ArrayList<>();
         if (req.lignes != null) {
             // Pour préserver le caissier d'origine des lignes existantes,
             // on capture l'association (id ligne → caissier) avant remplacement.
@@ -132,14 +140,13 @@ public class FicheService {
                 }
             }
 
-            List<LigneTransaction> nouvelles = req.lignes.stream()
-                    .map(reqLigne -> {
-                        Utilisateur caissier = (reqLigne.id != null && caissiersOrigine.containsKey(reqLigne.id))
-                                ? caissiersOrigine.get(reqLigne.id)
-                                : modifiePar;
-                        return buildLigne(reqLigne, caissier);
-                    })
-                    .toList();
+            for (LigneTransactionRequest reqLigne : req.lignes) {
+                Utilisateur caissier = (reqLigne.id != null && caissiersOrigine.containsKey(reqLigne.id))
+                        ? caissiersOrigine.get(reqLigne.id)
+                        : modifiePar;
+                nouvelles.add(buildLigne(reqLigne, caissier));
+                idsRequete.add(reqLigne.id);
+            }
             fiche.replaceLignes(nouvelles);
         }
 
@@ -151,7 +158,7 @@ public class FicheService {
                 TypeEntiteJournal.FICHE,
                 fiche.getId(),
                 fiche.getClient().getLibelle(),
-                descriptionFiche(fiche, "Modification"));
+                descriptionDiffModification(nouvelles, idsRequete, avant));
     }
 
     /**
@@ -221,6 +228,107 @@ public class FicheService {
         return String.format(java.util.Locale.FRANCE, "%,.2f €", value);
     }
 
+    /** Capture d'une ligne pour comparaison ultérieure (immutable). */
+    private record LigneSnapshot(
+            String typeJeu,
+            String typePaiement,
+            String typeChange,
+            Integer numeroSocle,
+            java.math.BigDecimal montantRGM,
+            java.math.BigDecimal changeEntrant,
+            java.math.BigDecimal changeSortant,
+            String observations
+    ) {}
+
+    private LigneSnapshot snapshot(LigneTransaction l) {
+        return new LigneSnapshot(
+                l.getTypeJeu()      != null ? l.getTypeJeu().name()      : null,
+                l.getTypePaiement() != null ? l.getTypePaiement().name() : null,
+                l.getTypeChange()   != null ? l.getTypeChange().name()   : null,
+                l.getNumeroSocle(),
+                l.getMontantRGM(),
+                l.getChangeEntrant(),
+                l.getChangeSortant(),
+                l.getObservations()
+        );
+    }
+
+    private boolean sameMontant(java.math.BigDecimal a, java.math.BigDecimal b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.compareTo(b) == 0;
+    }
+
+    private boolean sameContent(LigneSnapshot a, LigneTransaction b) {
+        return java.util.Objects.equals(a.typeJeu(),      b.getTypeJeu()      != null ? b.getTypeJeu().name()      : null)
+            && java.util.Objects.equals(a.typePaiement(), b.getTypePaiement() != null ? b.getTypePaiement().name() : null)
+            && java.util.Objects.equals(a.typeChange(),   b.getTypeChange()   != null ? b.getTypeChange().name()   : null)
+            && java.util.Objects.equals(a.numeroSocle(),  b.getNumeroSocle())
+            && sameMontant(a.montantRGM(),     b.getMontantRGM())
+            && sameMontant(a.changeEntrant(),  b.getChangeEntrant())
+            && sameMontant(a.changeSortant(),  b.getChangeSortant())
+            && java.util.Objects.equals(a.observations(), b.getObservations());
+    }
+
+    private String formatSnapshot(LigneSnapshot s) {
+        List<String> parts = new ArrayList<>();
+        if (s.typeJeu() != null) parts.add(s.typeJeu());
+        if (s.numeroSocle() != null) parts.add("socle " + s.numeroSocle());
+        if (s.montantRGM() != null && s.montantRGM().signum() != 0) {
+            parts.add("RGM " + formatMontant(s.montantRGM()));
+        }
+        if (s.typePaiement() != null) parts.add(s.typePaiement());
+        if (s.changeEntrant() != null && s.changeEntrant().signum() != 0) {
+            parts.add("entrant " + formatMontant(s.changeEntrant()));
+        }
+        if (s.changeSortant() != null && s.changeSortant().signum() != 0) {
+            parts.add("sortant " + formatMontant(s.changeSortant()));
+        }
+        if (s.typeChange() != null) parts.add(s.typeChange());
+        return String.join(", ", parts);
+    }
+
+    /**
+     * Description d'une modification de fiche : ne liste que les lignes
+     * effectivement ajoutées, modifiées ou supprimées (pas l'ensemble du
+     * contenu). Pour une ligne modifiée, l'ancien et le nouveau contenu sont
+     * tous deux affichés.
+     */
+    private String descriptionDiffModification(List<LigneTransaction> nouvelles,
+                                                List<Long> idsRequete,
+                                                Map<Long, LigneSnapshot> avant) {
+        StringBuilder sb = new StringBuilder("Modification");
+        boolean anyChange = false;
+        Set<Long> idsConserves = new java.util.HashSet<>();
+
+        for (int i = 0; i < nouvelles.size(); i++) {
+            Long idReq = idsRequete.get(i);
+            LigneTransaction n = nouvelles.get(i);
+            if (idReq == null) {
+                sb.append('\n').append("+ Ligne ajoutée : ").append(formatLigne(n));
+                anyChange = true;
+            } else {
+                idsConserves.add(idReq);
+                LigneSnapshot ancien = avant.get(idReq);
+                if (ancien != null && !sameContent(ancien, n)) {
+                    sb.append('\n').append("* Ligne modifiée : ").append(formatLigne(n))
+                      .append(" (auparavant : ").append(formatSnapshot(ancien)).append(")");
+                    anyChange = true;
+                }
+            }
+        }
+
+        for (Map.Entry<Long, LigneSnapshot> e : avant.entrySet()) {
+            if (!idsConserves.contains(e.getKey())) {
+                sb.append('\n').append("- Ligne supprimée : ").append(formatSnapshot(e.getValue()));
+                anyChange = true;
+            }
+        }
+
+        if (!anyChange) sb.append(" — (aucun changement de ligne)");
+        return sb.toString();
+    }
+
     private LigneTransaction buildLigne(LigneTransactionRequest req, Utilisateur caissier) {
         if (req.montantRGM != null && req.numeroSocle == null) {
             throw new BadRequestException("Le numéro de socle est obligatoire lorsqu'un montant RGM est renseigné");
@@ -243,6 +351,14 @@ public class FicheService {
                 ? f.getDateModification()
                 : f.getDateCreation();
         String modif = derniere != null ? derniere.format(TIME_FMT) : null;
+        // Jour de travail (06h→05h59) de la dernière modification, indépendant
+        // de la date de la fiche : si l'on modifie aujourd'hui une fiche de la
+        // veille, le front affichera "à HH:mm" et non "hier à HH:mm".
+        String modifDate = derniere != null
+                ? (derniere.getHour() < 6
+                        ? derniere.toLocalDate().minusDays(1).format(DATE_FMT)
+                        : derniere.toLocalDate().format(DATE_FMT))
+                : null;
         // Set conserve l'ordre d'apparition (LinkedHashSet) — utile pour
         // afficher les badges dans l'ordre de saisie sur l'accueil.
         Set<String> typesJeu = new LinkedHashSet<>();
@@ -260,7 +376,8 @@ public class FicheService {
                 f.getTotalRGM(),
                 f.getTotalChangeEntrant(),
                 f.getTotalChangeSortant(),
-                modif
+                modif,
+                modifDate
         );
     }
 
