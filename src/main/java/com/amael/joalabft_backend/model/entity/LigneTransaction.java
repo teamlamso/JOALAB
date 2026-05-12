@@ -59,6 +59,12 @@ public class LigneTransaction {
     @Column(length = 500)
     private String observations;
 
+    /** Coché par le caissier une fois que le montant RGM a été reporté dans
+     *  FrontCage (logiciel de caisse externe). N'a de sens que si
+     *  {@link #montantRGM} est renseigné. */
+    @Column(name = "enregistre_front_cage", nullable = false)
+    private boolean enregistreFrontCage;
+
     public LigneTransaction() {}
 
     // --- Getters / Setters ---
@@ -94,4 +100,7 @@ public class LigneTransaction {
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
+
+    public boolean isEnregistreFrontCage() { return enregistreFrontCage; }
+    public void setEnregistreFrontCage(boolean enregistreFrontCage) { this.enregistreFrontCage = enregistreFrontCage; }
 }
