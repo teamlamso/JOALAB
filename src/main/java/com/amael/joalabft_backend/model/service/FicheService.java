@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -122,34 +123,47 @@ public class FicheService {
         fiche.setModifiePar(modifiePar);
         fiche.setDateModification(LocalDateTime.now());
 
-        // Une seule passe sur les lignes existantes : on capture à la fois
-        // l'état précédent (pour le diff journal) et le caissier d'origine
-        // (pour ne pas écraser la signature des lignes conservées).
+        // Snapshot des lignes existantes par id : sert au diff journal ET de
+        // table de lookup pour les mises à jour in-place.
         Map<Long, LigneSnapshot> avant = new HashMap<>();
-        Map<Long, Utilisateur> caissiersOrigine = new HashMap<>();
+        Map<Long, LigneTransaction> existantesParId = new HashMap<>();
         for (LigneTransaction l : fiche.getLignes()) {
             if (l.getId() == null) continue;
             avant.put(l.getId(), snapshot(l));
-            if (l.getCaissier() != null) caissiersOrigine.put(l.getId(), l.getCaissier());
+            existantesParId.put(l.getId(), l);
         }
 
-        List<LigneTransaction> nouvelles = new ArrayList<>();
+        // On remplit lignesApres au fur et à mesure : il sert pour le diff
+        // (formatLigne renvoie l'état AFTER mutation, qu'on compare au snapshot
+        // BEFORE).
+        List<LigneTransaction> lignesApres = new ArrayList<>();
         List<Long> idsRequete = new ArrayList<>();
+        Set<Long> idsConserves = new HashSet<>();
+
         if (req.lignes != null) {
             for (LigneTransactionRequest reqLigne : req.lignes) {
-                Utilisateur caissier = (reqLigne.id != null && caissiersOrigine.containsKey(reqLigne.id))
-                        ? caissiersOrigine.get(reqLigne.id)
-                        : modifiePar;
-                nouvelles.add(buildLigne(reqLigne, caissier));
                 idsRequete.add(reqLigne.id);
+                LigneTransaction existante = reqLigne.id != null ? existantesParId.get(reqLigne.id) : null;
+                if (existante != null) {
+                    // Ligne conservée : on patche en place. Si rien ne change,
+                    // EclipseLink ne génère pas d'UPDATE.
+                    applyRequestToLigne(existante, reqLigne);
+                    lignesApres.add(existante);
+                    idsConserves.add(reqLigne.id);
+                } else {
+                    // Nouvelle ligne : INSERT.
+                    LigneTransaction nouvelle = buildLigne(reqLigne, modifiePar);
+                    fiche.addLigne(nouvelle);
+                    lignesApres.add(nouvelle);
+                }
             }
-            fiche.replaceLignes(nouvelles);
+            // Lignes absentes de la requête : à supprimer (orphan removal
+            // déclenchera les DELETE individuels).
+            fiche.getLignes().removeIf(l -> l.getId() != null && !idsConserves.contains(l.getId()));
         }
 
-        // Description calculée avant la persistance : on utilise des objets
-        // déjà en mémoire, pas besoin d'attendre que le merge soit terminé.
         String libelle = fiche.getClient().getLibelle();
-        String description = descriptionDiffModification(nouvelles, idsRequete, avant);
+        String description = descriptionDiffModification(lignesApres, idsRequete, avant);
 
         ficheRepository.update(fiche);
 
@@ -160,6 +174,27 @@ public class FicheService {
                 fiche.getId(),
                 libelle,
                 description);
+    }
+
+    /**
+     * Met à jour en place les champs d'une LigneTransaction existante à partir
+     * d'une requête. Le caissier d'origine est préservé (clé conservée pour
+     * l'audit). EclipseLink émet un UPDATE seulement si au moins un champ a
+     * changé.
+     */
+    private void applyRequestToLigne(LigneTransaction l, LigneTransactionRequest req) {
+        if (req.montantRGM != null && req.numeroSocle == null) {
+            throw new BadRequestException(
+                    "Le numéro de socle est obligatoire lorsqu'un montant RGM est renseigné");
+        }
+        l.setTypeJeu(req.typeJeu != null ? TypeJeu.valueOf(req.typeJeu) : null);
+        l.setTypePaiement(req.typePaiement != null ? TypePaiement.valueOf(req.typePaiement) : null);
+        l.setTypeChange(req.typeChange != null ? TypeChange.valueOf(req.typeChange) : null);
+        l.setNumeroSocle(req.numeroSocle);
+        l.setMontantRGM(req.montantRGM);
+        l.setChangeEntrant(req.changeEntrant);
+        l.setChangeSortant(req.changeSortant);
+        l.setObservations(req.observations);
     }
 
     /**
