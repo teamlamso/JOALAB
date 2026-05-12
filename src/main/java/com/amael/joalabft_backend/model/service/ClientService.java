@@ -43,9 +43,15 @@ public class ClientService {
 
     /** Retourne la liste des clients avec un résumé, filtrée optionnellement par recherche. */
     public List<ClientSummaryResponse> listClients(String search) {
-        return clientRepository.findAll(search).stream()
+        List<Client> clients = clientRepository.findAll(search);
+        // Une seule requête pour récupérer la dernière activité de tous les
+        // clients de la liste, plutôt que N requêtes (N+1 dans la liste qui
+        // expliquait les 15 s d'attente avec le SQL en FINE).
+        java.util.Map<Long, LocalDate> activites = clientRepository.getDerniereActivitePourIds(
+                clients.stream().map(Client::getId).toList());
+        return clients.stream()
                 .map(c -> {
-                    LocalDate activite = clientRepository.getDerniereActivite(c.getId());
+                    LocalDate activite = activites.get(c.getId());
                     return new ClientSummaryResponse(
                             c.getId(),
                             c.getLibelle(),

@@ -11,7 +11,7 @@
 
         <properties>
             <!-- Crée/met à jour le schéma automatiquement (à passer sur "none" en production) -->
-            <property name="eclipselink.ddl-generation" value="create-tables"/>
+            <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
             <property name="eclipselink.ddl-generation.output-mode" value="database"/>
             <property name="eclipselink.logging.level" value="WARNING"/>
             <property name="eclipselink.logging.level.sql" value="WARNING"/>

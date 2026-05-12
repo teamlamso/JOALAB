@@ -78,6 +78,12 @@ public class ClientImportService {
     @Inject
     private JournalService journalService;
 
+    @Inject
+    private GeoService geoService;
+
+    @Inject
+    private AdresseService adresseService;
+
     /**
      * Lit le classeur Excel fourni et crée les clients correspondants.
      *
@@ -197,10 +203,12 @@ public class ClientImportService {
         c.setDateNaissance(cellDate(row, columns, "Date de naissance", f));
         c.setPpe(parsePpe(cellString(row, columns, "PPE", f)));
 
-        // Lieu de naissance : combinaison "Ville (Pays)" selon ce qui est dispo.
+        // Lieu de naissance : pour la France on tente de récupérer le code
+        // département via geo.api.gouv.fr et on formate "Ville (XX)". Sinon
+        // on retombe sur "Ville (Pays)" / "Ville" / "Pays".
         String villeNaissance = cellString(row, columns, "PI Ville de naissance", f);
         String paysNaissance  = cellString(row, columns, "PI Pays de naissance",  f);
-        c.setLieuNaissance(combinerVillePays(villeNaissance, paysNaissance));
+        c.setLieuNaissance(resoudreLieuNaissance(villeNaissance, paysNaissance));
 
         // Pièce d'identité.
         c.setNumeroPiece(cellString(row, columns, "PI Numéro", f));
@@ -209,10 +217,35 @@ public class ClientImportService {
         c.setPaysDelivrance(normaliserPays(cellString(row, columns, "PI Pays de délivrance", f)));
         c.setPrefectureDelivrance(cellString(row, columns, "PI Ville de délivrance", f));
 
-        // Adresse : cellule unique « rue \n CP ville \n pays ».
-        appliquerAdresse(c, cellString(row, columns, "Adresse 1", f));
+        // Adresse : on tente d'abord la résolution via la BAN (api-adresse.data.gouv.fr)
+        // qui structure proprement rue/CP/ville. Si la BAN ne trouve rien (adresse
+        // étrangère, libellé bizarre…), fallback au parsing maison sur les retours
+        // ligne.
+        String adresseRaw = cellString(row, columns, "Adresse 1", f);
+        if (adresseRaw != null) {
+            AdresseService.Adresse a = adresseService.resoudre(adresseRaw);
+            if (a != null && a.rue() != null && a.ville() != null) {
+                c.setRue(a.rue());
+                c.setCodePostal(a.codePostal());
+                c.setVille(a.ville());
+                c.setPays(a.pays());
+            } else {
+                appliquerAdresse(c, adresseRaw);
+            }
+        }
 
         return c;
+    }
+
+    private String resoudreLieuNaissance(String ville, String pays) {
+        boolean franceImplicite = pays == null || pays.isBlank();
+        boolean france = !franceImplicite
+                && (normalize(pays).equals("fr") || normalize(pays).equals("france"));
+        if (ville != null && (france || franceImplicite)) {
+            String formatte = geoService.formatVilleFrance(ville);
+            if (formatte != null) return formatte;
+        }
+        return combinerVillePays(ville, pays);
     }
 
     private void appliquerAdresse(Client c, String raw) {
