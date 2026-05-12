@@ -43,6 +43,17 @@ export function deleteClient(id) {
 }
 
 /**
+ * Importe en masse des clients depuis un fichier Excel (.xlsx ou .xls).
+ * Réservé aux RESPONSABLE_CAISSE et MCD. Retourne un résumé avec le nombre
+ * d'imports, doublons ignorés, clients incomplets et erreurs détaillées.
+ */
+export function importClients(file) {
+  const data = new FormData()
+  data.append('file', file)
+  return request('/clients/import', { method: 'POST', body: data })
+}
+
+/**
  * Recherche les clients existants potentiellement similaires (mêmes nom+prénom
  * +date de naissance, ou même numéro de pièce). Retourne la liste des
  * candidats détectés (peut être vide).

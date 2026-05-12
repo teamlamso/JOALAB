@@ -57,6 +57,11 @@ export default function Header() {
                   Utilisateurs
                 </button>
               )}
+              {(user.role === 'MCD' || user.role === 'RESPONSABLE_CAISSE') && (
+                <button onClick={() => { setOpen(false); navigate('/clients/import') }}>
+                  Importer des clients
+                </button>
+              )}
               {user.role === 'MCD' && (
                 <button onClick={() => { setOpen(false); navigate('/journal') }}>
                   Journal d'audit

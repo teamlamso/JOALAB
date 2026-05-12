@@ -2,8 +2,11 @@ const API_BASE = '/api'
 
 export async function request(path, options = {}) {
   const token = localStorage.getItem('token')
+  // Pour un FormData (upload de fichier), c'est le navigateur qui doit poser
+  // l'en-tête Content-Type avec le boundary multipart — ne pas l'écraser.
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   }

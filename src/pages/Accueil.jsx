@@ -162,6 +162,9 @@ function ClientCard({ c, navigate }) {
         <span className="fiche-card-name-text">
           <span className="fiche-card-libelle">{c.libelle}</span>
           {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+          {c.complet === false && (
+            <span className="badge-incomplet" title="Certains champs sont manquants">À compléter</span>
+          )}
         </span>
       </div>
       {c.dateNaissance && (

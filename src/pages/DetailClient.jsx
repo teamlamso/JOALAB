@@ -102,12 +102,23 @@ export default function DetailClient() {
         </div>
       </div>
 
+      {client.complet === false && (
+        <div className="alert-warning">
+          Cette fiche client est <strong>incomplète</strong> : certains champs
+          (identité, pièce ou adresse) ne sont pas renseignés. Cliquez sur
+          « Modifier » pour les compléter.
+        </div>
+      )}
+
       {/* Info client */}
       <div className="client-info-card">
         <div className="client-info-main">
           <strong>
             {client.libelle}
             {client.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+            {client.complet === false && (
+              <span className="badge-incomplet" title="Certains champs sont manquants">À compléter</span>
+            )}
           </strong>
           {client.identifie ? (
             <p>

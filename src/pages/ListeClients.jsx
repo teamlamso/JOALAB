@@ -106,6 +106,9 @@ export default function ListeClients() {
                     <td>
                       <strong>{c.libelle}</strong>
                       {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
+                      {c.complet === false && (
+                        <span className="badge-incomplet" title="Certains champs sont manquants">À compléter</span>
+                      )}
                     </td>
                     <td>{formatDate(c.dateNaissance)}</td>
                     <td>{c.ville || '-'}</td>

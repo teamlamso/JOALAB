@@ -67,3 +67,8 @@ export function peutLireJournal(role) {
 export function peutLireHistoriqueFiche(role) {
   return role === 'RESPONSABLE_CAISSE' || role === 'MCD'
 }
+
+/** Import Excel de clients : RESPONSABLE_CAISSE et MCD. */
+export function peutImporterClients(role) {
+  return role === 'RESPONSABLE_CAISSE' || role === 'MCD'
+}
