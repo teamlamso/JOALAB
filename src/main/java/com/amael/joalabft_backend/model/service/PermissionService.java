@@ -188,4 +188,22 @@ public class PermissionService {
                     "Votre rôle ne vous autorise pas à consulter l'historique des fiches.");
         }
     }
+
+    /**
+     * Indique si {@code utilisateur} peut importer des clients en masse via
+     * un fichier Excel (RESPONSABLE_CAISSE ou MCD).
+     */
+    public boolean peutImporterClients(Utilisateur utilisateur) {
+        if (utilisateur == null) return false;
+        return utilisateur.getRole() == RoleUtilisateur.RESPONSABLE_CAISSE
+                || utilisateur.getRole() == RoleUtilisateur.MCD;
+    }
+
+    /** Lève 403 si {@code utilisateur} ne peut pas importer de clients. */
+    public void ensurePeutImporterClients(Utilisateur utilisateur) {
+        if (!peutImporterClients(utilisateur)) {
+            throw new ForbiddenException(
+                    "Votre rôle ne vous autorise pas à importer des clients.");
+        }
+    }
 }

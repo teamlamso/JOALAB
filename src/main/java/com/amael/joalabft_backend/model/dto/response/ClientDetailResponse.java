@@ -28,6 +28,9 @@ public class ClientDetailResponse {
     // --- Client non-identifié ---
     public String descriptionPhysique;
 
+    /** {@code true} si tous les champs requis sont renseignés. */
+    public boolean complet;
+
     /** Historique des fiches, triées par date décroissante. */
     public List<FicheSummaryResponse> fiches;
 }

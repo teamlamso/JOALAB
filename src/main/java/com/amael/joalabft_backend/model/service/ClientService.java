@@ -53,7 +53,8 @@ public class ClientService {
                             c.getVille(),
                             c.getPays(),
                             c.isPpe(),
-                            activite != null ? activite.format(DATE_FMT) : null
+                            activite != null ? activite.format(DATE_FMT) : null,
+                            c.isComplet()
                     );
                 })
                 .toList();
@@ -92,6 +93,7 @@ public class ClientService {
         dto.prefectureDelivrance = c.getPrefectureDelivrance();
         dto.paysDelivrance      = c.getPaysDelivrance();
         dto.descriptionPhysique = c.getDescriptionPhysique();
+        dto.complet             = c.isComplet();
         dto.fiches              = fiches;
         return dto;
     }

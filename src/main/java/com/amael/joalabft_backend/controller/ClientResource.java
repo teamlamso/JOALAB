@@ -3,15 +3,20 @@ package com.amael.joalabft_backend.controller;
 import com.amael.joalabft_backend.model.dto.request.ClientIdentificationRequest;
 import com.amael.joalabft_backend.model.dto.request.ClientRequest;
 import com.amael.joalabft_backend.model.entity.Utilisateur;
+import com.amael.joalabft_backend.model.service.ClientImportService;
 import com.amael.joalabft_backend.model.service.ClientService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.EntityPart;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,6 +42,9 @@ public class ClientResource {
 
     @Inject
     private ClientService clientService;
+
+    @Inject
+    private ClientImportService importService;
 
     /**
      * Retourne la liste des clients.
@@ -112,5 +120,24 @@ public class ClientResource {
         Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
         clientService.deleteClient(id, utilisateur);
         return Response.noContent().build();
+    }
+
+    /**
+     * Import en masse depuis un classeur Excel (.xlsx ou .xls).
+     * Le multipart doit contenir une partie nommée {@code file} portant le
+     * classeur. Réservé aux RESPONSABLE_CAISSE et MCD.
+     */
+    @POST
+    @Path("/import")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response importer(List<EntityPart> parts, @Context ContainerRequestContext ctx) throws IOException {
+        Utilisateur utilisateur = (Utilisateur) ctx.getProperty("utilisateur");
+        EntityPart filePart = parts.stream()
+                .filter(p -> "file".equals(p.getName()))
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Le fichier (partie « file ») est manquant."));
+        try (InputStream in = filePart.getContent()) {
+            return Response.ok(importService.importer(in, utilisateur)).build();
+        }
     }
 }
