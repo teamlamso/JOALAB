@@ -143,13 +143,6 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
           <input type="text" value={ligne.numeroSocle} onChange={set('numeroSocle')} disabled={socleDisabled} />
         </div>
         <div className={`form-group ${rgmDisabled ? 'field-disabled' : ''}`}>
-          <label>
-            Montant Online (RGM) :
-            {rgmWarnings.length > 0 && (
-              <span className="field-warning-icon" title={rgmWarnings.join('\n')}>&#9888;</span>
-            )}
-          </label>
-          <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} onBlur={blurMoney('montantRGM')} placeholder={"0 €"} disabled={rgmDisabled} />
           {hasRGM && (
             <label className="frontcage-toggle">
               <input
@@ -160,6 +153,13 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
               <span>Enregistré sur FrontCage</span>
             </label>
           )}
+          <label>
+            Montant Online (RGM) :
+            {rgmWarnings.length > 0 && (
+              <span className="field-warning-icon" title={rgmWarnings.join('\n')}>&#9888;</span>
+            )}
+          </label>
+          <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} onBlur={blurMoney('montantRGM')} placeholder={"0 €"} disabled={rgmDisabled} />
         </div>
         <div className="form-group">
           <label>Change Entrant :</label>
