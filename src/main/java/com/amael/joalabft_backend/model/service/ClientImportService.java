@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Import en masse de clients à partir d'un fichier Excel (.xlsx ou .xls).
@@ -49,6 +50,8 @@ import java.util.Map;
  */
 @Stateless
 public class ClientImportService {
+
+    private static final Logger LOG = Logger.getLogger(ClientImportService.class.getName());
 
     private static final DateTimeFormatter ISO     = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter FR_SLASH = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -106,6 +109,7 @@ public class ClientImportService {
                 throw new BadRequestException("Le fichier Excel est vide.");
             }
             Map<String, Integer> columns = mapHeaders(headerRow);
+            LOG.info("[IMPORT] Colonnes détectées dans l'Excel : " + columns.keySet());
 
             DataFormatter formatter = new DataFormatter();
             int lastRow = sheet.getLastRowNum();
@@ -223,6 +227,8 @@ public class ClientImportService {
         // CP+ville (cellule mono-ligne foireuse, format inattendu…), on
         // appelle la BAN en dernier recours.
         String adresseRaw = cellString(row, columns, "Adresse 1", f);
+        LOG.info("[IMPORT][ADRESSE] ligne " + (row.getRowNum() + 1) + " — raw = "
+                + (adresseRaw == null ? "<null>" : adresseRaw.replace("\n", "\\n").replace("\r", "\\r")));
         if (adresseRaw != null) {
             appliquerAdresse(c, adresseRaw);
             boolean adresseIncomplete = blank(c.getCodePostal()) || blank(c.getVille());
@@ -265,10 +271,7 @@ public class ClientImportService {
                 .replace("\r\n", "\n")
                 .replace('\r', '\n');
         String[] lines = norm.split("\n");
-        // Log diagnostic : si l'extraction échoue côté utilisateur, ça apparaît
-        // dans la console Payara pour qu'on puisse voir ce que POI a lu.
-        System.err.println("[IMPORT][ADRESSE] " + lines.length + " ligne(s) extraite(s) de : "
-                + raw.replace("\n", "\\n").replace("\r", "\\r"));
+        LOG.info("[IMPORT][ADRESSE] split en " + lines.length + " ligne(s)");
         if (lines.length >= 2) {
             // Format multi-ligne « rue \n CP ville \n pays ».
             c.setRue(strip(lines[0]));
