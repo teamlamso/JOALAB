@@ -152,12 +152,15 @@ public class Client {
     public List<FicheLABFT> getFiches() { return fiches; }
 
     /**
-     * Retourne le libellé d'affichage du client :
-     * nom + prénom pour un client identifié, description physique sinon.
+     * Retourne le libellé d'affichage du client : « Prénom NOM » (nom de
+     * famille en capitales) pour un client identifié, description physique
+     * sinon. Format appliqué partout dans l'application.
      */
     public String getLibelle() {
         if (identifie) {
-            return prenom + " " + nom;
+            String p = prenom == null ? "" : prenom;
+            String n = nom    == null ? "" : nom.toUpperCase();
+            return (p + " " + n).trim();
         }
         return descriptionPhysique;
     }

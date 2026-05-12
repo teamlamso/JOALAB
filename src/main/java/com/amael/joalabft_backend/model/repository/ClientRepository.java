@@ -116,4 +116,26 @@ public class ClientRepository {
         LocalDateTime result = q.getSingleResult();
         return result != null ? result.toLocalDate() : null;
     }
+
+    /**
+     * Retourne pour chaque identifiant fourni la date de la dernière fiche du
+     * client (clé absente si le client n'a aucune fiche). Une seule requête,
+     * remplace le N+1 que produisait {@link #getDerniereActivite(Long)} appelé
+     * en boucle depuis la liste des clients.
+     */
+    public java.util.Map<Long, LocalDate> getDerniereActivitePourIds(java.util.List<Long> clientIds) {
+        if (clientIds == null || clientIds.isEmpty()) return java.util.Collections.emptyMap();
+        List<Object[]> rows = em.createQuery(
+                "SELECT f.client.id, MAX(f.dateCreation) FROM FicheLABFT f " +
+                "WHERE f.client.id IN :ids GROUP BY f.client.id",
+                Object[].class
+        ).setParameter("ids", clientIds).getResultList();
+        java.util.Map<Long, LocalDate> map = new java.util.HashMap<>();
+        for (Object[] r : rows) {
+            Long id = (Long) r[0];
+            LocalDateTime dt = (LocalDateTime) r[1];
+            if (dt != null) map.put(id, dt.toLocalDate());
+        }
+        return map;
+    }
 }
