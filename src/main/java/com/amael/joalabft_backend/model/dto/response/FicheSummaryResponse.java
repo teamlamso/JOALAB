@@ -10,6 +10,10 @@ public class FicheSummaryResponse {
     public String clientLibelle;
     /** Indique si le client de la fiche est PPE (Personne Politiquement Exposée). */
     public boolean clientPpe;
+    /** {@code false} si la fiche client correspondante a des champs manquants
+     *  (état civil, pièce, adresse). Permet d'afficher un avertissement sur
+     *  les cartes de l'accueil et la consultation des fiches. */
+    public boolean clientComplet;
     /** Identifiant du client (utile pour rebondir vers son profil). */
     public Long clientId;
     /** Date de création de la fiche (yyyy-MM-dd). */
@@ -29,13 +33,14 @@ public class FicheSummaryResponse {
      *  à aujourd'hui. */
     public String derniereModifDate;
 
-    public FicheSummaryResponse(Long id, String clientLibelle, boolean clientPpe, Long clientId,
-                                 String date, String caissierNom, List<String> typesJeu,
+    public FicheSummaryResponse(Long id, String clientLibelle, boolean clientPpe, boolean clientComplet,
+                                 Long clientId, String date, String caissierNom, List<String> typesJeu,
                                  BigDecimal totalRGM, BigDecimal totalEntrant, BigDecimal totalSortant,
                                  String derniereModif, String derniereModifDate) {
         this.id                = id;
         this.clientLibelle     = clientLibelle;
         this.clientPpe         = clientPpe;
+        this.clientComplet     = clientComplet;
         this.clientId          = clientId;
         this.date              = date;
         this.caissierNom       = caissierNom;

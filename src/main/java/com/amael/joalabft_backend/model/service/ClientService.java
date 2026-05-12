@@ -258,6 +258,7 @@ public class ClientService {
                 f.getId(),
                 f.getClient().getLibelle(),
                 f.getClient().isPpe(),
+                f.getClient().isComplet(),
                 f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
