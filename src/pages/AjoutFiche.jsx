@@ -20,6 +20,7 @@ function newLigne() {
     changeEntrant: '',
     changeSortant: '',
     observations: '',
+    enregistreFrontCage: false,
   }
 }
 
@@ -125,6 +126,16 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
             )}
           </label>
           <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} onBlur={blurMoney('montantRGM')} placeholder={"0 €"} disabled={rgmDisabled} />
+          {hasRGM && (
+            <label className="frontcage-toggle">
+              <input
+                type="checkbox"
+                checked={!!ligne.enregistreFrontCage}
+                onChange={(e) => onChange({ ...ligne, enregistreFrontCage: e.target.checked })}
+              />
+              <span>Enregistré sur FrontCage</span>
+            </label>
+          )}
         </div>
         <div className="form-group">
           <label>Change Entrant :</label>
@@ -250,6 +261,7 @@ export default function AjoutFiche() {
         changeEntrant: l.changeEntrant ? parseFloat(l.changeEntrant) : null,
         changeSortant: l.changeSortant ? parseFloat(l.changeSortant) : null,
         observations: l.observations || null,
+        enregistreFrontCage: !!l.enregistreFrontCage && !!l.montantRGM,
       }))
 
       const payload = {

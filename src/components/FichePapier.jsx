@@ -175,7 +175,12 @@ export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre
           {lignesAffichees.map((l, i) => (
             <tr key={i}>
               <td className="fp-td-change">{i + 1}.</td>
-              <td className="fp-td-num">{l ? formatEur(l.montantRGM) : ''}</td>
+              <td className="fp-td-num">
+                {l ? formatEur(l.montantRGM) : ''}
+                {l?.enregistreFrontCage && (
+                  <span className="fp-frontcage" title="Enregistré sur FrontCage"> ✓</span>
+                )}
+              </td>
               <td className="fp-td-num">{l?.numeroSocle ?? ''}</td>
               <td className="fp-td-num">{l ? formatEur(l.changeEntrant) : ''}</td>
               <td className="fp-td-num">{l ? formatEur(l.changeSortant) : ''}</td>
