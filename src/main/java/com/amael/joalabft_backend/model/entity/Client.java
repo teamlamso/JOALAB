@@ -88,6 +88,40 @@ public class Client {
     @PrePersist
     private void onPrePersist() {
         dateCreation = LocalDateTime.now();
+        normaliserChamps();
+    }
+
+    @PreUpdate
+    private void onPreUpdate() {
+        normaliserChamps();
+    }
+
+    /**
+     * Normalise les champs à chaque persistance / mise à jour pour que
+     * l'application affiche systématiquement le format canonique « Prénom NOM ».
+     * Le {@code nom} passe en majuscules, le {@code prenom} en titlecase
+     * (« jean-pierre » devient « Jean-Pierre »).
+     */
+    private void normaliserChamps() {
+        if (nom != null) nom = nom.toUpperCase();
+        if (prenom != null) prenom = titleCase(prenom);
+    }
+
+    private static String titleCase(String s) {
+        if (s == null || s.isEmpty()) return s;
+        StringBuilder sb = new StringBuilder(s.length());
+        boolean upperNext = true;
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (Character.isWhitespace(ch) || ch == '-' || ch == '\'') {
+                sb.append(ch);
+                upperNext = true;
+            } else {
+                sb.append(upperNext ? Character.toUpperCase(ch) : Character.toLowerCase(ch));
+                upperNext = false;
+            }
+        }
+        return sb.toString();
     }
 
     public Client() {}

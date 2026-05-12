@@ -257,7 +257,18 @@ public class ClientImportService {
 
     private void appliquerAdresse(Client c, String raw) {
         if (raw == null) return;
-        String[] lines = raw.split("\\r?\\n");
+        // Normalisation : POI / Excel peuvent encoder le saut de ligne
+        // intra-cellule de plusieurs façons (LF, CR, CRLF, ou l'échappement
+        // littéral _x000A_ pour certains exports). On ramène tout à \n.
+        String norm = raw
+                .replace("_x000A_", "\n")
+                .replace("\r\n", "\n")
+                .replace('\r', '\n');
+        String[] lines = norm.split("\n");
+        // Log diagnostic : si l'extraction échoue côté utilisateur, ça apparaît
+        // dans la console Payara pour qu'on puisse voir ce que POI a lu.
+        System.err.println("[IMPORT][ADRESSE] " + lines.length + " ligne(s) extraite(s) de : "
+                + raw.replace("\n", "\\n").replace("\r", "\\r"));
         if (lines.length >= 2) {
             // Format multi-ligne « rue \n CP ville \n pays ».
             c.setRue(strip(lines[0]));
