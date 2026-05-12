@@ -66,7 +66,17 @@ export default function DetailFiche() {
     <div className="page">
       <div className="page-header no-print">
         <div className="page-header-left">
-          <h1>Détail de la fiche</h1>
+          <h1>
+            Détail de la fiche
+            {fiche.clientComplet === false && (
+              <span className="icone-warning"
+                    title="Le profil du client a des champs manquants — à compléter sur sa fiche">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L1 21h22L12 2zm0 6c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V9c0-.55.45-1 1-1zm0 10c-.69 0-1.25.56-1.25 1.25S11.31 20.5 12 20.5s1.25-.56 1.25-1.25S12.69 18 12 18z"/>
+                </svg>
+              </span>
+            )}
+          </h1>
           <p>
             Créée le {formatDateFr(fiche.date) || '-'} par {fiche.creePar}
             {fiche.dateModification && (

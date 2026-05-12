@@ -51,6 +51,16 @@ function ClearIcon() {
   )
 }
 
+function WarningIcon({ title }) {
+  return (
+    <span className="icone-warning" title={title}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L1 21h22L12 2zm0 6c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V9c0-.55.45-1 1-1zm0 10c-.69 0-1.25.56-1.25 1.25S11.31 20.5 12 20.5s1.25-.56 1.25-1.25S12.69 18 12 18z"/>
+      </svg>
+    </span>
+  )
+}
+
 function EditIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -100,6 +110,7 @@ function FicheCard({ f, navigate, showDate, highlight, role }) {
       <div className="fiche-card-name" title={f.clientLibelle}>
         <span className="fiche-card-name-text">
           <span className="fiche-card-libelle">{f.clientLibelle}</span>
+          {f.clientComplet === false && <WarningIcon title="Le profil client a des champs manquants — à compléter" />}
           <BadgesJeu types={f.typesJeu} />
           {f.clientPpe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
         </span>

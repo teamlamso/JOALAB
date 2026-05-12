@@ -1191,7 +1191,7 @@ tbody tr:hover {
   vertical-align: middle;
 }
 
-.fp-ppe         { background: #e67e22; }
+.fp-ppe         { background: #8e2d4e; }
 .fp-badge-jeu-mas { background: #5dade2; }
 .fp-badge-jeu-jte { background: #c0392b; }
 .fp-badge-jeu-jt  { background: #27ae60; }
@@ -1303,7 +1303,7 @@ tbody tr:hover {
   vertical-align: middle;
 }
 
-.badge-ppe { background: #e67e22; }
+.badge-ppe { background: #8e2d4e; }
 .badge-jeu-mas { background: #5dade2; }
 .badge-jeu-jte { background: #c0392b; }
 .badge-jeu-jt  { background: #27ae60; }
@@ -1565,6 +1565,16 @@ tbody tr:hover {
   margin-left: 6px;
   letter-spacing: 0.3px;
   vertical-align: middle;
+}
+
+.icone-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #e67e22;
+  margin-left: 6px;
+  cursor: help;
+  flex-shrink: 0;
 }
 
 .import-summary {
