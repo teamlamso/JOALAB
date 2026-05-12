@@ -73,6 +73,9 @@ export default function ListeClients() {
           <button className="btn btn-secondary" onClick={() => navigate('/accueil')}>
             Retour
           </button>
+          <button className="btn btn-primary" onClick={() => navigate('/clients/nouveau')}>
+            + Ajouter un client
+          </button>
         </div>
       </div>
 
