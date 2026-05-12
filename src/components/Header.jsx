@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { formatLibelle } from '../utils/libelle.js'
 import logoJOA from '../assets/logoJOA.svg'
 
 function formatRole(role) {
@@ -31,7 +32,7 @@ export default function Header() {
     navigate('/')
   }
 
-  const fullName = user ? `${user.prenom} ${user.nom}` : ''
+  const fullName = user ? formatLibelle(user.prenom, user.nom) : ''
 
   return (
     <header className="header">

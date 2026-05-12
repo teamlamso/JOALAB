@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { createClient, matchClient, updateClient } from '../api/clients.js'
+import { formatLibelle } from '../utils/libelle.js'
 import DateInput from '../components/DateInput.jsx'
 import AddressSearch from '../components/AddressSearch.jsx'
 import PlaceSearch from '../components/PlaceSearch.jsx'
@@ -67,7 +68,7 @@ export default function NouveauClient() {
   const goToTarget = (newId) => {
     if (returnTo === 'fiche') {
       navigate('/fiches/identification', {
-        state: { preselectClient: { id: newId, libelle: `${form.prenom} ${form.nom}` } },
+        state: { preselectClient: { id: newId, libelle: formatLibelle(form.prenom, form.nom) } },
       })
     } else {
       navigate(`/clients/${newId}`)

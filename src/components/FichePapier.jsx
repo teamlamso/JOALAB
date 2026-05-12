@@ -1,4 +1,5 @@
 import logoJOA from '../assets/logoJOA.svg'
+import { formatLibelle } from '../utils/libelle.js'
 
 const NB_LIGNES_MIN = 6
 
@@ -91,7 +92,7 @@ export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre
           {fiche.clientIdentifie ? (
             <>
               <div className="fp-identite-nom">
-                {fiche.clientPrenom} {fiche.clientNom}
+                {formatLibelle(fiche.clientPrenom, fiche.clientNom)}
               </div>
               {fiche.clientDateNaissance && (
                 <div>Né(e) le {formatDateFr(fiche.clientDateNaissance)}</div>
