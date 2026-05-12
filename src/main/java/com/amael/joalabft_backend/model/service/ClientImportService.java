@@ -396,11 +396,18 @@ public class ClientImportService {
         return s == null ? null : s.trim();
     }
 
-    /** Normalise une chaîne : trim, lowercase, suppression des accents. */
+    /**
+     * Normalise une chaîne pour la comparer (clé de header, valeur enum) :
+     * trim, lowercase, suppression des accents, et — important pour les
+     * exports Microsoft Dynamics qui sèment des espaces insécables (U+00A0)
+     * ou autres caractères invisibles dans les headers — réduction de toute
+     * séquence de whitespace Unicode (espaces, NBSP, séparateurs, contrôles
+     * invisibles) à un simple espace ASCII.
+     */
     private static String normalize(String s) {
         if (s == null) return "";
-        String n = Normalizer.normalize(s.trim(), Normalizer.Form.NFD)
+        String n = Normalizer.normalize(s, Normalizer.Form.NFKD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}", "");
-        return n.toLowerCase();
+        return n.toLowerCase().replaceAll("[\\s\\p{Z}\\p{Cf}\\p{Cc}]+", " ").trim();
     }
 }
