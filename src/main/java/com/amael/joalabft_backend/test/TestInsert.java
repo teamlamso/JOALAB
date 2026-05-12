@@ -50,6 +50,13 @@ public class TestInsert {
 
     @PostConstruct
     public void init() {
+        // Idempotent : si les utilisateurs de seed existent déjà (cas où Payara
+        // a loupé un drop-and-create), on ne réinsère rien — le startup ne
+        // doit pas casser à cause d'une violation de clé unique.
+        if (utilisateurRepository.existsByIdentifiant("aduchat")) {
+            return;
+        }
+
         // ── 1. Utilisateurs ──────────────────────────────────────────────────────
         Utilisateur alexis = utilisateur("aduchat",  "Duchat", "Alexis", RoleUtilisateur.CAISSIER);
         Utilisateur marie  = utilisateur("mcurie",  "Curie",  "Marie",  RoleUtilisateur.RESPONSABLE_CAISSE);
