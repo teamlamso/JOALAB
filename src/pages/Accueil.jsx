@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { listFiches } from '../api/fiches.js'
 import { listClients } from '../api/clients.js'
 import DatePickerInput from '../components/DatePickerInput.jsx'
@@ -181,7 +181,16 @@ function ClientCard({ c, navigate }) {
 export default function Accueil() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [search, setSearch] = useState('')
+  // La recherche vit dans l'URL (?q=…) pour être restaurée quand on revient
+  // depuis DetailClient via le bouton « Retour » (navigate(-1)).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const search = searchParams.get('q') || ''
+  const setSearch = (value) => {
+    const next = new URLSearchParams(searchParams)
+    if (value) next.set('q', value)
+    else next.delete('q')
+    setSearchParams(next, { replace: true })
+  }
   const [dateDebut, setDateDebut] = useState(workDayYesterday())
   const [dateFin, setDateFin] = useState(workDay())
   const [fiches, setFiches] = useState([])
