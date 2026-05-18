@@ -12,14 +12,19 @@ import com.amael.joalabft_backend.model.enums.TypeActionJournal;
 import com.amael.joalabft_backend.model.enums.TypeEntiteJournal;
 import com.amael.joalabft_backend.model.repository.ClientRepository;
 import com.amael.joalabft_backend.model.repository.FicheLABFTRepository;
+import com.amael.joalabft_backend.model.util.WorkDay;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Logique métier des clients.
@@ -44,10 +49,8 @@ public class ClientService {
     /** Retourne la liste des clients avec un résumé, filtrée optionnellement par recherche. */
     public List<ClientSummaryResponse> listClients(String search) {
         List<Client> clients = clientRepository.findAll(search);
-        // Une seule requête pour récupérer la dernière activité de tous les
-        // clients de la liste, plutôt que N requêtes (N+1 dans la liste qui
-        // expliquait les 15 s d'attente avec le SQL en FINE).
-        java.util.Map<Long, LocalDate> activites = clientRepository.getDerniereActivitePourIds(
+        // Single query qui évite le N+1 ; chargeait 15 s avec le SQL en FINE.
+        Map<Long, LocalDate> activites = clientRepository.getDerniereActivitePourIds(
                 clients.stream().map(Client::getId).toList());
         return clients.stream()
                 .map(c -> {
@@ -244,19 +247,17 @@ public class ClientService {
         return (s == null || s.isBlank()) ? null : LocalDate.parse(s, DATE_FMT);
     }
 
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+
     private FicheSummaryResponse toFicheSummary(FicheLABFT f) {
-        java.time.LocalDateTime derniere = f.getDateModification() != null
+        LocalDateTime derniere = f.getDateModification() != null
                 ? f.getDateModification()
                 : f.getDateCreation();
-        String derniereModif = derniere != null
-                ? derniere.format(DateTimeFormatter.ofPattern("HH:mm"))
-                : null;
-        String derniereModifDate = derniere != null
-                ? (derniere.getHour() < 6
-                        ? derniere.toLocalDate().minusDays(1).format(DATE_FMT)
-                        : derniere.toLocalDate().format(DATE_FMT))
-                : null;
-        java.util.Set<String> typesJeu = new java.util.LinkedHashSet<>();
+        String derniereModif = derniere != null ? derniere.format(TIME_FMT) : null;
+        LocalDate modifWorkDay = WorkDay.from(derniere);
+        String derniereModifDate = modifWorkDay != null ? modifWorkDay.format(DATE_FMT) : null;
+
+        Set<String> typesJeu = new LinkedHashSet<>();
         f.getLignes().forEach(l -> {
             if (l.getTypeJeu() != null) typesJeu.add(l.getTypeJeu().name());
         });
@@ -268,7 +269,7 @@ public class ClientService {
                 f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
-                java.util.List.copyOf(typesJeu),
+                List.copyOf(typesJeu),
                 f.getTotalRGM(),
                 f.getTotalChangeEntrant(),
                 f.getTotalChangeSortant(),

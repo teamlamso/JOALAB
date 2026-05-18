@@ -20,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Import en masse de clients à partir d'un fichier Excel (.xlsx ou .xls).
@@ -53,6 +55,10 @@ public class ClientImportService {
     private static final DateTimeFormatter ISO     = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter FR_SLASH = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FR_DASH  = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    private static final Pattern CP_PATTERN = Pattern.compile("\\b(\\d{5})\\b");
+    private static final Pattern VILLE_FRANCE_PATTERN =
+            Pattern.compile("(?i)^(.*?)[,\\s]+\\b(france|fr)\\b\\s*$");
 
     /** Mapping des intitulés Excel vers nos valeurs internes de typePiece (clé normalisée). */
     private static final Map<String, String> TYPE_PIECE_MAPPING = Map.ofEntries(
@@ -278,19 +284,18 @@ public class ClientImportService {
             }
             if (lines.length >= 3) c.setPays(normaliserPays(strip(lines[2])));
         } else {
-            // Cellule sur une seule ligne : on essaie de repérer le CP
-            // n'importe où dans la chaîne (5 chiffres consécutifs).
+            // Cellule sur une seule ligne : on repère le CP n'importe où dans
+            // la chaîne (5 chiffres consécutifs).
             String single = strip(raw);
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\b(\\d{5})\\b").matcher(single);
+            Matcher m = CP_PATTERN.matcher(single);
             if (m.find()) {
                 String cp     = m.group(1);
                 String avant  = single.substring(0, m.start()).trim().replaceAll("[,;]\\s*$", "");
                 String apres  = single.substring(m.end()).trim().replaceAll("^[,;]\\s*", "");
                 if (!avant.isEmpty()) c.setRue(avant);
                 c.setCodePostal(cp);
-                // « Paris, France » / « Paris FRANCE » → ville = Paris, pays = France.
-                java.util.regex.Matcher mp = java.util.regex.Pattern.compile(
-                        "(?i)^(.*?)[,\\s]+\\b(france|fr)\\b\\s*$").matcher(apres);
+                // « Paris, France » / « Paris FRANCE » → ville=Paris, pays=France.
+                Matcher mp = VILLE_FRANCE_PATTERN.matcher(apres);
                 if (mp.matches()) {
                     String v = mp.group(1).trim();
                     if (!v.isEmpty()) c.setVille(v);

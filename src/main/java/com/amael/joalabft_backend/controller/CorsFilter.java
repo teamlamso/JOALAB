@@ -1,6 +1,7 @@
 package com.amael.joalabft_backend.controller;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.container.PreMatching;
@@ -15,8 +16,7 @@ import java.io.IOException;
  */
 @Provider
 @PreMatching
-public class CorsFilter implements ContainerResponseFilter,
-        jakarta.ws.rs.container.ContainerRequestFilter {
+public class CorsFilter implements ContainerResponseFilter, ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {

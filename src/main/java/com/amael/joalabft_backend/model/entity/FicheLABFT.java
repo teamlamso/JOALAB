@@ -1,5 +1,6 @@
 package com.amael.joalabft_backend.model.entity;
 
+import com.amael.joalabft_backend.model.util.WorkDay;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -88,16 +89,9 @@ public class FicheLABFT {
         });
     }
 
-    /**
-     * Retourne la journée de travail de la fiche.
-     * Une journée commence à 06h00 et se termine à 05h59 le lendemain.
-     * Une fiche créée avant 06h00 appartient au jour précédent.
-     */
+    /** Journée de travail de la fiche, voir {@link WorkDay}. */
     public LocalDate getDate() {
-        if (dateCreation == null) return null;
-        return dateCreation.getHour() < 6
-                ? dateCreation.toLocalDate().minusDays(1)
-                : dateCreation.toLocalDate();
+        return WorkDay.from(dateCreation);
     }
 
     /** Somme du montant RGM de toutes les lignes. */
