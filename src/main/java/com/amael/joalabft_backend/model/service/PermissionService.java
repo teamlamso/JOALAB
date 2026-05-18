@@ -3,11 +3,11 @@ package com.amael.joalabft_backend.model.service;
 import com.amael.joalabft_backend.model.entity.FicheLABFT;
 import com.amael.joalabft_backend.model.entity.Utilisateur;
 import com.amael.joalabft_backend.model.enums.RoleUtilisateur;
+import com.amael.joalabft_backend.model.util.WorkDay;
 import jakarta.ejb.Stateless;
 import jakarta.ws.rs.ForbiddenException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -37,18 +37,6 @@ public class PermissionService {
     private static final int RESPONSABLE_FENETRE_JOURS = 31;
 
     /**
-     * Retourne le jour de travail courant : la journée commence à 06h00 et se
-     * termine à 05h59 le lendemain. Avant 06h00 du matin, on est encore sur la
-     * journée de la veille.
-     */
-    public LocalDate jourTravailCourant() {
-        LocalDateTime now = LocalDateTime.now();
-        return now.getHour() < 6
-                ? now.toLocalDate().minusDays(1)
-                : now.toLocalDate();
-    }
-
-    /**
      * Indique si {@code utilisateur} a le droit de modifier une fiche dont la
      * date de travail est {@code dateFiche}. L'écart est mesuré en jours entiers
      * entre la date de la fiche et le jour de travail courant.
@@ -56,8 +44,8 @@ public class PermissionService {
     public boolean peutModifierFiche(Utilisateur utilisateur, LocalDate dateFiche) {
         if (utilisateur == null || dateFiche == null) return false;
         if (utilisateur.getRole() == RoleUtilisateur.MCD) return true;
-        long ecart = ChronoUnit.DAYS.between(dateFiche, jourTravailCourant());
-        if (ecart < 0) return false; // fiche dans le futur, rejet
+        long ecart = ChronoUnit.DAYS.between(dateFiche, WorkDay.today());
+        if (ecart < 0) return false;
         return switch (utilisateur.getRole()) {
             case CAISSIER           -> ecart <= CAISSIER_FENETRE_JOURS;
             case RESPONSABLE_CAISSE -> ecart <= RESPONSABLE_FENETRE_JOURS;

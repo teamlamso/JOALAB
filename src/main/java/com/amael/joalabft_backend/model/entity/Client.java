@@ -215,8 +215,8 @@ public class Client {
      * front pour pouvoir les surligner dans le formulaire (ex. {@code "rue"},
      * {@code "typePiece"}…). La liste est vide si le client est complet.
      */
-    public java.util.List<String> getChampsManquants() {
-        java.util.List<String> manquants = new java.util.ArrayList<>();
+    public List<String> getChampsManquants() {
+        List<String> manquants = new ArrayList<>();
         if (!identifie) {
             if (!notBlank(descriptionPhysique)) manquants.add("descriptionPhysique");
             return manquants;

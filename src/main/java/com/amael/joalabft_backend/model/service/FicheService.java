@@ -16,11 +16,13 @@ import com.amael.joalabft_backend.model.enums.TypeJeu;
 import com.amael.joalabft_backend.model.enums.TypePaiement;
 import com.amael.joalabft_backend.model.repository.ClientRepository;
 import com.amael.joalabft_backend.model.repository.FicheLABFTRepository;
+import com.amael.joalabft_backend.model.util.WorkDay;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,7 +31,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -177,12 +181,11 @@ public class FicheService {
     }
 
     /**
-     * Met à jour en place les champs d'une LigneTransaction existante à partir
-     * d'une requête. Le caissier d'origine est préservé (clé conservée pour
-     * l'audit). EclipseLink émet un UPDATE seulement si au moins un champ a
-     * changé.
+     * Met à jour en place les champs d'une LigneTransaction à partir d'une
+     * requête (sans toucher au caissier d'origine, conservé pour l'audit).
+     * EclipseLink émet un UPDATE seulement si au moins un champ a changé.
      */
-    private void applyRequestToLigne(LigneTransaction l, LigneTransactionRequest req) {
+    private LigneTransaction applyRequestToLigne(LigneTransaction l, LigneTransactionRequest req) {
         if (req.montantRGM != null && req.numeroSocle == null) {
             throw new BadRequestException(
                     "Le numéro de socle est obligatoire lorsqu'un montant RGM est renseigné");
@@ -196,6 +199,7 @@ public class FicheService {
         l.setChangeSortant(req.changeSortant);
         l.setObservations(req.observations);
         l.setEnregistreFrontCage(req.enregistreFrontCage);
+        return l;
     }
 
     /**
@@ -261,8 +265,8 @@ public class FicheService {
         return String.join(", ", parts);
     }
 
-    private String formatMontant(java.math.BigDecimal value) {
-        return String.format(java.util.Locale.FRANCE, "%,.2f €", value);
+    private String formatMontant(BigDecimal value) {
+        return String.format(Locale.FRANCE, "%,.2f €", value);
     }
 
     /** Capture d'une ligne pour comparaison ultérieure (immutable). */
@@ -271,9 +275,9 @@ public class FicheService {
             String typePaiement,
             String typeChange,
             Integer numeroSocle,
-            java.math.BigDecimal montantRGM,
-            java.math.BigDecimal changeEntrant,
-            java.math.BigDecimal changeSortant,
+            BigDecimal montantRGM,
+            BigDecimal changeEntrant,
+            BigDecimal changeSortant,
             String observations,
             boolean enregistreFrontCage
     ) {}
@@ -292,21 +296,21 @@ public class FicheService {
         );
     }
 
-    private boolean sameMontant(java.math.BigDecimal a, java.math.BigDecimal b) {
+    private boolean sameMontant(BigDecimal a, BigDecimal b) {
         if (a == null && b == null) return true;
         if (a == null || b == null) return false;
         return a.compareTo(b) == 0;
     }
 
     private boolean sameContent(LigneSnapshot a, LigneTransaction b) {
-        return java.util.Objects.equals(a.typeJeu(),      b.getTypeJeu()      != null ? b.getTypeJeu().name()      : null)
-            && java.util.Objects.equals(a.typePaiement(), b.getTypePaiement() != null ? b.getTypePaiement().name() : null)
-            && java.util.Objects.equals(a.typeChange(),   b.getTypeChange()   != null ? b.getTypeChange().name()   : null)
-            && java.util.Objects.equals(a.numeroSocle(),  b.getNumeroSocle())
+        return Objects.equals(a.typeJeu(),      b.getTypeJeu()      != null ? b.getTypeJeu().name()      : null)
+            && Objects.equals(a.typePaiement(), b.getTypePaiement() != null ? b.getTypePaiement().name() : null)
+            && Objects.equals(a.typeChange(),   b.getTypeChange()   != null ? b.getTypeChange().name()   : null)
+            && Objects.equals(a.numeroSocle(),  b.getNumeroSocle())
             && sameMontant(a.montantRGM(),     b.getMontantRGM())
             && sameMontant(a.changeEntrant(),  b.getChangeEntrant())
             && sameMontant(a.changeSortant(),  b.getChangeSortant())
-            && java.util.Objects.equals(a.observations(), b.getObservations())
+            && Objects.equals(a.observations(), b.getObservations())
             && a.enregistreFrontCage() == b.isEnregistreFrontCage();
     }
 
@@ -339,7 +343,7 @@ public class FicheService {
                                                 Map<Long, LigneSnapshot> avant) {
         StringBuilder sb = new StringBuilder("Modification");
         boolean anyChange = false;
-        Set<Long> idsConserves = new java.util.HashSet<>();
+        Set<Long> idsConserves = new HashSet<>();
 
         for (int i = 0; i < nouvelles.size(); i++) {
             Long idReq = idsRequete.get(i);
@@ -370,19 +374,7 @@ public class FicheService {
     }
 
     private LigneTransaction buildLigne(LigneTransactionRequest req, Utilisateur caissier) {
-        if (req.montantRGM != null && req.numeroSocle == null) {
-            throw new BadRequestException("Le numéro de socle est obligatoire lorsqu'un montant RGM est renseigné");
-        }
-        LigneTransaction l = new LigneTransaction();
-        l.setTypeJeu(req.typeJeu != null ? TypeJeu.valueOf(req.typeJeu) : null);
-        l.setTypePaiement(req.typePaiement != null ? TypePaiement.valueOf(req.typePaiement) : null);
-        l.setTypeChange(req.typeChange != null ? TypeChange.valueOf(req.typeChange) : null);
-        l.setNumeroSocle(req.numeroSocle);
-        l.setMontantRGM(req.montantRGM);
-        l.setChangeEntrant(req.changeEntrant);
-        l.setChangeSortant(req.changeSortant);
-        l.setObservations(req.observations);
-        l.setEnregistreFrontCage(req.enregistreFrontCage);
+        LigneTransaction l = applyRequestToLigne(new LigneTransaction(), req);
         l.setCaissier(caissier);
         return l;
     }
@@ -392,16 +384,11 @@ public class FicheService {
                 ? f.getDateModification()
                 : f.getDateCreation();
         String modif = derniere != null ? derniere.format(TIME_FMT) : null;
-        // Jour de travail (06h→05h59) de la dernière modification, indépendant
-        // de la date de la fiche : si l'on modifie aujourd'hui une fiche de la
-        // veille, le front affichera "à HH:mm" et non "hier à HH:mm".
-        String modifDate = derniere != null
-                ? (derniere.getHour() < 6
-                        ? derniere.toLocalDate().minusDays(1).format(DATE_FMT)
-                        : derniere.toLocalDate().format(DATE_FMT))
-                : null;
-        // Set conserve l'ordre d'apparition (LinkedHashSet) — utile pour
-        // afficher les badges dans l'ordre de saisie sur l'accueil.
+        // Jour de travail de la dernière modification, indépendant de la date
+        // de la fiche : modifier aujourd'hui une fiche de la veille affichera
+        // "à HH:mm" (pas "hier à HH:mm").
+        LocalDate modifWorkDay = WorkDay.from(derniere);
+        String modifDate = modifWorkDay != null ? modifWorkDay.format(DATE_FMT) : null;
         Set<String> typesJeu = new LinkedHashSet<>();
         f.getLignes().forEach(l -> {
             if (l.getTypeJeu() != null) typesJeu.add(l.getTypeJeu().name());
