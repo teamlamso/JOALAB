@@ -1,3 +1,27 @@
+export const TYPES_PIECE = [
+  'CNIe',
+  'CNI',
+  'Permis de Conduire (Carte)',
+  'Permis de Conduire (Papier)',
+  'Passeport Français',
+  'Passeport Etranger',
+  'Carte Identité Etrangère',
+  'Titre de Séjour',
+]
+
+export const PIECES_AVEC_PREFECTURE = [
+  'CNI',
+  'Permis de Conduire (Carte)',
+  'Permis de Conduire (Papier)',
+  'Passeport Français',
+  'Titre de Séjour',
+]
+
+export const PIECES_AVEC_PAYS = [
+  'Passeport Etranger',
+  'Carte Identité Etrangère',
+]
+
 /**
  * Libellés affichés pour les champs manquants d'un client. Les clés sont
  * celles retournées par {@code Client#getChampsManquants} côté backend.

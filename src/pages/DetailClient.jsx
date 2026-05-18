@@ -2,34 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getClient, deleteClient } from '../api/clients.js'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import { EyeIcon } from '../components/Icons.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { peutSupprimerClient } from '../utils/permissions.js'
 import { texteChampsManquants } from '../utils/champsClient.js'
-
-function EyeIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  )
-}
-
-function formatDate(iso) {
-  if (!iso) return '-'
-  try {
-    const [y, m, d] = iso.slice(0, 10).split('-')
-    return `${d}/${m}/${y}`
-  } catch {
-    return iso
-  }
-}
-
-function formatEur(value) {
-  if (value == null || value === 0) return '-'
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)
-}
+import { formatDateFr, formatEur } from '../utils/formatters.js'
 
 export default function DetailClient() {
   const { id } = useParams()
@@ -135,7 +113,7 @@ export default function DetailClient() {
           {client.identifie ? (
             <p>
               {adresseLines.map((l, i) => <span key={i}>{l}<br /></span>)}
-              {client.dateNaissance && <>Né(e) le : {formatDate(client.dateNaissance)}{client.lieuNaissance ? ` à ${client.lieuNaissance}` : ''}</>}
+              {client.dateNaissance && <>Né(e) le : {formatDateFr(client.dateNaissance)}{client.lieuNaissance ? ` à ${client.lieuNaissance}` : ''}</>}
             </p>
           ) : (
             <p>{client.descriptionPhysique}</p>
@@ -145,7 +123,7 @@ export default function DetailClient() {
           <div className="client-info-id">
             {client.typePiece && <span>Type de pièce : {client.typePiece}<br /></span>}
             {client.numeroPiece && <span>Numéro : {client.numeroPiece}<br /></span>}
-            {client.dateDelivrance && <span>Date de délivrance : {formatDate(client.dateDelivrance)}<br /></span>}
+            {client.dateDelivrance && <span>Date de délivrance : {formatDateFr(client.dateDelivrance)}<br /></span>}
             {client.prefectureDelivrance && <span>Préfecture : {client.prefectureDelivrance}<br /></span>}
             {client.paysDelivrance && <span>Pays de délivrance : {client.paysDelivrance}</span>}
           </div>
@@ -175,7 +153,7 @@ export default function DetailClient() {
             ) : (
               client.fiches.map((f) => (
                 <tr key={f.id}>
-                  <td>{formatDate(f.date)}</td>
+                  <td>{formatDateFr(f.date)}</td>
                   <td>{f.caissierNom}</td>
                   <td>{formatEur(f.totalRGM)}</td>
                   <td>{formatEur(f.totalEntrant)}</td>

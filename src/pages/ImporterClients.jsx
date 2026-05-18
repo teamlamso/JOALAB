@@ -58,7 +58,7 @@ export default function ImporterClients() {
           <p>
             Sélectionnez un classeur Excel (.xlsx ou .xls). Les colonnes
             reconnues sont : Prénom, Nom de famille, Date de naissance, PPE,
-            PI Numéro / Pays / Ville (délivrance &amp; naissance), PI Type de
+            PI Numéro / Pays / Ville (délivrance & naissance), PI Type de
             document, PI Date de délivrance, Adresse 1. Les colonnes
             supplémentaires sont ignorées.
           </p>

@@ -13,13 +13,7 @@ import {
 } from '../utils/permissions.js'
 import { imprimerSousFiche, ORDRE_TYPES_JEU } from '../utils/print.js'
 import { texteChampsManquants } from '../utils/champsClient.js'
-
-function formatDateFr(str) {
-  if (!str) return ''
-  if (str.includes('/')) return str.slice(0, 10)
-  const [y, m, d] = str.slice(0, 10).split('-')
-  return `${d}/${m}/${y}`
-}
+import { formatDateFr } from '../utils/formatters.js'
 
 export default function DetailFiche() {
   const { id } = useParams()

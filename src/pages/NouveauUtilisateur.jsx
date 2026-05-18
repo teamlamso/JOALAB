@@ -105,13 +105,13 @@ export default function NouveauUtilisateur() {
               <input type="text" value={form.nom} onChange={set('nom')} required />
             </div>
             <div className="form-group">
-              <label>Pr&eacute;nom :</label>
+              <label>Prénom :</label>
               <input type="text" value={form.prenom} onChange={set('prenom')} required />
             </div>
           </div>
 
           <div className="form-group">
-            <label>R&ocirc;le :</label>
+            <label>Rôle :</label>
             <select value={form.role} onChange={set('role')} required>
               {rolesPossibles.map((r) => (
                 <option key={r} value={r}>{ROLE_LABELS[r]}</option>

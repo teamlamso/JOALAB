@@ -1,24 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { listClients } from '../api/clients.js'
-
-function SearchIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-  )
-}
-
-function formatDate(iso) {
-  if (!iso) return ''
-  try {
-    const [y, m, d] = iso.slice(0, 10).split('-')
-    return `${d}/${m}/${y}`
-  } catch {
-    return iso
-  }
-}
+import { SearchIcon } from '../components/Icons.jsx'
+import { formatDateFr } from '../utils/formatters.js'
 
 export default function Identification() {
   const navigate = useNavigate()
@@ -31,7 +15,6 @@ export default function Identification() {
   const [loadingSearch, setLoadingSearch] = useState(false)
   const [description, setDescription] = useState('')
 
-  // Auto-fill search if coming from DetailClient
   useEffect(() => {
     if (preselectClient) {
       navigate('/fiches/nouveau', { state: { clientData: { id: preselectClient.id, libelle: preselectClient.libelle, identifie: true } } })
@@ -43,7 +26,6 @@ export default function Identification() {
     setLoadingSearch(true)
     try {
       const data = await listClients(q)
-      // filter to only identified clients in "identifie" tab
       setResults(tab === 'identifie' ? data.filter((c) => c.identifie !== false) : data.filter((c) => c.identifie === false))
     } catch {
       setResults([])
@@ -128,7 +110,7 @@ export default function Identification() {
                           {c.libelle}
                           {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
                         </strong>
-                        {c.dateNaissance && <p>Né(e) le {formatDate(c.dateNaissance)}</p>}
+                        {c.dateNaissance && <p>Né(e) le {formatDateFr(c.dateNaissance)}</p>}
                       </div>
                       <div className="search-result-item-actions">
                         <button

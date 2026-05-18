@@ -13,31 +13,12 @@ import PrefectureSearch from '../components/PrefectureSearch.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { peutModifierClientComplet } from '../utils/permissions.js'
-import { texteChampsManquants } from '../utils/champsClient.js'
-
-const TYPES_PIECE = [
-  'CNIe',
-  'CNI',
-  'Permis de Conduire (Carte)',
-  'Permis de Conduire (Papier)',
-  'Passeport Français',
-  'Passeport Etranger',
-  'Carte Identité Etrangère',
-  'Titre de Séjour',
-]
-
-const PIECES_AVEC_PREFECTURE = [
-  'CNI',
-  'Permis de Conduire (Carte)',
-  'Permis de Conduire (Papier)',
-  'Passeport Français',
-  'Titre de Séjour',
-]
-
-const PIECES_AVEC_PAYS = [
-  'Passeport Etranger',
-  'Carte Identité Etrangère',
-]
+import {
+  TYPES_PIECE,
+  PIECES_AVEC_PREFECTURE,
+  PIECES_AVEC_PAYS,
+  texteChampsManquants,
+} from '../utils/champsClient.js'
 
 /**
  * Édition d'un client existant.
@@ -200,7 +181,7 @@ export default function EditClient() {
                     <input type="text" value={form.nom} onChange={set('nom')} required disabled={lockIdentite} />
                   </div>
                   <div className={cls('prenom')}>
-                    <label>Pr&eacute;nom :</label>
+                    <label>Prénom :</label>
                     <input type="text" value={form.prenom} onChange={set('prenom')} required disabled={lockIdentite} />
                   </div>
                 </div>
@@ -259,7 +240,7 @@ export default function EditClient() {
               <input type="text" value={form.rue} onChange={set('rue')} />
             </div>
             <div className="form-group">
-              <label>Compl&eacute;ment :</label>
+              <label>Complément :</label>
               <input type="text" value={form.complement} onChange={set('complement')} />
             </div>
             <div className="form-row-2">

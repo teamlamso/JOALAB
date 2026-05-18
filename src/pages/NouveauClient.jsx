@@ -9,30 +9,7 @@ import CountrySearch from '../components/CountrySearch.jsx'
 import PrefectureSearch from '../components/PrefectureSearch.jsx'
 import ClientMatchDialog from '../components/ClientMatchDialog.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
-
-const TYPES_PIECE = [
-  'CNIe',
-  'CNI',
-  'Permis de Conduire (Carte)',
-  'Permis de Conduire (Papier)',
-  'Passeport Français',
-  'Passeport Etranger',
-  'Carte Identité Etrangère',
-  'Titre de Séjour',
-]
-
-const PIECES_AVEC_PREFECTURE = [
-  'CNI',
-  'Permis de Conduire (Carte)',
-  'Permis de Conduire (Papier)',
-  'Passeport Français',
-  'Titre de Séjour',
-]
-
-const PIECES_AVEC_PAYS = [
-  'Passeport Etranger',
-  'Carte Identité Etrangère',
-]
+import { TYPES_PIECE, PIECES_AVEC_PREFECTURE, PIECES_AVEC_PAYS } from '../utils/champsClient.js'
 
 const EMPTY_IDENTIFIED = {
   nom: '', prenom: '', dateNaissance: '', lieuNaissance: '', ppe: false,
@@ -165,7 +142,7 @@ export default function NouveauClient() {
                   <input type="text" value={form.nom} onChange={set('nom')} required />
                 </div>
                 <div className="form-group">
-                  <label>Pr&eacute;nom :</label>
+                  <label>Prénom :</label>
                   <input type="text" value={form.prenom} onChange={set('prenom')} required />
                 </div>
               </div>
@@ -205,7 +182,7 @@ export default function NouveauClient() {
                 <input type="text" value={form.rue} onChange={set('rue')} />
               </div>
               <div className="form-group">
-                <label>Compl&eacute;ment :</label>
+                <label>Complément :</label>
                 <input type="text" value={form.complement} onChange={set('complement')} />
               </div>
               <div className="form-row-2">

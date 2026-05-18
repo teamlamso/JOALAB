@@ -1,23 +1,10 @@
 import logoJOA from '../assets/logoJOA.svg'
 import { formatLibelle } from '../utils/libelle.js'
+import { formatDateFr, formatEur } from '../utils/formatters.js'
 
 const NB_LIGNES_MIN = 6
 
-function formatEur(value) {
-  if (value == null || Number(value) === 0) return ''
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-  }).format(value)
-}
-
-function formatDateFr(str) {
-  if (!str) return ''
-  if (str.includes('/')) return str.slice(0, 10)
-  const [y, m, d] = str.slice(0, 10).split('-')
-  return `${d}/${m}/${y}`
-}
+const eur = (v) => formatEur(v, '')
 
 function Check({ on }) {
   return on ? <span className="fp-check">×</span> : null
@@ -176,14 +163,14 @@ export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre
             <tr key={i}>
               <td className="fp-td-change">{i + 1}.</td>
               <td className="fp-td-num">
-                {l ? formatEur(l.montantRGM) : ''}
+                {l ? eur(l.montantRGM) : ''}
                 {l?.enregistreFrontCage && (
                   <span className="fp-frontcage" title="Enregistré sur FrontCage"> ✓</span>
                 )}
               </td>
               <td className="fp-td-num">{l?.numeroSocle ?? ''}</td>
-              <td className="fp-td-num">{l ? formatEur(l.changeEntrant) : ''}</td>
-              <td className="fp-td-num">{l ? formatEur(l.changeSortant) : ''}</td>
+              <td className="fp-td-num">{l ? eur(l.changeEntrant) : ''}</td>
+              <td className="fp-td-num">{l ? eur(l.changeSortant) : ''}</td>
               <td className="fp-td-check"><Check on={l?.typeJeu === 'MAS'} /></td>
               <td className="fp-td-check"><Check on={l?.typeJeu === 'JTE'} /></td>
               <td className="fp-td-check"><Check on={l?.typeJeu === 'JT'} /></td>
@@ -200,8 +187,8 @@ export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre
           <tr className="fp-tr-totaux">
             <td className="fp-td-change"><strong>Totaux</strong></td>
             <td colSpan={2}></td>
-            <td className="fp-td-num"><strong>{formatEur(totalEntrantPlusRGM)}</strong></td>
-            <td className="fp-td-num"><strong>{formatEur(totalSortant)}</strong></td>
+            <td className="fp-td-num"><strong>{eur(totalEntrantPlusRGM)}</strong></td>
+            <td className="fp-td-num"><strong>{eur(totalSortant)}</strong></td>
             <td colSpan={11}></td>
           </tr>
         </tbody>
