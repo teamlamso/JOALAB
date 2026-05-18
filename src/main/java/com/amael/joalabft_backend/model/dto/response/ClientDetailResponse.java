@@ -30,6 +30,8 @@ public class ClientDetailResponse {
 
     /** {@code true} si tous les champs requis sont renseignés. */
     public boolean complet;
+    /** Liste des champs manquants (clés front, voir {@code Client#getChampsManquants}). */
+    public List<String> champsManquants;
 
     /** Historique des fiches, triées par date décroissante. */
     public List<FicheSummaryResponse> fiches;

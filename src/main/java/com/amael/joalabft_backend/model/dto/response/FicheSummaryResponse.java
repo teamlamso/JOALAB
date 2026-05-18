@@ -14,6 +14,8 @@ public class FicheSummaryResponse {
      *  (état civil, pièce, adresse). Permet d'afficher un avertissement sur
      *  les cartes de l'accueil et la consultation des fiches. */
     public boolean clientComplet;
+    /** Liste des champs manquants du client (clés front, voir {@code Client#getChampsManquants}). */
+    public List<String> clientChampsManquants;
     /** Identifiant du client (utile pour rebondir vers son profil). */
     public Long clientId;
     /** Date de création de la fiche (yyyy-MM-dd). */
@@ -33,22 +35,24 @@ public class FicheSummaryResponse {
      *  à aujourd'hui. */
     public String derniereModifDate;
 
-    public FicheSummaryResponse(Long id, String clientLibelle, boolean clientPpe, boolean clientComplet,
+    public FicheSummaryResponse(Long id, String clientLibelle, boolean clientPpe,
+                                 List<String> clientChampsManquants,
                                  Long clientId, String date, String caissierNom, List<String> typesJeu,
                                  BigDecimal totalRGM, BigDecimal totalEntrant, BigDecimal totalSortant,
                                  String derniereModif, String derniereModifDate) {
-        this.id                = id;
-        this.clientLibelle     = clientLibelle;
-        this.clientPpe         = clientPpe;
-        this.clientComplet     = clientComplet;
-        this.clientId          = clientId;
-        this.date              = date;
-        this.caissierNom       = caissierNom;
-        this.typesJeu          = typesJeu;
-        this.totalRGM          = totalRGM;
-        this.totalEntrant      = totalEntrant;
-        this.totalSortant      = totalSortant;
-        this.derniereModif     = derniereModif;
-        this.derniereModifDate = derniereModifDate;
+        this.id                    = id;
+        this.clientLibelle         = clientLibelle;
+        this.clientPpe             = clientPpe;
+        this.clientChampsManquants = clientChampsManquants;
+        this.clientComplet         = clientChampsManquants == null || clientChampsManquants.isEmpty();
+        this.clientId              = clientId;
+        this.date                  = date;
+        this.caissierNom           = caissierNom;
+        this.typesJeu              = typesJeu;
+        this.totalRGM              = totalRGM;
+        this.totalEntrant          = totalEntrant;
+        this.totalSortant          = totalSortant;
+        this.derniereModif         = derniereModif;
+        this.derniereModifDate     = derniereModifDate;
     }
 }

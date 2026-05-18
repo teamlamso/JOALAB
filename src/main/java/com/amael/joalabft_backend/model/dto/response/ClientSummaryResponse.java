@@ -1,5 +1,7 @@
 package com.amael.joalabft_backend.model.dto.response;
 
+import java.util.List;
+
 /** Résumé d'un client pour les listes. */
 public class ClientSummaryResponse {
     public Long id;
@@ -14,10 +16,12 @@ public class ClientSummaryResponse {
      *  signaler les clients importés en masse qui ont des informations
      *  manquantes (« À compléter »). */
     public boolean complet;
+    /** Liste des champs manquants (clés front, voir {@code Client#getChampsManquants}). */
+    public List<String> champsManquants;
 
     public ClientSummaryResponse(Long id, String libelle, String dateNaissance,
                                   String ville, String pays, boolean ppe,
-                                  String derniereActivite, boolean complet) {
+                                  String derniereActivite, List<String> champsManquants) {
         this.id               = id;
         this.libelle          = libelle;
         this.dateNaissance    = dateNaissance;
@@ -25,6 +29,7 @@ public class ClientSummaryResponse {
         this.pays             = pays;
         this.ppe              = ppe;
         this.derniereActivite = derniereActivite;
-        this.complet          = complet;
+        this.champsManquants  = champsManquants;
+        this.complet          = champsManquants == null || champsManquants.isEmpty();
     }
 }

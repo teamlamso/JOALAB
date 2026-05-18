@@ -21,6 +21,8 @@ public class FicheDetailResponse {
     public boolean clientPpe;
     /** {@code false} si le client a des champs manquants (à compléter). */
     public boolean clientComplet;
+    /** Liste des champs manquants du client (clés front, voir {@code Client#getChampsManquants}). */
+    public List<String> clientChampsManquants;
     public String clientRue;
     public String clientCodePostal;
     public String clientVille;
