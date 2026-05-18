@@ -1590,6 +1590,44 @@ tbody tr:hover {
   vertical-align: middle;
 }
 
+/* Surlignage hachuré orange pour un champ « à compléter » dans le formulaire
+   client (couleur cohérente avec .badge-incomplet). Appliqué sur le
+   form-group parent pour habiller à la fois le label et l'input. */
+.form-group.champ-manquant {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(230, 126, 34, 0.18) 0,
+    rgba(230, 126, 34, 0.18) 6px,
+    rgba(230, 126, 34, 0.06) 6px,
+    rgba(230, 126, 34, 0.06) 12px
+  );
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  margin: 0 -8px 14px;
+}
+
+.form-group.champ-manquant label {
+  color: #b05f12;
+  font-weight: 600;
+}
+
+.form-group.champ-manquant input,
+.form-group.champ-manquant select,
+.form-group.champ-manquant textarea {
+  border-color: #e67e22;
+}
+
+.fiche-client-incomplet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.fiche-client-incomplet span {
+  flex: 1;
+}
+
 .icone-warning {
   display: inline-flex;
   align-items: center;

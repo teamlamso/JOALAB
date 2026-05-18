@@ -5,6 +5,7 @@ import { listClients } from '../api/clients.js'
 import DatePickerInput from '../components/DatePickerInput.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { peutModifierFiche } from '../utils/permissions.js'
+import { texteChampsManquants } from '../utils/champsClient.js'
 
 /** Journée de travail courante (06h00→05h59 le lendemain). */
 function workDay() {
@@ -110,7 +111,15 @@ function FicheCard({ f, navigate, showDate, highlight, role }) {
       <div className="fiche-card-name" title={f.clientLibelle}>
         <span className="fiche-card-name-text">
           <span className="fiche-card-libelle">{f.clientLibelle}</span>
-          {f.clientComplet === false && <WarningIcon title="Le profil client a des champs manquants — à compléter" />}
+          {f.clientComplet === false && (
+            <WarningIcon
+              title={
+                f.clientChampsManquants && f.clientChampsManquants.length > 0
+                  ? `Champs manquants : ${texteChampsManquants(f.clientChampsManquants)}`
+                  : 'Le profil client a des champs manquants — à compléter'
+              }
+            />
+          )}
           <BadgesJeu types={f.typesJeu} />
           {f.clientPpe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
         </span>
@@ -174,7 +183,16 @@ function ClientCard({ c, navigate }) {
           <span className="fiche-card-libelle">{c.libelle}</span>
           {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
           {c.complet === false && (
-            <span className="badge-incomplet" title="Certains champs sont manquants">À compléter</span>
+            <span
+              className="badge-incomplet"
+              title={
+                c.champsManquants && c.champsManquants.length > 0
+                  ? `Champs manquants : ${texteChampsManquants(c.champsManquants)}`
+                  : 'Certains champs sont manquants'
+              }
+            >
+              À compléter
+            </span>
           )}
         </span>
       </div>

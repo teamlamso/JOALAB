@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listClients } from '../api/clients.js'
+import { texteChampsManquants } from '../utils/champsClient.js'
 
 function SearchIcon() {
   return (
@@ -110,7 +111,16 @@ export default function ListeClients() {
                       <strong>{c.libelle}</strong>
                       {c.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
                       {c.complet === false && (
-                        <span className="badge-incomplet" title="Certains champs sont manquants">À compléter</span>
+                        <span
+                          className="badge-incomplet"
+                          title={
+                            c.champsManquants && c.champsManquants.length > 0
+                              ? `Champs manquants : ${texteChampsManquants(c.champsManquants)}`
+                              : 'Certains champs sont manquants'
+                          }
+                        >
+                          À compléter
+                        </span>
                       )}
                     </td>
                     <td>{formatDate(c.dateNaissance)}</td>

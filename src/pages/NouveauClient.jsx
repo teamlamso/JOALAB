@@ -66,12 +66,17 @@ export default function NouveauClient() {
   }
 
   const goToTarget = (newId) => {
+    // {@code replace: true} évite que « Retour » depuis la page suivante ne
+    // revienne sur le formulaire « Nouveau client » : l'utilisateur revient
+    // ainsi sur la liste des clients (ou l'écran d'identification d'une fiche)
+    // d'où il provient.
     if (returnTo === 'fiche') {
       navigate('/fiches/identification', {
         state: { preselectClient: { id: newId, libelle: formatLibelle(form.prenom, form.nom) } },
+        replace: true,
       })
     } else {
-      navigate(`/clients/${newId}`)
+      navigate(`/clients/${newId}`, { replace: true })
     }
   }
 

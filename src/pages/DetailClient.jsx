@@ -5,6 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { peutSupprimerClient } from '../utils/permissions.js'
+import { texteChampsManquants } from '../utils/champsClient.js'
 
 function EyeIcon() {
   return (
@@ -104,9 +105,11 @@ export default function DetailClient() {
 
       {client.complet === false && (
         <div className="alert-warning">
-          Cette fiche client est <strong>incomplète</strong> : certains champs
-          (identité, pièce ou adresse) ne sont pas renseignés. Cliquez sur
-          « Modifier » pour les compléter.
+          Cette fiche client est <strong>incomplète</strong>.{' '}
+          {client.champsManquants && client.champsManquants.length > 0 ? (
+            <>Champs manquants : <strong>{texteChampsManquants(client.champsManquants)}</strong>. </>
+          ) : null}
+          Cliquez sur « Modifier » pour les compléter.
         </div>
       )}
 
@@ -117,7 +120,16 @@ export default function DetailClient() {
             {client.libelle}
             {client.ppe && <span className="badge-ppe" title="Personne Politiquement Exposée">PPE</span>}
             {client.complet === false && (
-              <span className="badge-incomplet" title="Certains champs sont manquants">À compléter</span>
+              <span
+                className="badge-incomplet"
+                title={
+                  client.champsManquants && client.champsManquants.length > 0
+                    ? `Champs manquants : ${texteChampsManquants(client.champsManquants)}`
+                    : 'Certains champs sont manquants'
+                }
+              >
+                À compléter
+              </span>
             )}
           </strong>
           {client.identifie ? (
