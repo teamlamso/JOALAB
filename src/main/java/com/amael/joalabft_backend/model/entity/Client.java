@@ -206,17 +206,35 @@ public class Client {
      * sur les clients importés en masse depuis un Excel.
      */
     public boolean isComplet() {
+        return getChampsManquants().isEmpty();
+    }
+
+    /**
+     * Liste détaillée des champs qui manquent pour qu'un client soit considéré
+     * comme complet. Les noms retournés correspondent aux clés des champs côté
+     * front pour pouvoir les surligner dans le formulaire (ex. {@code "rue"},
+     * {@code "typePiece"}…). La liste est vide si le client est complet.
+     */
+    public java.util.List<String> getChampsManquants() {
+        java.util.List<String> manquants = new java.util.ArrayList<>();
         if (!identifie) {
-            return notBlank(descriptionPhysique);
+            if (!notBlank(descriptionPhysique)) manquants.add("descriptionPhysique");
+            return manquants;
         }
-        boolean identite = notBlank(nom) && notBlank(prenom)
-                        && dateNaissance != null && notBlank(lieuNaissance);
-        boolean piece    = notBlank(typePiece) && notBlank(numeroPiece)
-                        && dateDelivrance != null
-                        && (notBlank(paysDelivrance) || notBlank(prefectureDelivrance));
-        boolean adresse  = notBlank(rue) && notBlank(codePostal)
-                        && notBlank(ville) && notBlank(pays);
-        return identite && piece && adresse;
+        if (!notBlank(nom))              manquants.add("nom");
+        if (!notBlank(prenom))           manquants.add("prenom");
+        if (dateNaissance == null)       manquants.add("dateNaissance");
+        if (!notBlank(lieuNaissance))    manquants.add("lieuNaissance");
+        if (!notBlank(typePiece))        manquants.add("typePiece");
+        if (!notBlank(numeroPiece))      manquants.add("numeroPiece");
+        if (dateDelivrance == null)      manquants.add("dateDelivrance");
+        if (!notBlank(paysDelivrance) && !notBlank(prefectureDelivrance))
+                                         manquants.add("origineDelivrance");
+        if (!notBlank(rue))              manquants.add("rue");
+        if (!notBlank(codePostal))       manquants.add("codePostal");
+        if (!notBlank(ville))            manquants.add("ville");
+        if (!notBlank(pays))             manquants.add("pays");
+        return manquants;
     }
 
     private static boolean notBlank(String s) {

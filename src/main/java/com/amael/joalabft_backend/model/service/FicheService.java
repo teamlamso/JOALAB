@@ -410,7 +410,7 @@ public class FicheService {
                 f.getId(),
                 f.getClient().getLibelle(),
                 f.getClient().isPpe(),
-                f.getClient().isComplet(),
+                f.getClient().getChampsManquants(),
                 f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
@@ -441,7 +441,8 @@ public class FicheService {
         dto.clientDateNaissance     = c.getDateNaissance() != null ? c.getDateNaissance().format(DATE_FMT) : null;
         dto.clientLieuNaissance     = c.getLieuNaissance();
         dto.clientPpe               = c.isPpe();
-        dto.clientComplet           = c.isComplet();
+        dto.clientChampsManquants   = c.getChampsManquants();
+        dto.clientComplet           = dto.clientChampsManquants.isEmpty();
         dto.clientRue               = c.getRue();
         dto.clientCodePostal        = c.getCodePostal();
         dto.clientVille             = c.getVille();

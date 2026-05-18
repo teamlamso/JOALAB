@@ -60,7 +60,7 @@ public class ClientService {
                             c.getPays(),
                             c.isPpe(),
                             activite != null ? activite.format(DATE_FMT) : null,
-                            c.isComplet()
+                            c.getChampsManquants()
                     );
                 })
                 .toList();
@@ -99,7 +99,8 @@ public class ClientService {
         dto.prefectureDelivrance = c.getPrefectureDelivrance();
         dto.paysDelivrance      = c.getPaysDelivrance();
         dto.descriptionPhysique = c.getDescriptionPhysique();
-        dto.complet             = c.isComplet();
+        dto.champsManquants     = c.getChampsManquants();
+        dto.complet             = dto.champsManquants.isEmpty();
         dto.fiches              = fiches;
         return dto;
     }
@@ -263,7 +264,7 @@ public class ClientService {
                 f.getId(),
                 f.getClient().getLibelle(),
                 f.getClient().isPpe(),
-                f.getClient().isComplet(),
+                f.getClient().getChampsManquants(),
                 f.getClient().getId(),
                 f.getDate() != null ? f.getDate().format(DATE_FMT) : null,
                 f.getCreePar().getNomComplet(),
