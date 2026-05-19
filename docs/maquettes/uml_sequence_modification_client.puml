@@ -1,0 +1,84 @@
+@startuml uml_sequence_modification_client
+title Diagramme de séquence — Modification d'un client (logique selon rôle)
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantBorderColor #444
+
+actor "Utilisateur\n(rôle variable)" as user
+participant "DetailClient.jsx\n→ EditClient.jsx" as ui
+participant "api/clients.js" as api
+participant "AuthFilter" as authF
+participant "ClientResource\n@Path /clients" as ctrl
+participant "PermissionService" as perm
+participant "ClientService" as svc
+participant "ClientRepository" as repo
+participant "JournalService" as journal
+database  "BD LABFTDB" as db
+
+== Chargement du client ==
+user -> ui : ouvre /clients/:id/modifier
+ui -> api : getClient(id)
+api -> authF : GET /api/clients/{id}\nAuthorization: Bearer {token}
+authF -> ctrl : getClient(id, utilisateur)
+ctrl -> svc : getClient(id)
+svc -> repo : findById(id)
+repo -> db : SELECT * FROM clients WHERE id = ?
+db --> repo : Client
+svc --> ctrl : ClientDetailResponse\n(+ champsManquants)
+ctrl --> api : 200 OK
+api --> ui : données client
+ui --> user : formulaire pré-rempli\nchamps manquants surlignés (hachuré orange)
+
+== Soumission selon rôle ==
+
+alt rôle = CAISSIER (PATCH partiel — adresse + pièce uniquement)
+    user -> ui : modifie adresse / pièce, valide
+    ui -> api : updateClientIdentification(id, body)
+    api -> authF : PATCH /api/clients/{id}/identification
+    authF -> ctrl : updateClientIdentification(id, req, utilisateur)
+    ctrl -> svc : updateClientIdentification(id, req, utilisateur)
+    note right of svc
+      Aucune vérification de permission supplémentaire :
+      accessible à tous les rôles authentifiés.
+    end note
+    svc -> repo : findById(id)
+    repo --> svc : Client
+    svc -> svc : c.setRue / setVille / setPays...\nc.setTypePiece / setNumeroPiece...
+    svc -> repo : update(c)\n(@PreUpdate → normalisation nom/prénom)
+    repo -> db : UPDATE clients SET rue=?, ville=?, ...
+    svc -> journal : log(MODIFICATION, CLIENT, c.id,\n"Modification de l'adresse ou de la pièce d'identité")
+    journal -> db : INSERT INTO journal_actions
+    svc --> ctrl : void
+    ctrl --> api : 204 No Content
+
+else rôle = RESPONSABLE_CAISSE ou MCD (PUT identité complète)
+    user -> ui : modifie tous les champs, valide
+    ui -> api : updateClient(id, body)
+    api -> authF : PUT /api/clients/{id}
+    authF -> ctrl : updateClient(id, req, utilisateur)
+    ctrl -> svc : updateClient(id, req, utilisateur)
+
+    svc -> perm : ensurePeutModifierClientComplet(utilisateur)
+    alt rôle insuffisant (CAISSIER) — sécurité défense en profondeur
+        perm --> svc : throws ForbiddenException
+        svc --> ctrl : propage
+        ctrl --> api : 403 Forbidden
+    else autorisé
+        perm --> svc : ok
+        svc -> repo : findById(id)
+        repo --> svc : Client
+        svc -> svc : applyRequest(c, req)\nsetIdentifie / setNom / setPrenom...\nsetDateNaissance / setLieuNaissance / setPpe...
+        svc -> repo : update(c)
+        repo -> db : UPDATE clients SET ...
+        svc -> journal : log(MODIFICATION, CLIENT, c.id,\n"Modification de l'identité complète")
+        journal -> db : INSERT INTO journal_actions
+        svc --> ctrl : void
+        ctrl --> api : 204 No Content
+    end
+end
+
+api --> ui : succès
+ui --> user : toast « Client mis à jour »\nretour à DetailClient (ou à la fiche d'origine)
+
+@enduml

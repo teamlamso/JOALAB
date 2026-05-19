@@ -1,0 +1,98 @@
+@startuml uml_deploiement
+title Diagramme de déploiement — JOA LAB-FT
+
+skinparam shadowing false
+skinparam nodeBorderColor #444
+skinparam componentBorderColor #444
+skinparam databaseBorderColor #444
+
+' ============== POSTE UTILISATEUR ==============
+node "Poste de travail caissier\n(Windows / Linux)" as PC {
+  artifact "Navigateur Chrome / Edge\n(SPA React 19)" as browser {
+    component "Application JOA LAB-FT\n(bundle Vite — JS/CSS)" as spa
+    component "localStorage\n(token, user)" as ls
+  }
+}
+
+' ============== SERVEUR APPLICATIF ==============
+node "Serveur d'application\n(machine Linux, JDK 21)" as srv {
+
+  node "Payara Server 7.2025.1\n(Jakarta EE 11)" as payara {
+    component "JOALABFT_Backend-1.0-SNAPSHOT.war" as war {
+      component "Filtres JAX-RS\n(CorsFilter, AuthFilter)" as filters
+      component "Resources JAX-RS\n(/api/auth, /fiches,\n/clients, /utilisateurs,\n/journal)" as rest
+      component "Services EJB Stateless\n(Auth, Fiche, Client,\nClientImport, Utilisateur,\nJournal, Permission)" as svc
+      component "SessionStore\n@ApplicationScoped\n(TTL 8h, en mémoire)" as session
+      component "Repositories\n(EntityManager / JPA)" as repos
+      component "TestInsert\n@Singleton @Startup" as seed
+    }
+    component "EclipseLink 4.0.7\n(JPA provider)" as orm
+    component "Pool JDBC\nLABFTDB_Pool" as pool
+  }
+
+  artifact "asadmin\n(création datasource\njdbc/LABFTDB)" as asadmin
+}
+
+' ============== BASE DE DONNÉES ==============
+node "Hôte base de données" as dbhost {
+  database "BD relationnelle\n(MySQL / PostgreSQL / H2)\n— schéma LABFTDB —" as db {
+    folder "Tables" {
+      file "utilisateurs"
+      file "clients"
+      file "fiches_labft"
+      file "lignes_transaction"
+      file "journal_actions"
+    }
+  }
+}
+
+' ============== SERVICES EXTERNES ==============
+cloud "Internet" {
+  node "data.gouv.fr" as gouv {
+    component "API BAN\napi-adresse.data.gouv.fr" as ban
+    component "API Découpage administratif\ngeo.api.gouv.fr" as geoapi
+  }
+}
+
+' ============== INFRASTRUCTURE DEV ==============
+node "Environnement de\ndéveloppement (laptop)" as dev {
+  component "Vite dev server\nport 5173\n(proxy /api → :8080)" as vite
+  component "Maven 3.9.6\n+ JDK 21" as mvn
+}
+
+' --- Liens de communication ---
+browser -[#0066CC]-> filters       : HTTPS / HTTP\n/api/* + Bearer token\n(JSON, multipart pour import)
+spa -[#888]-> ls                   : lecture/écriture
+filters --> rest                   : pipeline JAX-RS
+rest --> svc                       : @Inject (CDI/EJB)
+svc --> repos                      : @Inject
+svc --> session                    : @Inject
+repos --> orm                      : EntityManager
+orm --> pool
+pool -[#009933]-> db               : JDBC (driver)
+asadmin .> pool                    : provisionne (à l'install)
+seed .> repos                      : init au démarrage\n(données de test)
+
+svc -[#CC6600]-> ban               : HTTPS — résolution adresses\n(import Excel + saisie manuelle)
+svc -[#CC6600]-> geoapi            : HTTPS — formatage commune FR
+
+vite .[#888].> browser             : sert le bundle SPA (dev)
+vite .[#888].> filters             : proxy HTTP /api → :8080 (dev)
+mvn .> war                         : mvn package (build local)
+
+note right of payara
+  Datasource Payara :
+  jdbc/LABFTDB → pool JDBC
+  Persistence-unit "LABFTPU" (JTA)
+  EclipseLink ddl-generation =
+  drop-and-create-tables (DEV)
+end note
+
+note right of browser
+  Bundle React 19 + Vite
+  Routing : React Router 7.5
+  AuthContext → token Bearer
+  injecté sur chaque fetch.
+end note
+
+@enduml
