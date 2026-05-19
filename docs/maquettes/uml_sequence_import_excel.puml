@@ -1,0 +1,86 @@
+@startuml uml_sequence_import_excel
+title Diagramme de séquence — Import Excel des clients
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantBorderColor #444
+
+actor "Responsable ou MCD" as user
+participant "ImporterClients.jsx" as ui
+participant "api/clients.js" as api
+participant "AuthFilter" as authF
+participant "ClientResource\n@Path /clients" as ctrl
+participant "PermissionService" as perm
+participant "ClientImportService" as imp
+participant "Apache POI\n(Workbook)" as poi
+participant "GeoService" as geo
+participant "AdresseService" as adr
+participant "ClientRepository" as repo
+participant "JournalService" as journal
+database  "BD LABFTDB" as db
+collections "API geo.api.gouv.fr" as geoapi
+collections "API BAN\napi-adresse.data.gouv.fr" as banapi
+
+user -> ui : sélectionne fichier .xlsx, valide
+ui -> api : importClients(file)  [FormData]
+api -> authF : POST /api/clients/import  multipart/form-data\nAuthorization: Bearer {token}
+authF -> ctrl : importer(parts, utilisateur)
+
+ctrl -> perm : ensurePeutImporterClients(utilisateur)
+alt rôle = CAISSIER
+    perm --> ctrl : ForbiddenException
+    ctrl --> api : 403 Forbidden
+else autorisé
+    perm --> ctrl : ok
+    ctrl -> imp : importer(inputStream, utilisateur)
+
+    imp -> poi : WorkbookFactory.create(input)
+    poi --> imp : Workbook (1re feuille)
+    imp -> imp : parseHeaders(row0)\n(normalisation : lowercase, sans accents)
+
+    loop pour chaque ligne i >= 1
+        imp -> imp : parseRow(row)\n(noms, DOB, PPE, pièce, dates...)
+
+        opt lieu de naissance fourni en France
+            imp -> geo : formatVilleFrance(ville)
+            geo -> geoapi : GET /communes?nom=...
+            geoapi --> geo : commune(s)
+            geo --> imp : "Ville (XX)"
+        end
+
+        opt adresse à compléter
+            imp -> adr : resoudre(adresseRaw)
+            adr -> banapi : GET /search?q=...
+            banapi --> adr : features
+            adr --> imp : Adresse(rue, CP, ville, pays) ou null
+        end
+
+        imp -> repo : findSimilar(nom, prenom, dob, numPiece)
+        repo -> db : SELECT * FROM clients WHERE ...
+        db --> repo : List<Client>
+        repo --> imp : candidats
+
+        alt doublon détecté
+            imp -> imp : result.skipped++
+        else nouveau client
+            imp -> repo : save(client)
+            repo -> db : INSERT INTO clients
+            db --> repo : id
+            imp -> journal : log(CREATION, CLIENT, c.id, "Import Excel")
+            journal -> db : INSERT INTO journal_actions
+
+            alt !client.isComplet()
+                imp -> imp : result.incomplete++
+            end
+            imp -> imp : result.imported++
+        end
+    end
+
+    imp --> ctrl : ImportClientsResponse\n{ imported, incomplete, skipped, errors[] }
+    ctrl --> api : 200 OK
+end
+
+api --> ui : statistiques d'import
+ui --> user : affiche le résumé\n(imported / incomplete / skipped / errors)
+
+@enduml

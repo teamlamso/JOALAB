@@ -1,0 +1,82 @@
+@startuml uml_sequence_creation_fiche
+title Diagramme de séquence — Création d'une fiche LAB-FT
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantBorderColor #444
+
+actor "Caissier" as user
+participant "Identification.jsx\n+ AjoutFiche.jsx" as ui
+participant "api/clients.js\napi/fiches.js" as api
+participant "AuthFilter" as authF
+participant "ClientResource\n@Path /clients" as ctrlC
+participant "FicheResource\n@Path /fiches" as ctrlF
+participant "ClientService" as svcC
+participant "FicheService" as svcF
+participant "ClientRepository" as repoC
+participant "FicheLABFTRepository" as repoF
+participant "JournalService" as journal
+database  "BD LABFTDB" as db
+
+== Étape 1 : Identification du client ==
+user -> ui : recherche d'un client (saisie nom / prénom)
+ui -> api : listClients(search)
+api -> authF : GET /api/clients?search=...\nAuthorization: Bearer {token}
+authF -> authF : valide token, récupère Utilisateur
+authF -> ctrlC : listClients(search, utilisateur)
+ctrlC -> svcC : listClients(search)
+svcC -> repoC : findAll(search)
+repoC -> db : SELECT ... FROM clients ...
+db --> repoC : List<Client>
+svcC -> repoC : getDerniereActivitePourIds(ids)
+repoC -> db : SELECT clientId, MAX(date) ...
+db --> repoC : Map<Long, LocalDate>
+svcC --> ctrlC : List<ClientSummaryResponse>
+ctrlC --> api : 200 OK
+api --> ui : résultats
+ui --> user : liste filtrée
+
+alt Client trouvé
+    user -> ui : sélectionne un client existant
+else Client nouveau
+    user -> ui : crée le client (POST /api/clients)
+else Client non identifié
+    user -> ui : saisit la description physique\n(création client identifie=false à la sauvegarde)
+end
+
+== Étape 2 : Saisie des lignes de transaction ==
+user -> ui : ajoute lignes (TypeJeu, RGM, change, observations...)
+ui -> ui : validation côté client\n(RGM > 500 €, multiple de 5 €, n° socle si RGM…)
+
+== Étape 3 : Enregistrement de la fiche ==
+ui -> api : createFiche({ clientId, lignes[] })
+api -> authF : POST /api/fiches\nAuthorization: Bearer {token}
+authF -> ctrlF : createFiche(req, utilisateur)
+ctrlF -> svcF : createFiche(req, creePar)
+
+svcF -> repoC : findById(req.clientId)
+repoC -> db : SELECT * FROM clients WHERE id = ?
+db --> repoC : Client
+repoC --> svcF : Client
+
+svcF -> svcF : new FicheLABFT()\nfiche.setClient(c)\nfiche.setCreePar(creePar)
+
+loop pour chaque ligne du request
+    svcF -> svcF : buildLigne(req, caissier)\nvalidation : socle obligatoire si RGM
+    svcF -> svcF : fiche.addLigne(ligne)
+end
+
+svcF -> repoF : save(fiche)
+repoF -> db : INSERT INTO fiches_labft (...) \nINSERT INTO lignes_transaction (...)  [cascade=ALL]
+db --> repoF : id
+repoF --> svcF : FicheLABFT (persisté)
+
+svcF -> journal : log(CREATION, FICHE, fiche.id, client.libelle, "Création — N lignes")
+journal -> db : INSERT INTO journal_actions
+
+svcF --> ctrlF : Long id
+ctrlF --> api : 201 Created\n{ id: 789 }
+api --> ui : fiche créée
+ui --> user : navigation → /accueil + toast « Fiche enregistrée »
+
+@enduml

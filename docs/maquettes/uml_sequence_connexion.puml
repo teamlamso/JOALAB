@@ -1,0 +1,50 @@
+@startuml uml_sequence_connexion
+title Diagramme de séquence — Connexion d'un utilisateur
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam sequenceBoxBorderColor #444
+skinparam ParticipantBorderColor #444
+
+actor "Utilisateur" as user
+participant "Login.jsx\n(React)" as ui
+participant "api/auth.js\n(fetch)" as api
+participant "CorsFilter" as cors
+participant "AuthFilter" as authF
+participant "AuthResource\n@Path /auth" as ctrl
+participant "AuthService" as svc
+participant "UtilisateurRepository" as repo
+participant "SessionStore\n(ConcurrentHashMap)" as session
+participant "JournalService" as journal
+database  "BD LABFTDB\n(JPA / EclipseLink)" as db
+
+user -> ui : saisit identifiant + mot de passe
+ui -> api : login(identifiant, motDePasse)
+api -> cors : POST /api/auth/login\n(Content-Type: application/json)
+cors -> authF : (chemin /auth/login ignoré)
+authF -> ctrl : invoque login(req)
+ctrl -> svc : login(identifiant, motDePasse)
+
+svc -> repo : findByIdentifiant(identifiant)
+repo -> db : SELECT * FROM utilisateurs WHERE identifiant = ?
+db --> repo : Utilisateur
+repo --> svc : Optional<Utilisateur>
+
+alt utilisateur trouvé ET hash SHA-256 correspond
+    svc -> session : createSession(utilisateur)
+    session --> svc : token UUID
+    svc -> journal : log(CONNEXION, UTILISATEUR, u.id, ...)
+    journal -> db : INSERT INTO journal_actions
+    svc --> ctrl : token
+    ctrl --> api : 200 OK\nLoginResponse { token, id, nom, prenom, role }
+    api --> ui : { token, user }
+    ui -> ui : localStorage.setItem('token', token)\nAuthContext.signIn(user)
+    ui --> user : redirection /accueil
+else identifiants invalides
+    svc --> ctrl : null
+    ctrl --> api : 401 Unauthorized
+    api --> ui : Error
+    ui --> user : « Identifiant ou mot de passe incorrect »
+end
+
+@enduml

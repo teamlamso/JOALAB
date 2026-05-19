@@ -1,0 +1,103 @@
+@startuml uml_cas_utilisation
+title Diagramme de cas d'utilisation — JOA LAB-FT
+
+skinparam handwritten false
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam ActorBorderColor #444
+skinparam UsecaseBorderColor #444
+skinparam UsecaseBackgroundColor #FAFAFA
+
+left to right direction
+
+' --- Acteurs ---
+actor "Caissier" as caissier
+actor "Responsable\nde caisse" as responsable
+actor "MCD\n(Membre du\ncomité de direction)" as mcd
+
+actor "API BAN\n(api-adresse.data.gouv.fr)" as ban
+actor "API Geo\n(geo.api.gouv.fr)" as geo
+
+' Hiérarchie : un responsable peut tout ce qu'un caissier peut, un MCD tout ce qu'un responsable peut.
+responsable --|> caissier
+mcd --|> responsable
+
+rectangle "Application JOA LAB-FT" {
+
+  package "Authentification" as PA {
+    usecase "Se connecter" as UC_LOGIN
+    usecase "Se déconnecter" as UC_LOGOUT
+  }
+
+  package "Fiches LAB-FT" as PF {
+    usecase "Consulter les fiches\ndu jour / d'une période" as UC_F_LIST
+    usecase "Créer une fiche" as UC_F_CREATE
+    usecase "Identifier le client\nde la fiche" as UC_F_IDENT
+    usecase "Consulter une fiche" as UC_F_VIEW
+    usecase "Imprimer une / plusieurs\nfiches" as UC_F_PRINT
+    usecase "Modifier une fiche\n(jour + veille)" as UC_F_EDIT_J
+    usecase "Modifier une fiche\n(jusqu'à 31 jours)" as UC_F_EDIT_M
+    usecase "Modifier une fiche\n(sans limite)" as UC_F_EDIT_ALL
+    usecase "Supprimer une fiche" as UC_F_DELETE
+    usecase "Consulter l'historique\nd'une fiche" as UC_F_HIST
+  }
+
+  package "Clients" as PC {
+    usecase "Rechercher des clients" as UC_C_LIST
+    usecase "Consulter un client" as UC_C_VIEW
+    usecase "Créer un client" as UC_C_CREATE
+    usecase "Détecter les doublons" as UC_C_MATCH
+    usecase "Modifier l'adresse et\nla pièce d'identité" as UC_C_PATCH
+    usecase "Modifier l'identité\ncomplète d'un client" as UC_C_EDIT
+    usecase "Importer des clients\ndepuis un Excel" as UC_C_IMPORT
+    usecase "Supprimer un client" as UC_C_DELETE
+  }
+
+  package "Utilisateurs" as PU {
+    usecase "Lister les utilisateurs" as UC_U_LIST
+    usecase "Créer un caissier" as UC_U_CREATE_C
+    usecase "Créer un responsable\nou un MCD" as UC_U_CREATE_R
+  }
+
+  package "Audit" as PJ {
+    usecase "Consulter le\njournal global" as UC_J_GLOBAL
+  }
+}
+
+' --- Inclusions / extensions ---
+UC_F_CREATE ..> UC_F_IDENT : <<include>>
+UC_F_IDENT  ..> UC_C_MATCH  : <<include>>
+UC_C_CREATE ..> UC_C_MATCH  : <<include>>
+UC_C_IMPORT ..> ban         : <<include>>
+UC_C_IMPORT ..> geo         : <<include>>
+UC_C_PATCH  ..> ban         : <<extend>>
+
+' --- Caissier ---
+caissier --> UC_LOGIN
+caissier --> UC_LOGOUT
+caissier --> UC_F_LIST
+caissier --> UC_F_CREATE
+caissier --> UC_F_VIEW
+caissier --> UC_F_PRINT
+caissier --> UC_F_EDIT_J
+caissier --> UC_C_LIST
+caissier --> UC_C_VIEW
+caissier --> UC_C_CREATE
+caissier --> UC_C_PATCH
+
+' --- Responsable de caisse (en plus du Caissier) ---
+responsable --> UC_F_EDIT_M
+responsable --> UC_F_HIST
+responsable --> UC_C_EDIT
+responsable --> UC_C_IMPORT
+responsable --> UC_U_LIST
+responsable --> UC_U_CREATE_C
+
+' --- MCD (en plus du Responsable) ---
+mcd --> UC_F_EDIT_ALL
+mcd --> UC_F_DELETE
+mcd --> UC_C_DELETE
+mcd --> UC_U_CREATE_R
+mcd --> UC_J_GLOBAL
+
+@enduml
