@@ -75,20 +75,19 @@ Le code se trouve dans `FicheService.updateFiche` → snapshots stockés dans `M
 
 ### B1. Comment est stocké le mot de passe ?
 
-Hash SHA-256 hexadécimal, généré par `PasswordHasher.hash` :
+Hash **BCrypt** (facteur de coût 12, salt aléatoire intégré), généré par `PasswordHasher.hash` :
 
 ```java
-MessageDigest digest = MessageDigest.getInstance("SHA-256");
-byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-// → 64 caractères hex stockés dans utilisateurs.mot_de_passe
+return BCrypt.withDefaults().hashToString(12, motDePasse.toCharArray());
+// → 60 caractères "$2a$12$<salt+hash>" stockés dans utilisateurs.mot_de_passe
 ```
 
-**Limites connues** :
-- Pas de **sel** → deux utilisateurs avec le même mot de passe ont le même hash (rainbow tables).
-- Pas de **fonction adaptative** (Bcrypt, Argon2id, PBKDF2) → le hash est rapide à calculer, donc rapide à brute-forcer.
-- Comparaison via `equals` standard → théoriquement **timing-attack** possible (sortie anticipée au premier octet différent).
+**Propriétés** :
+- **Sel intégré** au hash → deux utilisateurs avec le même mot de passe ont deux hashes différents (rainbow tables inopérantes).
+- **Fonction adaptative** : 2^12 = 4096 itérations (~250 ms sur un serveur moderne). Le coût peut être augmenté sans changement de schéma.
+- **Comparaison constant-time** : `BCrypt.verifyer().verify()` ne fait pas de sortie anticipée.
 
-**Comment je le corrige en production** : remplacer `PasswordHasher` par BCrypt (`org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder` ou équivalent jBCrypt). Le sel est intégré au hash. La comparaison est faite avec `MessageDigest.isEqual(...)` qui est constant-time. C'est un changement local — seul `AuthService.login` et la création d'utilisateurs sont impactés.
+**Rétrocompatibilité** : la méthode `PasswordHasher.verify()` accepte aussi les anciens hashes SHA-256 (64 caractères hex, comparés en temps constant). À la première connexion réussie d'un compte legacy, `AuthService.login()` détecte le hash via `isLegacyHash()` et le re-hashe en BCrypt — la migration est transparente pour l'utilisateur, sans script SQL.
 
 ### B2. Que se passe-t-il si un attaquant intercepte un token JWT… euh, Bearer UUID ?
 
@@ -376,7 +375,7 @@ Pour un projet plus sensible (réglementaire pur), on imposerait la CHECK au niv
 
 | # | Limite | Impact | Mitigation pour la production |
 |---|---|---|---|
-| 1 | SHA-256 sans sel + `equals` non timing-safe | Brute-force, rainbow tables, timing | BCrypt / Argon2id + `MessageDigest.isEqual` |
+| 1 | ~~SHA-256 sans sel~~ → **migré vers BCrypt cost 12 + salt** (fallback legacy + re-hash transparent à la connexion) | Résolu | — |
 | 2 | Sessions en mémoire, expiration passive | Fuite mémoire (faible), pas de HA | Redis ou JWT signés ; purge active |
 | 3 | CORS `*` | Élargit la surface d'attaque | Whitelist d'origines en production |
 | 4 | Token en `localStorage` | Lecture par XSS | Cookie `HttpOnly` + CSP serveur |

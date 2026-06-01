@@ -38,6 +38,13 @@
             <version>5.4.0</version>
         </dependency>
 
+        <!-- BCrypt — hachage des mots de passe avec salt et facteur de coût adaptatif. -->
+        <dependency>
+            <groupId>at.favre.lib</groupId>
+            <artifactId>bcrypt</artifactId>
+            <version>0.10.2</version>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
