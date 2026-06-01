@@ -14,7 +14,7 @@ package "model.entity" as ENT {
   class Utilisateur <<Entity>> {
     - id : Long
     - identifiant : String
-    - motDePasse : String  «SHA-256»
+    - motDePasse : String  «BCrypt cost 12»
     - nom : String
     - prenom : String
     - role : RoleUtilisateur

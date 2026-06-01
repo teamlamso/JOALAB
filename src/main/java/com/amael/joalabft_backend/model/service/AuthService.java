@@ -11,7 +11,11 @@ import java.util.Optional;
 
 /**
  * Gère l'authentification des utilisateurs.
- * Les mots de passe sont comparés après hachage SHA-256.
+ *
+ * <p>Les mots de passe sont vérifiés via {@link PasswordHasher#verify(String, String)},
+ * qui accepte le format BCrypt courant et tolère les hashes SHA-256 hérités. Tout hash
+ * legacy détecté lors d'une connexion réussie est <strong>migré en BCrypt</strong> de
+ * manière transparente pour l'utilisateur.
  */
 @Stateless
 public class AuthService {
@@ -35,7 +39,11 @@ public class AuthService {
         if (opt.isEmpty()) return null;
 
         Utilisateur u = opt.get();
-        if (!u.getMotDePasse().equals(PasswordHasher.hash(motDePasse))) return null;
+        if (!PasswordHasher.verify(motDePasse, u.getMotDePasse())) return null;
+
+        if (PasswordHasher.isLegacyHash(u.getMotDePasse())) {
+            u.setMotDePasse(PasswordHasher.hash(motDePasse));
+        }
 
         String token = sessionStore.createSession(u);
         journalService.log(

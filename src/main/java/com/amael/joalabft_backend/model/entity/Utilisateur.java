@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 
 /**
  * Compte applicatif d'un employé du casino.
- * Le mot de passe est stocké sous forme de hash SHA-256.
+ * Le mot de passe est stocké sous forme de hash BCrypt (60 caractères) ; les comptes
+ * antérieurs à la migration peuvent transitoirement contenir un hash SHA-256 (64
+ * caractères hex) re-hashé en BCrypt à la prochaine connexion.
  */
 @Entity
 @Table(name = "utilisateurs")
@@ -18,7 +20,7 @@ public class Utilisateur {
     @Column(nullable = false, unique = true, length = 50)
     private String identifiant;
 
-    @Column(name = "mot_de_passe", nullable = false, length = 64)
+    @Column(name = "mot_de_passe", nullable = false, length = 100)
     private String motDePasse;
 
     @Column(nullable = false, length = 50)

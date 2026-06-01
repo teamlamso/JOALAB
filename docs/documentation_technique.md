@@ -204,7 +204,7 @@ public String login(String identifiant, String motDePasse) {
 **Sortie** : token UUID si succès, `null` sinon.
 **Effet de bord** : enregistre une entrée `CONNEXION` dans le journal d'audit.
 
-`PasswordHasher.hash()` produit un hexadécimal SHA-256 sur 64 caractères. La comparaison avec le mot de passe stocké se fait par `equals` direct.
+`PasswordHasher.hash()` produit un hash **BCrypt** (60 caractères, facteur de coût 12, salt aléatoire intégré). La vérification utilise `PasswordHasher.verify()` qui détecte automatiquement le format : BCrypt pour les comptes récents, SHA-256 hexadécimal (64 caractères) pour les comptes hérités. Tout hash legacy détecté lors d'une connexion réussie est re-hashé en BCrypt et persisté de manière transparente.
 
 ### 4.2 SessionStore — `@ApplicationScoped`
 
@@ -460,7 +460,7 @@ useEffect(() => {
 4. AuthFilter         → laisse passer (whitelisted)
 5. AuthResource       → AuthService.login
 6. UtilisateurRepo    → findByIdentifiant
-7. PasswordHasher     → SHA-256 du mdp reçu, comparaison
+7. PasswordHasher     → verify() BCrypt (re-hash si hash legacy SHA-256)
 8. SessionStore       → createSession → token UUID
 9. JournalService     → log(CONNEXION, ...)
 10. Response 200      → { token, id, nom, prenom, role }

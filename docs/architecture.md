@@ -74,7 +74,7 @@ src/main/resources/
 
 L'authentification est geree par tokens de session en memoire :
 
-1. `POST /api/auth/login` : verifie identifiant + mot de passe (SHA-256), retourne un token UUID
+1. `POST /api/auth/login` : verifie identifiant + mot de passe (BCrypt cout 12, fallback SHA-256 pour les comptes anciens), retourne un token UUID
 2. Le token est stocke dans `SessionStore` (ConcurrentHashMap en memoire)
 3. `AuthFilter` intercepte toutes les requetes, verifie le token Bearer et injecte l'`Utilisateur` dans le contexte de la requete
 4. `POST /api/auth/logout` : invalide le token

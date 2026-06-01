@@ -39,7 +39,7 @@ asadmin create-jdbc-resource --connectionpoolid LABFTDB_Pool jdbc/LABFTDB
 |---|---|---|---|
 | `id` | BIGINT | PK, auto-increment | |
 | `identifiant` | VARCHAR(50) | NOT NULL, UNIQUE | Login de l'utilisateur |
-| `mot_de_passe` | VARCHAR(64) | NOT NULL | Hash SHA-256 du mot de passe |
+| `mot_de_passe` | VARCHAR(100) | NOT NULL | Hash BCrypt du mot de passe (60 caractères) ; SHA-256 toléré pour migration progressive |
 | `nom` | VARCHAR(50) | NOT NULL | |
 | `prenom` | VARCHAR(50) | NOT NULL | |
 | `role` | VARCHAR(20) | NOT NULL | Enum : `CAISSIER`, `RESPONSABLE_CAISSE`, `MCD` |

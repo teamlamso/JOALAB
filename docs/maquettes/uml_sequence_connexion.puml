@@ -30,7 +30,10 @@ repo -> db : SELECT * FROM utilisateurs WHERE identifiant = ?
 db --> repo : Utilisateur
 repo --> svc : Optional<Utilisateur>
 
-alt utilisateur trouvé ET hash SHA-256 correspond
+alt utilisateur trouvé ET PasswordHasher.verify(BCrypt ou SHA-256 legacy) = true
+    opt hash SHA-256 legacy détecté
+        svc -> svc : re-hash BCrypt + update entité
+    end
     svc -> session : createSession(utilisateur)
     session --> svc : token UUID
     svc -> journal : log(CONNEXION, UTILISATEUR, u.id, ...)
