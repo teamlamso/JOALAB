@@ -85,6 +85,16 @@ public class FicheLABFTRepository {
         return em.merge(fiche);
     }
 
+    /**
+     * Force la synchronisation immédiate du contexte de persistance avec la
+     * base. À utiliser quand on a besoin de garantir l'ordre des opérations
+     * SQL — typiquement des DELETE d'orphelines avant des INSERT pour éviter
+     * une duplication ou un conflit de contrainte.
+     */
+    public void flush() {
+        em.flush();
+    }
+
     /** Supprime une fiche (les lignes sont supprimées en cascade). */
     public void delete(FicheLABFT fiche) {
         em.remove(em.contains(fiche) ? fiche : em.merge(fiche));

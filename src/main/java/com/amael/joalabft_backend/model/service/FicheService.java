@@ -63,8 +63,8 @@ public class FicheService {
      * Si {@code from} ou {@code to} est {@code null}, la date du jour est utilisée.
      */
     public List<FicheSummaryResponse> listFiches(LocalDate from, LocalDate to, String search) {
-        LocalDate debut = from != null ? from : LocalDate.now();
-        LocalDate fin   = to   != null ? to   : LocalDate.now();
+        LocalDate debut = from != null ? from : WorkDay.today();
+        LocalDate fin   = to   != null ? to   : WorkDay.today();
         return ficheRepository.findWithFilters(debut, fin, search).stream()
                 .map(this::toSummary)
                 .toList();
@@ -125,7 +125,7 @@ public class FicheService {
         permissionService.ensurePeutModifierFiche(modifiePar, fiche);
 
         fiche.setModifiePar(modifiePar);
-        fiche.setDateModification(LocalDateTime.now());
+        fiche.setDateModification(WorkDay.now());
 
         // Snapshot des lignes existantes par id : sert au diff journal ET de
         // table de lookup pour les mises à jour in-place.
@@ -147,13 +147,30 @@ public class FicheService {
         if (req.lignes != null) {
             for (LigneTransactionRequest reqLigne : req.lignes) {
                 idsRequete.add(reqLigne.id);
+                if (reqLigne.id != null && existantesParId.containsKey(reqLigne.id)) {
+                    idsConserves.add(reqLigne.id);
+                }
+            }
+
+            // ÉTAPE 1 — supprimer d'abord les orphelines et flusher, pour que
+            // les DELETE partent en base AVANT les INSERT des nouvelles
+            // lignes. Sans ce flush explicite, certains drivers/dialectes
+            // réordonnent les opérations et peuvent commiter un INSERT alors
+            // que l'orphan removal n'a pas encore retiré la ligne supprimée :
+            // l'utilisateur voit la ligne supprimée réapparaître ET la
+            // nouvelle ligne s'ajouter à côté (effet « duplication »).
+            boolean aSupprimer = fiche.getLignes()
+                    .removeIf(l -> l.getId() != null && !idsConserves.contains(l.getId()));
+            if (aSupprimer) ficheRepository.flush();
+
+            // ÉTAPE 2 — patcher les lignes conservées et ajouter les nouvelles.
+            for (LigneTransactionRequest reqLigne : req.lignes) {
                 LigneTransaction existante = reqLigne.id != null ? existantesParId.get(reqLigne.id) : null;
                 if (existante != null) {
                     // Ligne conservée : on patche en place. Si rien ne change,
                     // EclipseLink ne génère pas d'UPDATE.
                     applyRequestToLigne(existante, reqLigne);
                     lignesApres.add(existante);
-                    idsConserves.add(reqLigne.id);
                 } else {
                     // Nouvelle ligne : INSERT.
                     LigneTransaction nouvelle = buildLigne(reqLigne, modifiePar);
@@ -161,9 +178,6 @@ public class FicheService {
                     lignesApres.add(nouvelle);
                 }
             }
-            // Lignes absentes de la requête : à supprimer (orphan removal
-            // déclenchera les DELETE individuels).
-            fiche.getLignes().removeIf(l -> l.getId() != null && !idsConserves.contains(l.getId()));
         }
 
         String libelle = fiche.getClient().getLibelle();

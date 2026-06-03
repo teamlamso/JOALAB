@@ -39,6 +39,118 @@ public class AdresseService {
     /** Adresse structurée. {@code pays} toujours « France » (la BAN ne couvre que la France). */
     public record Adresse(String rue, String codePostal, String ville, String pays) {}
 
+    /** Suggestion d'autocomplétion : libellé prêt à afficher + adresse structurée. */
+    public record Suggestion(String label, String rue, String codePostal, String ville, String pays) {}
+
+    /** Plafond raisonnable de suggestions (pour éviter une réponse trop lourde). */
+    private static final int LIMITE_MAX = 10;
+
+    /**
+     * Retourne jusqu'à {@code limit} suggestions d'adresses pour la requête
+     * {@code q}. On interroge d'abord la BAN (France, rapide, libellés propres) ;
+     * si elle ne retourne rien, on bascule sur Nominatim (couverture mondiale).
+     * Si les deux échouent, on renvoie une liste vide — le frontend doit
+     * traiter ce cas comme « aucune suggestion ».
+     */
+    public List<Suggestion> chercherSuggestions(String q, int limit) {
+        if (q == null || q.isBlank()) return List.of();
+        int n = Math.max(1, Math.min(limit, LIMITE_MAX));
+        List<Suggestion> ban = chercherBan(q, n);
+        if (!ban.isEmpty()) return ban;
+        return chercherNominatim(q, n);
+    }
+
+    private List<Suggestion> chercherBan(String q, int limit) {
+        try {
+            String url = "https://api-adresse.data.gouv.fr/search/?q="
+                    + URLEncoder.encode(q, StandardCharsets.UTF_8)
+                    + "&limit=" + limit
+                    + "&autocomplete=1";
+            String body = httpGet(url);
+            if (body == null) return List.of();
+            List<Suggestion> out = new ArrayList<>();
+            try (JsonReader reader = Json.createReader(new StringReader(body))) {
+                JsonObject root = reader.readObject();
+                if (!root.containsKey("features")) return List.of();
+                JsonArray features = root.getJsonArray("features");
+                for (JsonValue feat : features) {
+                    JsonObject props = feat.asJsonObject().getJsonObject("properties");
+                    String label = readString(props, "label", null);
+                    if (label == null) continue;
+                    out.add(new Suggestion(
+                            label,
+                            readString(props, "name",     ""),
+                            readString(props, "postcode", ""),
+                            readString(props, "city",     ""),
+                            "France"
+                    ));
+                }
+            }
+            return out;
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private List<Suggestion> chercherNominatim(String q, int limit) {
+        try {
+            String url = "https://nominatim.openstreetmap.org/search?q="
+                    + URLEncoder.encode(q, StandardCharsets.UTF_8)
+                    + "&format=json&addressdetails=1&accept-language=fr&limit=" + limit;
+            String body = httpGet(url);
+            if (body == null) return List.of();
+            List<Suggestion> out = new ArrayList<>();
+            try (JsonReader reader = Json.createReader(new StringReader(body))) {
+                JsonArray arr = reader.readArray();
+                for (JsonValue v : arr) {
+                    JsonObject o = v.asJsonObject();
+                    JsonObject addr = o.containsKey("address") ? o.getJsonObject("address") : null;
+                    String houseNum = readString(addr, "house_number", "");
+                    String road     = firstString(addr, "road", "pedestrian", "path");
+                    String rue      = (houseNum.isEmpty() ? "" : houseNum + " ") + road;
+                    String ville    = firstString(addr, "city", "town", "village", "municipality");
+                    String cp       = readString(addr, "postcode", "");
+                    String pays     = readString(addr, "country",  "");
+                    String label = String.join(", ",
+                            rue.isBlank() ? null : rue.trim(),
+                            cp.isBlank()  ? null : cp,
+                            ville.isBlank() ? null : ville,
+                            pays.isBlank() ? null : pays
+                    ).replaceAll(", null", "").replaceAll("null, ", "");
+                    if (label.isBlank()) label = readString(o, "display_name", "(adresse)");
+                    out.add(new Suggestion(label, rue.trim(), cp, ville, pays));
+                }
+            }
+            return out;
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private String httpGet(String url) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(5))
+                    .header("User-Agent", "JOALABFT/1.0 (contact: dev@joa.lab-ft)")
+                    .GET()
+                    .build();
+            HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() != 200) return null;
+            return resp.body();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String firstString(JsonObject o, String... keys) {
+        if (o == null) return "";
+        for (String k : keys) {
+            String v = readString(o, k, "");
+            if (!v.isEmpty()) return v;
+        }
+        return "";
+    }
+
     /**
      * Résout {@code raw} en adresse structurée. {@code null} si non trouvée
      * ou si tous les essais retournent des résultats trop vagues.

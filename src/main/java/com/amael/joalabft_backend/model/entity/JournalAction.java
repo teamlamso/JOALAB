@@ -2,6 +2,7 @@ package com.amael.joalabft_backend.model.entity;
 
 import com.amael.joalabft_backend.model.enums.TypeActionJournal;
 import com.amael.joalabft_backend.model.enums.TypeEntiteJournal;
+import com.amael.joalabft_backend.model.util.WorkDay;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -52,7 +53,7 @@ public class JournalAction {
 
     @PrePersist
     private void onPrePersist() {
-        if (horodatage == null) horodatage = LocalDateTime.now();
+        if (horodatage == null) horodatage = WorkDay.now();
     }
 
     public JournalAction() {}

@@ -47,7 +47,7 @@ public class FicheLABFT {
     @PrePersist
     private void onPrePersist() {
         if (dateCreation == null) {
-            dateCreation = LocalDateTime.now();
+            dateCreation = WorkDay.now();
         }
     }
 

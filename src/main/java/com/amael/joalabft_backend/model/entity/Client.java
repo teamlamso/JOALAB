@@ -1,5 +1,6 @@
 package com.amael.joalabft_backend.model.entity;
 
+import com.amael.joalabft_backend.model.util.WorkDay;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -87,7 +88,7 @@ public class Client {
 
     @PrePersist
     private void onPrePersist() {
-        dateCreation = LocalDateTime.now();
+        dateCreation = WorkDay.now();
         normaliserChamps();
     }
 
