@@ -1,0 +1,105 @@
+@startuml uml_sequence_creation_client
+title Diagramme de séquence — Création d'un client avec détection automatique des doublons
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantBorderColor #444
+
+actor "Utilisateur\n(Caissier / Resp. caisse / MCD)" as user
+participant "NouveauClient.jsx" as ui
+participant "ClientMatchDialog.jsx" as dlg
+participant "api/clients.js" as api
+participant "AuthFilter" as authF
+participant "ClientResource\n@Path /clients" as ctrl
+participant "ClientService" as svc
+participant "ClientRepository" as repo
+participant "JournalService" as journal
+database  "BD LABFTDB" as db
+
+== Étape 1 : Saisie du formulaire ==
+user -> ui : saisit nom, prénom, date de naissance,\nadresse, pièce d'identité, PPE...
+ui -> ui : validation locale (champs requis, formats)
+user -> ui : clique sur « Enregistrer »
+
+== Étape 2 : Recherche automatique de doublons ==
+ui -> api : matchClient(payload)
+api -> authF : POST /api/clients/match\nAuthorization: Bearer {token}
+authF -> authF : valide token, récupère Utilisateur
+authF -> ctrl : matchClient(req)
+ctrl -> svc : findSimilar(req)
+svc -> svc : parseDate(req.dateNaissance)
+svc -> repo : findSimilar(nom, prenom, dateNaissance, numeroPiece)
+repo -> db : SELECT * FROM clients\nWHERE identifie = true AND (\n  (LOWER(nom)=? AND LOWER(prenom)=? AND dateNaissance=?)\n  OR (numeroPiece IS NOT NULL AND numeroPiece=?)\n)
+db --> repo : List<Client> (0..n candidats)
+repo --> svc : List<Client>
+loop pour chaque candidat
+    svc -> svc : getClient(c.id)\n(détail + historique fiches)
+    svc -> repo : findById(c.id)
+    repo --> svc : Client
+end
+svc --> ctrl : List<ClientDetailResponse>
+ctrl --> api : 200 OK + JSON candidates
+api --> ui : candidates
+
+alt Aucun candidat (candidates.length == 0)
+    == Étape 3a : Création immédiate ==
+    ui -> ui : performCreate()
+    ui -> api : createClient(payload)
+    api -> authF : POST /api/clients\nAuthorization: Bearer {token}
+    authF -> ctrl : createClient(req, ctx)
+    ctrl -> svc : createClient(req, utilisateur)
+    svc -> svc : applyRequest(new Client(), req)
+    svc -> repo : save(client) — persist + flush
+    repo -> db : INSERT INTO clients (...)
+    db --> repo : id généré
+    repo --> svc : Client (avec id)
+    svc -> journal : log(CREATION, CLIENT, id, libellé)
+    journal -> db : INSERT INTO journal_actions
+    svc --> ctrl : Long id
+    ctrl --> api : 201 Created\n{ id: 456 }
+    api --> ui : { id }
+    ui --> user : toast « Client créé »\nnavigation → /clients/{id}
+
+else Candidats détectés (candidates.length > 0)
+    == Étape 3b : Décision utilisateur ==
+    ui -> dlg : setMatches(candidates) — ouvre le dialogue
+    dlg --> user : Affiche les candidats avec diff visuel\n(champs identiques / divergents)
+
+    alt Choix : « Modifier l'existant » (fusion)
+        user -> dlg : sélectionne un candidat
+        dlg -> ui : handleMerge(candidate)
+        ui -> api : updateClient(candidate.id, payload)
+        api -> authF : PUT /api/clients/{id}
+        authF -> ctrl : updateClient(id, req, ctx)
+        ctrl -> svc : updateClient(id, req, utilisateur)
+        svc -> svc : ensurePeutModifierClientComplet(utilisateur)
+        note right of svc
+          Si CAISSIER : ForbiddenException → 403.
+          La fusion suppose donc Resp. caisse ou MCD.
+        end note
+        svc -> repo : findById(candidate.id)
+        repo --> svc : Client existant
+        svc -> svc : applyRequest(c, req) — écrase les champs
+        svc -> repo : update(c)
+        repo -> db : UPDATE clients SET ...
+        svc -> journal : log(MODIFICATION, CLIENT, id,\n"Modification de l'identité complète")
+        journal -> db : INSERT INTO journal_actions
+        svc --> ctrl : void
+        ctrl --> api : 204 No Content
+        api --> ui : ok
+        ui --> user : toast « Client mis à jour »\nnavigation → /clients/{candidate.id}
+
+    else Choix : « Créer un doublon quand même »
+        user -> dlg : clique « Créer quand même »
+        dlg -> ui : handleContinueAnyway()
+        ui -> ui : performCreate() — identique à 3a
+        ui --> user : toast « Client créé »
+
+    else Choix : « Annuler »
+        user -> dlg : ferme le dialogue
+        dlg -> ui : setMatches(null)
+        ui --> user : retour au formulaire\n(saisie modifiable)
+    end
+end
+
+@enduml
