@@ -46,4 +46,14 @@ public class SessionStore {
     public void invalidate(String token) {
         if (token != null) sessions.remove(token);
     }
+
+    /**
+     * Invalide toutes les sessions ouvertes pour l'utilisateur {@code id}.
+     * Utilisé lors de l'archivage d'un compte pour révoquer ses accès immédiatement,
+     * sans attendre l'expiration du TTL.
+     */
+    public void invalidateByUtilisateurId(Long id) {
+        if (id == null) return;
+        sessions.entrySet().removeIf(e -> id.equals(e.getValue().utilisateur().getId()));
+    }
 }

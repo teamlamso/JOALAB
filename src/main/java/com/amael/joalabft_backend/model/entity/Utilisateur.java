@@ -33,6 +33,14 @@ public class Utilisateur {
     @Column(nullable = false, length = 20)
     private RoleUtilisateur role;
 
+    /**
+     * Soft-delete : un utilisateur archivé n'apparaît plus dans les listes,
+     * ne peut plus se connecter, mais reste référencé par les fiches et lignes
+     * de transaction historiques afin de préserver l'intégrité de l'audit.
+     */
+    @Column(nullable = false)
+    private boolean archive = false;
+
     public Utilisateur() {}
 
     public Long getId() { return id; }
@@ -51,6 +59,9 @@ public class Utilisateur {
 
     public RoleUtilisateur getRole() { return role; }
     public void setRole(RoleUtilisateur role) { this.role = role; }
+
+    public boolean isArchive() { return archive; }
+    public void setArchive(boolean archive) { this.archive = archive; }
 
     /** Retourne le nom complet affiché dans l'interface (ex : "Alexis Duchat"). */
     public String getNomComplet() {
