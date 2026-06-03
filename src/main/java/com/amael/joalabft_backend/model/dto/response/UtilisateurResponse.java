@@ -10,14 +10,16 @@ public class UtilisateurResponse {
     public String nom;
     public String prenom;
     public String role;
+    public boolean archive;
 
     public UtilisateurResponse() {}
 
-    public UtilisateurResponse(Long id, String identifiant, String nom, String prenom, String role) {
+    public UtilisateurResponse(Long id, String identifiant, String nom, String prenom, String role, boolean archive) {
         this.id          = id;
         this.identifiant = identifiant;
         this.nom         = nom;
         this.prenom      = prenom;
         this.role        = role;
+        this.archive     = archive;
     }
 }

@@ -146,6 +146,53 @@ public class PermissionService {
         }
     }
 
+    /** Indique si {@code utilisateur} peut modifier un compte applicatif (MCD uniquement). */
+    public boolean peutModifierUtilisateur(Utilisateur utilisateur) {
+        return utilisateur != null && utilisateur.getRole() == RoleUtilisateur.MCD;
+    }
+
+    /** Lève 403 si {@code utilisateur} ne peut pas modifier un compte applicatif. */
+    public void ensurePeutModifierUtilisateur(Utilisateur utilisateur) {
+        if (!peutModifierUtilisateur(utilisateur)) {
+            throw new ForbiddenException(
+                    "Seul un MCD peut modifier un compte utilisateur.");
+        }
+    }
+
+    /** Indique si {@code utilisateur} peut archiver un compte applicatif (MCD uniquement). */
+    public boolean peutArchiverUtilisateur(Utilisateur utilisateur) {
+        return utilisateur != null && utilisateur.getRole() == RoleUtilisateur.MCD;
+    }
+
+    /**
+     * Lève 403 si {@code demandeur} ne peut pas archiver {@code cible}. Un MCD ne
+     * peut pas s'auto-archiver, ce qui supprimerait le dernier compte privilégié
+     * actif et bloquerait toute administration ultérieure.
+     */
+    public void ensurePeutArchiverUtilisateur(Utilisateur demandeur, Utilisateur cible) {
+        if (!peutArchiverUtilisateur(demandeur)) {
+            throw new ForbiddenException(
+                    "Seul un MCD peut archiver un compte utilisateur.");
+        }
+        if (cible != null && demandeur.getId() != null && demandeur.getId().equals(cible.getId())) {
+            throw new ForbiddenException(
+                    "Vous ne pouvez pas archiver votre propre compte.");
+        }
+    }
+
+    /** Indique si {@code utilisateur} peut réactiver un compte archivé (MCD uniquement). */
+    public boolean peutDesarchiverUtilisateur(Utilisateur utilisateur) {
+        return utilisateur != null && utilisateur.getRole() == RoleUtilisateur.MCD;
+    }
+
+    /** Lève 403 si {@code utilisateur} ne peut pas réactiver un compte archivé. */
+    public void ensurePeutDesarchiverUtilisateur(Utilisateur utilisateur) {
+        if (!peutDesarchiverUtilisateur(utilisateur)) {
+            throw new ForbiddenException(
+                    "Seul un MCD peut réactiver un compte utilisateur.");
+        }
+    }
+
     /** Indique si {@code utilisateur} peut consulter le journal global (MCD uniquement). */
     public boolean peutLireJournal(Utilisateur utilisateur) {
         return utilisateur != null && utilisateur.getRole() == RoleUtilisateur.MCD;

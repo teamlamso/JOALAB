@@ -39,6 +39,7 @@ public class AuthService {
         if (opt.isEmpty()) return null;
 
         Utilisateur u = opt.get();
+        if (u.isArchive()) return null;
         if (!PasswordHasher.verify(motDePasse, u.getMotDePasse())) return null;
 
         if (PasswordHasher.isLegacyHash(u.getMotDePasse())) {
