@@ -17,7 +17,7 @@ export default function Identification() {
 
   useEffect(() => {
     if (preselectClient) {
-      navigate('/fiches/nouveau', { state: { clientData: { id: preselectClient.id, libelle: preselectClient.libelle, identifie: true } } })
+      navigate('/fiches/nouveau', { state: { clientData: { id: preselectClient.id, libelle: preselectClient.libelle, identifie: true, ppe: !!preselectClient.ppe } } })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

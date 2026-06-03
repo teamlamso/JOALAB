@@ -74,7 +74,7 @@ export default function DetailClient() {
           )}
           <button
             className="btn btn-primary"
-            onClick={() => navigate('/fiches/identification', { state: { preselectClient: { id: client.id, libelle: client.libelle } } })}
+            onClick={() => navigate('/fiches/identification', { state: { preselectClient: { id: client.id, libelle: client.libelle, ppe: client.ppe } } })}
           >
             + Ajouter une fiche
           </button>

@@ -2,7 +2,7 @@ import { Fragment, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getFiche } from '../api/fiches.js'
 import FichePapier from '../components/FichePapier.jsx'
-import { imprimerSousFiche, ORDRE_TYPES_JEU } from '../utils/print.js'
+import { imprimerSousFiche, buildPrintTitle, ORDRE_TYPES_JEU } from '../utils/print.js'
 
 /** Page de visualisation groupée. Reçoit `?ids=1,2,3`, charge toutes les
  *  fiches et les affiche à la suite — chacune éclatée par type de jeu
@@ -28,6 +28,17 @@ export default function ImprimerFiches() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [idsParam])
+
+  // Pose document.title pour que Ctrl+P propose un nom utile. Pour un lot,
+  // on reprend le nom de la première fiche suivi du nombre total — c'est
+  // imparfait mais ça vaut mieux que « JOA LAB-FT ».
+  useEffect(() => {
+    if (fiches.length === 0) return
+    const previous = document.title
+    const base = buildPrintTitle(fiches[0], null)
+    document.title = fiches.length > 1 ? `${base}_+${fiches.length - 1}` : base
+    return () => { document.title = previous }
+  }, [fiches])
 
   if (loading) return <div className="loading">Chargement…</div>
   if (error) return <div className="page"><div className="alert-error">{error}</div></div>

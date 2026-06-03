@@ -49,7 +49,7 @@ export default function NouveauClient() {
     // d'où il provient.
     if (returnTo === 'fiche') {
       navigate('/fiches/identification', {
-        state: { preselectClient: { id: newId, libelle: formatLibelle(form.prenom, form.nom) } },
+        state: { preselectClient: { id: newId, libelle: formatLibelle(form.prenom, form.nom), ppe: !!form.ppe } },
         replace: true,
       })
     } else {

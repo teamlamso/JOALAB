@@ -11,7 +11,7 @@ import {
   peutSupprimerFiche,
   peutLireHistoriqueFiche,
 } from '../utils/permissions.js'
-import { imprimerSousFiche, ORDRE_TYPES_JEU } from '../utils/print.js'
+import { imprimerSousFiche, buildPrintTitle, ORDRE_TYPES_JEU } from '../utils/print.js'
 import { texteChampsManquants } from '../utils/champsClient.js'
 import { formatDateFr } from '../utils/formatters.js'
 
@@ -33,6 +33,17 @@ export default function DetailFiche() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [id])
+
+  // Pose document.title pour que Ctrl+P propose directement le bon nom de
+  // fichier PDF. Le bouton « Imprimer cette fiche » repose en plus son
+  // titre par sous-fiche dans imprimerSousFiche ; ici on couvre le cas où
+  // l'utilisateur passe par le menu du navigateur.
+  useEffect(() => {
+    if (!fiche) return
+    const previous = document.title
+    document.title = buildPrintTitle(fiche, null)
+    return () => { document.title = previous }
+  }, [fiche])
 
   const handleDelete = async () => {
     setDeleting(true)

@@ -35,8 +35,14 @@ export const ORDRE_TYPES_JEU = ORDRE_TYPES
 
 /**
  * Imprime une sous-fiche unique. Masque toutes les autres .fiche-papier
- * de la page via {@code style.display = 'none'} pendant l'impression, puis
+ * de la page via une règle CSS conditionnelle pendant l'impression, puis
  * restaure à la fermeture (événement afterprint).
+ *
+ * Pour le nom du PDF : on pose {@code document.title} AVANT
+ * {@code window.print()} (c'est ce que Chrome/Edge utilisent comme nom
+ * par défaut) et on retarde sa restauration. Sans ce délai, certains
+ * navigateurs relisent le titre dans la boîte « Enregistrer sous » qui
+ * s'ouvre après {@code afterprint}, et obtiennent l'ancien titre.
  *
  * Toute la mécanique est encadrée d'un try/catch : si quoi que ce soit
  * échoue, on appelle quand même {@code window.print()} pour que l'utilisateur
@@ -53,15 +59,13 @@ export function imprimerSousFiche(fiche, typeFiltre) {
         : `.fiche-papier[data-fiche-id="${ficheId}"]:not([data-type])`
     )
 
-    if (target) {
-      const previous = document.title
-      document.title = buildPrintTitle(fiche, typeFiltre)
+    const previous = document.title
+    document.title = buildPrintTitle(fiche, typeFiltre)
 
+    if (target) {
       // Approche purement CSS : on marque la cible et on pose un drapeau
       // sur body. La règle CSS @media print { body.print-isolated
       // .fiche-papier:not(.print-target) { display: none } } fait le reste.
-      // Pas de modification d'inline style, plus fiable sur les navigateurs
-      // qui batchent agressivement les mutations (Zen).
       target.classList.add('print-target')
       document.body.classList.add('print-isolated')
 
@@ -69,21 +73,26 @@ export function imprimerSousFiche(fiche, typeFiltre) {
       // window.print() — qu'on appelle dans le même tick pour préserver le
       // contexte d'action utilisateur (privacy mode strict).
       void target.offsetHeight
+    }
 
-      restoreFn = () => {
-        document.title = previous
+    restoreFn = () => {
+      document.title = previous
+      if (target) {
         target.classList.remove('print-target')
         document.body.classList.remove('print-isolated')
       }
-      const onAfter = () => {
-        try { restoreFn() } catch { /* ignore */ }
-        window.removeEventListener('afterprint', onAfter)
-      }
-      window.addEventListener('afterprint', onAfter)
     }
+    const onAfter = () => {
+      // Retardé : Chrome/Edge réouvrent parfois la boîte « Enregistrer
+      // sous » après afterprint et relisent document.title à ce moment-là.
+      // 1500 ms suffit pour qu'elle ait pris le bon nom.
+      setTimeout(() => {
+        try { restoreFn() } catch { /* ignore */ }
+      }, 1500)
+      window.removeEventListener('afterprint', onAfter)
+    }
+    window.addEventListener('afterprint', onAfter)
   } catch {
-    // En cas d'erreur de préparation on retombe sur une impression non filtrée
-    // (cf. window.print() en bas), c'est la moins mauvaise option.
     if (restoreFn) {
       try { restoreFn() } catch { /* ignore */ }
     }
