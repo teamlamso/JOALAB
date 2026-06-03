@@ -15,6 +15,7 @@ import EditFiche from './pages/EditFiche.jsx'
 import ImprimerFiches from './pages/ImprimerFiches.jsx'
 import ListeUtilisateurs from './pages/ListeUtilisateurs.jsx'
 import NouveauUtilisateur from './pages/NouveauUtilisateur.jsx'
+import EditUtilisateur from './pages/EditUtilisateur.jsx'
 import Journal from './pages/Journal.jsx'
 import ImporterClients from './pages/ImporterClients.jsx'
 
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/fiches/:id/modifier" element={<EditFiche />} />
             <Route path="/utilisateurs" element={<ListeUtilisateurs />} />
             <Route path="/utilisateurs/nouveau" element={<NouveauUtilisateur />} />
+            <Route path="/utilisateurs/:id/modifier" element={<EditUtilisateur />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/clients/import" element={<ImporterClients />} />
           </Route>

@@ -56,6 +56,21 @@ export function peutListerUtilisateurs(role) {
   return role === 'RESPONSABLE_CAISSE' || role === 'MCD'
 }
 
+/** Modification d'un compte applicatif (identifiant, nom, prénom, rôle) — MCD uniquement. */
+export function peutModifierUtilisateur(role) {
+  return role === 'MCD'
+}
+
+/** Archivage (soft-delete) d'un compte applicatif — MCD uniquement. */
+export function peutArchiverUtilisateur(role) {
+  return role === 'MCD'
+}
+
+/** Réactivation d'un compte archivé — MCD uniquement. */
+export function peutDesarchiverUtilisateur(role) {
+  return role === 'MCD'
+}
+
 export function peutLireJournal(role) {
   return role === 'MCD'
 }
