@@ -1,5 +1,6 @@
 package com.amael.joalabft_backend.controller;
 
+import com.amael.joalabft_backend.model.dto.response.SuggestionAdresseResponse;
 import com.amael.joalabft_backend.model.service.AdresseService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
@@ -40,7 +41,7 @@ public class AdresseResource {
     @Path("/search")
     public Response search(@QueryParam("q") String q,
                            @QueryParam("limit") @DefaultValue("6") int limit) {
-        List<AdresseService.Suggestion> suggestions = adresseService.chercherSuggestions(q, limit);
+        List<SuggestionAdresseResponse> suggestions = adresseService.chercherSuggestions(q, limit);
         return Response.ok(suggestions).build();
     }
 }

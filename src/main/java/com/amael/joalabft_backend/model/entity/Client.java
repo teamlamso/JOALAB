@@ -229,13 +229,23 @@ public class Client {
         if (!notBlank(typePiece))        manquants.add("typePiece");
         if (!notBlank(numeroPiece))      manquants.add("numeroPiece");
         if (dateDelivrance == null)      manquants.add("dateDelivrance");
-        if (!notBlank(paysDelivrance) && !notBlank(prefectureDelivrance))
-                                         manquants.add("origineDelivrance");
+        // La CNIe (Carte Nationale d'Identité électronique) n'a pas de
+        // mention de préfecture ni de pays sur le titre lui-même — c'est la
+        // seule pièce dans ce cas. Le frontend l'exclut aussi de la liste
+        // PIECES_AVEC_PREFECTURE / PIECES_AVEC_PAYS, on garde la cohérence ici.
+        if (exigeOrigineDelivrance(typePiece)
+                && !notBlank(paysDelivrance) && !notBlank(prefectureDelivrance)) {
+            manquants.add("origineDelivrance");
+        }
         if (!notBlank(rue))              manquants.add("rue");
         if (!notBlank(codePostal))       manquants.add("codePostal");
         if (!notBlank(ville))            manquants.add("ville");
         if (!notBlank(pays))             manquants.add("pays");
         return manquants;
+    }
+
+    private static boolean exigeOrigineDelivrance(String typePiece) {
+        return typePiece != null && !"CNIe".equals(typePiece);
     }
 
     private static boolean notBlank(String s) {

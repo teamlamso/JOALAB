@@ -1,5 +1,7 @@
 package com.amael.joalabft_backend.model.service;
 
+import com.amael.joalabft_backend.model.dto.response.SuggestionAdresseResponse;
+import com.amael.joalabft_backend.model.dto.response.SuggestionLieuResponse;
 import jakarta.ejb.Stateless;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -16,7 +18,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Client pour {@code api-adresse.data.gouv.fr} (BAN — Base Adresse Nationale).
@@ -39,9 +43,6 @@ public class AdresseService {
     /** Adresse structurée. {@code pays} toujours « France » (la BAN ne couvre que la France). */
     public record Adresse(String rue, String codePostal, String ville, String pays) {}
 
-    /** Suggestion d'autocomplétion : libellé prêt à afficher + adresse structurée. */
-    public record Suggestion(String label, String rue, String codePostal, String ville, String pays) {}
-
     /** Plafond raisonnable de suggestions (pour éviter une réponse trop lourde). */
     private static final int LIMITE_MAX = 10;
 
@@ -52,15 +53,64 @@ public class AdresseService {
      * Si les deux échouent, on renvoie une liste vide — le frontend doit
      * traiter ce cas comme « aucune suggestion ».
      */
-    public List<Suggestion> chercherSuggestions(String q, int limit) {
+    public List<SuggestionAdresseResponse> chercherSuggestions(String q, int limit) {
         if (q == null || q.isBlank()) return List.of();
         int n = Math.max(1, Math.min(limit, LIMITE_MAX));
-        List<Suggestion> ban = chercherBan(q, n);
+        List<SuggestionAdresseResponse> ban = chercherBan(q, n);
         if (!ban.isEmpty()) return ban;
         return chercherNominatim(q, n);
     }
 
-    private List<Suggestion> chercherBan(String q, int limit) {
+    /**
+     * Retourne jusqu'à {@code limit} suggestions de lieux (villes uniquement,
+     * sans rue ni numéro) pour la requête {@code q}. Interroge Nominatim
+     * directement et formate les libellés en {@code "Ville (XX)"} où XX est
+     * le numéro de département (France) ou le pays (international).
+     *
+     * <p>Distinct de {@link #chercherSuggestions} qui cible les adresses
+     * postales complètes : ici on veut juste localiser une ville pour le
+     * champ « lieu de naissance ».
+     */
+    public List<SuggestionLieuResponse> chercherLieux(String q, int limit) {
+        if (q == null || q.isBlank()) return List.of();
+        int n = Math.max(1, Math.min(limit, LIMITE_MAX));
+        try {
+            String url = "https://nominatim.openstreetmap.org/search?q="
+                    + URLEncoder.encode(q, StandardCharsets.UTF_8)
+                    + "&format=json&addressdetails=1&accept-language=fr&limit=" + n;
+            String body = httpGet(url);
+            if (body == null) return List.of();
+            Set<String> dejaVus = new LinkedHashSet<>();
+            try (JsonReader reader = Json.createReader(new StringReader(body))) {
+                JsonArray arr = reader.readArray();
+                for (JsonValue v : arr) {
+                    JsonObject o = v.asJsonObject();
+                    JsonObject addr = o.containsKey("address") ? o.getJsonObject("address") : null;
+                    if (addr == null) continue;
+                    String ville = firstString(addr, "city", "town", "village", "municipality");
+                    if (ville.isBlank()) continue;
+                    String suffixe;
+                    String countryCode = readString(addr, "country_code", "");
+                    String postcode    = readString(addr, "postcode",     "");
+                    if ("fr".equals(countryCode) && !postcode.isBlank()) {
+                        String dpt = postcode.startsWith("97") ? postcode.substring(0, 3)
+                                                                : postcode.substring(0, Math.min(2, postcode.length()));
+                        suffixe = "(" + dpt + ")";
+                    } else {
+                        suffixe = "(" + readString(addr, "country", "") + ")";
+                    }
+                    dejaVus.add(ville + " " + suffixe);
+                }
+            }
+            List<SuggestionLieuResponse> out = new ArrayList<>();
+            for (String label : dejaVus) out.add(new SuggestionLieuResponse(label));
+            return out;
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private List<SuggestionAdresseResponse> chercherBan(String q, int limit) {
         try {
             String url = "https://api-adresse.data.gouv.fr/search/?q="
                     + URLEncoder.encode(q, StandardCharsets.UTF_8)
@@ -68,7 +118,7 @@ public class AdresseService {
                     + "&autocomplete=1";
             String body = httpGet(url);
             if (body == null) return List.of();
-            List<Suggestion> out = new ArrayList<>();
+            List<SuggestionAdresseResponse> out = new ArrayList<>();
             try (JsonReader reader = Json.createReader(new StringReader(body))) {
                 JsonObject root = reader.readObject();
                 if (!root.containsKey("features")) return List.of();
@@ -77,7 +127,7 @@ public class AdresseService {
                     JsonObject props = feat.asJsonObject().getJsonObject("properties");
                     String label = readString(props, "label", null);
                     if (label == null) continue;
-                    out.add(new Suggestion(
+                    out.add(new SuggestionAdresseResponse(
                             label,
                             readString(props, "name",     ""),
                             readString(props, "postcode", ""),
@@ -92,14 +142,14 @@ public class AdresseService {
         }
     }
 
-    private List<Suggestion> chercherNominatim(String q, int limit) {
+    private List<SuggestionAdresseResponse> chercherNominatim(String q, int limit) {
         try {
             String url = "https://nominatim.openstreetmap.org/search?q="
                     + URLEncoder.encode(q, StandardCharsets.UTF_8)
                     + "&format=json&addressdetails=1&accept-language=fr&limit=" + limit;
             String body = httpGet(url);
             if (body == null) return List.of();
-            List<Suggestion> out = new ArrayList<>();
+            List<SuggestionAdresseResponse> out = new ArrayList<>();
             try (JsonReader reader = Json.createReader(new StringReader(body))) {
                 JsonArray arr = reader.readArray();
                 for (JsonValue v : arr) {
@@ -111,14 +161,15 @@ public class AdresseService {
                     String ville    = firstString(addr, "city", "town", "village", "municipality");
                     String cp       = readString(addr, "postcode", "");
                     String pays     = readString(addr, "country",  "");
-                    String label = String.join(", ",
-                            rue.isBlank() ? null : rue.trim(),
-                            cp.isBlank()  ? null : cp,
-                            ville.isBlank() ? null : ville,
-                            pays.isBlank() ? null : pays
-                    ).replaceAll(", null", "").replaceAll("null, ", "");
-                    if (label.isBlank()) label = readString(o, "display_name", "(adresse)");
-                    out.add(new Suggestion(label, rue.trim(), cp, ville, pays));
+                    StringBuilder labelBuf = new StringBuilder();
+                    if (!rue.isBlank())   labelBuf.append(rue.trim());
+                    if (!cp.isBlank())    { if (labelBuf.length() > 0) labelBuf.append(", "); labelBuf.append(cp); }
+                    if (!ville.isBlank()) { if (labelBuf.length() > 0) labelBuf.append(", "); labelBuf.append(ville); }
+                    if (!pays.isBlank())  { if (labelBuf.length() > 0) labelBuf.append(", "); labelBuf.append(pays); }
+                    String label = labelBuf.length() > 0
+                            ? labelBuf.toString()
+                            : readString(o, "display_name", "(adresse)");
+                    out.add(new SuggestionAdresseResponse(label, rue.trim(), cp, ville, pays));
                 }
             }
             return out;
