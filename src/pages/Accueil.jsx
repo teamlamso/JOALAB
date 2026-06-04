@@ -44,10 +44,26 @@ function FicheCard({ f, navigate, showDate, highlight, role }) {
   const totalRGMEntrant = (f.totalRGM || 0) + (f.totalEntrant || 0)
   const peutModifier = peutModifierFiche(role, f.date)
 
+  // Le nom du client est cliquable : raccourci vers le profil. La zone
+  // englobe le libellé + le badge PPE + le picto warning pour avoir une
+  // cible large (et non un seul texte fin).
+  const ouvrirClient = (e) => {
+    e.stopPropagation()
+    if (f.clientId) navigate(`/clients/${f.clientId}`)
+  }
+
   return (
     <div className={`fiche-card${highlight ? ' fiche-card-alert' : ''}`}>
       <div className="fiche-card-name" title={f.clientLibelle}>
-        <span className="fiche-card-name-text">
+        <span
+          className="fiche-card-name-text fiche-card-name-link"
+          onClick={ouvrirClient}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') ouvrirClient(e) }}
+          title="Voir le profil du client"
+          style={{ cursor: f.clientId ? 'pointer' : 'default' }}
+        >
           <span className="fiche-card-libelle">{f.clientLibelle}</span>
           {f.clientComplet === false && (
             <WarningIcon
@@ -149,18 +165,24 @@ function ClientCard({ c, navigate }) {
 export default function Accueil() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  // La recherche vit dans l'URL (?q=…) pour être restaurée quand on revient
-  // depuis DetailClient via le bouton « Retour » (navigate(-1)).
+  // Recherche + plage de dates vivent dans l'URL (?q=&from=&to=) : permet la
+  // restauration via navigate(-1) depuis DetailFiche / DetailClient et le
+  // partage par URL d'un état filtré.
   const [searchParams, setSearchParams] = useSearchParams()
-  const search = searchParams.get('q') || ''
-  const setSearch = (value) => {
+  const search    = searchParams.get('q')    || ''
+  const dateDebut = searchParams.get('from') || workDayYesterday()
+  const dateFin   = searchParams.get('to')   || workDay()
+  const patchParams = (patch) => {
     const next = new URLSearchParams(searchParams)
-    if (value) next.set('q', value)
-    else next.delete('q')
+    Object.entries(patch).forEach(([k, v]) => {
+      if (v === null || v === undefined || v === '') next.delete(k)
+      else next.set(k, v)
+    })
     setSearchParams(next, { replace: true })
   }
-  const [dateDebut, setDateDebut] = useState(workDayYesterday())
-  const [dateFin, setDateFin] = useState(workDay())
+  const setSearch    = (value) => patchParams({ q: value })
+  const setDateDebut = (value) => patchParams({ from: value })
+  const setDateFin   = (value) => patchParams({ to: value })
   const [fiches, setFiches] = useState([])
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)

@@ -95,9 +95,18 @@ export default function DetailFiche() {
           </p>
         </div>
         <div className="page-header-actions">
-          <button className="btn btn-secondary" onClick={() => navigate('/accueil')}>
+          <button className="btn btn-secondary" onClick={() => navigate(-1)}>
             Retour
           </button>
+          {fiche.clientId && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => navigate(`/clients/${fiche.clientId}`)}
+              title={`Voir le profil de ${fiche.clientLibelle}`}
+            >
+              Voir le client
+            </button>
+          )}
           {peutHistorique && (
             <button className="btn btn-secondary" onClick={() => setHistoriqueOuvert(true)}>
               Historique

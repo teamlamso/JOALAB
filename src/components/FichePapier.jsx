@@ -169,7 +169,12 @@ export default function FichePapier({ fiche, pageBreakBefore = false, typeFiltre
                 )}
               </td>
               <td className="fp-td-num">{l?.numeroSocle ?? ''}</td>
-              <td className="fp-td-num">{l ? eur(l.changeEntrant) : ''}</td>
+              <td className="fp-td-num">
+                {l ? eur(l.changeEntrant) : ''}
+                {l?.enregistreFrontCageEntrant && (
+                  <span className="fp-frontcage" title="Enregistré sur FrontCage"> ✓</span>
+                )}
+              </td>
               <td className="fp-td-num">{l ? eur(l.changeSortant) : ''}</td>
               <td className="fp-td-check"><Check on={l?.typeJeu === 'MAS'} /></td>
               <td className="fp-td-check"><Check on={l?.typeJeu === 'JTE'} /></td>

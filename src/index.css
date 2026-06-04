@@ -785,6 +785,25 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
+/* Zone de clic large sur le nom du client dans une fiche : souligne
+   uniquement le libellé au survol, pas les badges. */
+.fiche-card-name-link {
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+.fiche-card-name-link:hover {
+  background-color: var(--surface-hover, rgba(0, 0, 0, 0.04));
+}
+.fiche-card-name-link:hover .fiche-card-libelle {
+  text-decoration: underline;
+}
+.fiche-card-name-link:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 1px;
+}
+
 .fiche-card-name-text .badge-jeu,
 .fiche-card-name-text .badge-ppe {
   flex-shrink: 0;

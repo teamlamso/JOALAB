@@ -22,6 +22,7 @@ function newLigne() {
     changeSortant: '',
     observations: '',
     enregistreFrontCage: false,
+    enregistreFrontCageEntrant: false,
   }
 }
 
@@ -45,6 +46,7 @@ function ligneFromResponse(l) {
     changeSortant: loadMoney(l.changeSortant),
     observations: l.observations ?? '',
     enregistreFrontCage: !!l.enregistreFrontCage,
+    enregistreFrontCageEntrant: !!l.enregistreFrontCageEntrant,
   }
 }
 
@@ -162,6 +164,16 @@ function LigneEditor({ ligne, onChange, onRemove, canRemove }) {
           <input type="text" inputMode="decimal" value={toDisplay(ligne.montantRGM)} onChange={setMoney('montantRGM')} onBlur={blurMoney('montantRGM')} placeholder={"0 €"} disabled={rgmDisabled} />
         </div>
         <div className="form-group">
+          {!!ligne.changeEntrant && (
+            <label className="frontcage-toggle">
+              <input
+                type="checkbox"
+                checked={!!ligne.enregistreFrontCageEntrant}
+                onChange={(e) => onChange({ ...ligne, enregistreFrontCageEntrant: e.target.checked })}
+              />
+              <span>Enregistré sur FrontCage</span>
+            </label>
+          )}
           <label>Change Entrant :</label>
           <input type="text" inputMode="decimal" value={toDisplay(ligne.changeEntrant)} onChange={setMoney('changeEntrant')} onBlur={blurMoney('changeEntrant')} placeholder={"0,00 €"} />
         </div>
@@ -290,6 +302,7 @@ export default function EditFiche() {
         changeSortant: l.changeSortant ? parseFloat(l.changeSortant) : null,
         observations: l.observations || null,
         enregistreFrontCage: !!l.enregistreFrontCage && !!l.montantRGM,
+        enregistreFrontCageEntrant: !!l.enregistreFrontCageEntrant && !!l.changeEntrant,
       }))
       await updateFiche(id, { lignes: lignesPayload })
       notify('Fiche mise à jour', 'success')
