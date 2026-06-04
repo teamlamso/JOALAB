@@ -29,4 +29,7 @@ public class LigneTransactionRequest {
 
     /** Vrai si le caissier a déjà reporté ce montant RGM dans FrontCage. */
     public boolean enregistreFrontCage;
+
+    /** Vrai si le caissier a déjà reporté le change entrant dans FrontCage. */
+    public boolean enregistreFrontCageEntrant;
 }

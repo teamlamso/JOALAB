@@ -213,6 +213,7 @@ public class FicheService {
         l.setChangeSortant(req.changeSortant);
         l.setObservations(req.observations);
         l.setEnregistreFrontCage(req.enregistreFrontCage);
+        l.setEnregistreFrontCageEntrant(req.enregistreFrontCageEntrant);
         return l;
     }
 
@@ -293,7 +294,8 @@ public class FicheService {
             BigDecimal changeEntrant,
             BigDecimal changeSortant,
             String observations,
-            boolean enregistreFrontCage
+            boolean enregistreFrontCage,
+            boolean enregistreFrontCageEntrant
     ) {}
 
     private LigneSnapshot snapshot(LigneTransaction l) {
@@ -306,7 +308,8 @@ public class FicheService {
                 l.getChangeEntrant(),
                 l.getChangeSortant(),
                 l.getObservations(),
-                l.isEnregistreFrontCage()
+                l.isEnregistreFrontCage(),
+                l.isEnregistreFrontCageEntrant()
         );
     }
 
@@ -325,7 +328,8 @@ public class FicheService {
             && sameMontant(a.changeEntrant(),  b.getChangeEntrant())
             && sameMontant(a.changeSortant(),  b.getChangeSortant())
             && Objects.equals(a.observations(), b.getObservations())
-            && a.enregistreFrontCage() == b.isEnregistreFrontCage();
+            && a.enregistreFrontCage() == b.isEnregistreFrontCage()
+            && a.enregistreFrontCageEntrant() == b.isEnregistreFrontCageEntrant();
     }
 
     private String formatSnapshot(LigneSnapshot s) {
@@ -471,7 +475,8 @@ public class FicheService {
                         l.getChangeSortant(),
                         l.getObservations(),
                         l.getCaissier() != null ? l.getCaissier().getNomComplet() : f.getCreePar().getNomComplet(),
-                        l.isEnregistreFrontCage()
+                        l.isEnregistreFrontCage(),
+                        l.isEnregistreFrontCageEntrant()
                 ))
                 .toList();
 

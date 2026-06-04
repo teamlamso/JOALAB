@@ -16,22 +16,27 @@ public class LigneTransactionResponse {
     public String caissier;
     /** {@code true} si le montant RGM a déjà été reporté dans FrontCage. */
     public boolean enregistreFrontCage;
+    /** {@code true} si le change entrant a déjà été reporté dans FrontCage. */
+    public boolean enregistreFrontCageEntrant;
 
     public LigneTransactionResponse(Long id, String typeJeu, String typePaiement,
                                      String typeChange, Integer numeroSocle,
                                      BigDecimal montantRGM, BigDecimal changeEntrant,
                                      BigDecimal changeSortant, String observations,
-                                     String caissier, boolean enregistreFrontCage) {
-        this.id                  = id;
-        this.typeJeu             = typeJeu;
-        this.typePaiement        = typePaiement;
-        this.typeChange          = typeChange;
-        this.numeroSocle         = numeroSocle;
-        this.montantRGM          = montantRGM;
-        this.changeEntrant       = changeEntrant;
-        this.changeSortant       = changeSortant;
-        this.observations        = observations;
-        this.caissier            = caissier;
-        this.enregistreFrontCage = enregistreFrontCage;
+                                     String caissier,
+                                     boolean enregistreFrontCage,
+                                     boolean enregistreFrontCageEntrant) {
+        this.id                          = id;
+        this.typeJeu                     = typeJeu;
+        this.typePaiement                = typePaiement;
+        this.typeChange                  = typeChange;
+        this.numeroSocle                 = numeroSocle;
+        this.montantRGM                  = montantRGM;
+        this.changeEntrant               = changeEntrant;
+        this.changeSortant               = changeSortant;
+        this.observations                = observations;
+        this.caissier                    = caissier;
+        this.enregistreFrontCage         = enregistreFrontCage;
+        this.enregistreFrontCageEntrant  = enregistreFrontCageEntrant;
     }
 }

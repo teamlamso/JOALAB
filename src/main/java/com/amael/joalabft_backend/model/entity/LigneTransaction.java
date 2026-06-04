@@ -65,6 +65,11 @@ public class LigneTransaction {
     @Column(name = "enregistre_front_cage", nullable = false)
     private boolean enregistreFrontCage;
 
+    /** Idem mais pour le change entrant (logiciel FrontCage distinct du report
+     *  RGM côté caisse). N'a de sens que si {@link #changeEntrant} est renseigné. */
+    @Column(name = "enregistre_front_cage_entrant", nullable = false)
+    private boolean enregistreFrontCageEntrant;
+
     public LigneTransaction() {}
 
     // --- Getters / Setters ---
@@ -103,4 +108,7 @@ public class LigneTransaction {
 
     public boolean isEnregistreFrontCage() { return enregistreFrontCage; }
     public void setEnregistreFrontCage(boolean enregistreFrontCage) { this.enregistreFrontCage = enregistreFrontCage; }
+
+    public boolean isEnregistreFrontCageEntrant() { return enregistreFrontCageEntrant; }
+    public void setEnregistreFrontCageEntrant(boolean v) { this.enregistreFrontCageEntrant = v; }
 }
