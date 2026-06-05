@@ -1,0 +1,181 @@
+Acteur;Scénario;Résultat attendu;Classe;Méthode;État
+Système;Convertir un horodatage avant 06h00 en jour de travail;Renvoie le jour précédent;WorkDayTest;from_avant6h_renvoieJourPrecedent;Passé
+Système;Convertir un horodatage à 06h00 pile;Renvoie le jour courant;WorkDayTest;from_a6hPile_renvoieJourCourant;Passé
+Système;Convertir un horodatage en milieu de journée;Renvoie le jour courant;WorkDayTest;from_apres6h_renvoieJourCourant;Passé
+Système;Convertir un horodatage à 23h59;Renvoie le jour courant (pas le suivant);WorkDayTest;from_a23h59_renvoieJourCourant;Passé
+Système;Convertir un horodatage null;Renvoie null;WorkDayTest;from_null_renvoieNull;Passé
+Système;Vérifier le fuseau de calcul du jour de travail;ZONE = Europe/Paris (anti-dérive UTC en Docker);WorkDayTest;zone_estEuropeParis;Passé
+Système;Appeler WorkDay.now();Retourne un horodatage cohérent avec l'heure locale Paris (tolérance 5 s);WorkDayTest;now_estDansLaJourneeCourante;Passé
+Système;Appeler WorkDay.today();Retourne la date dérivée de now() via from();WorkDayTest;today_estCoherenteAvecNow;Passé
+Système;Hasher un mot de passe;Produit un hash BCrypt de 60 caractères ($2a$12$...);PasswordHasherTest;hash_produitUnHashBCryptDe60Caracteres;Passé
+Système;Hasher un mot de passe null;Lève IllegalArgumentException;PasswordHasherTest;hash_motDePasseNull_leveIllegalArgumentException;Passé
+Système;Vérifier le bon mot de passe contre son hash BCrypt;Renvoie true;PasswordHasherTest;verify_motDePasseCorrect_retourneTrue;Passé
+Système;Vérifier un mauvais mot de passe;Renvoie false;PasswordHasherTest;verify_motDePasseIncorrect_retourneFalse;Passé
+Système;Vérifier avec un hash null;Renvoie false;PasswordHasherTest;verify_hashNull_retourneFalse;Passé
+Système;Vérifier un mot de passe null;Renvoie false;PasswordHasherTest;verify_motDePasseNull_retourneFalse;Passé
+Système;Vérifier le bon mot de passe contre un hash SHA-256 hérité;Renvoie true (rétrocompatibilité);PasswordHasherTest;verify_hashLegacySHA256_correct_retourneTrue;Passé
+Système;Vérifier un mauvais mot de passe contre un hash legacy;Renvoie false;PasswordHasherTest;verify_hashLegacySHA256_incorrect_retourneFalse;Passé
+Système;Inspecter un hash SHA-256 (64 caractères hex);Détecté comme legacy;PasswordHasherTest;isLegacyHash_hashSHA256_retourneTrue;Passé
+Système;Inspecter un hash BCrypt;Détecté comme moderne (non legacy);PasswordHasherTest;isLegacyHash_hashBCrypt_retourneFalse;Passé
+Système;Inspecter un hash null;Renvoie false;PasswordHasherTest;isLegacyHash_null_retourneFalse;Passé
+Système;Inspecter une chaîne vide;Renvoie false;PasswordHasherTest;isLegacyHash_chaineVide_retourneFalse;Passé
+Système;Inspecter une chaîne de mauvaise longueur;Renvoie false;PasswordHasherTest;isLegacyHash_mauvaiseLongueur_retourneFalse;Passé
+Système;Inspecter une chaîne de 64 caractères non hex;Renvoie false;PasswordHasherTest;isLegacyHash_caracteresNonHex_retourneFalse;Passé
+Système;Hasher deux fois le même mot de passe;Les deux hashes diffèrent (salt aléatoire);PasswordHasherTest;hash_deuxHashes_sontDifferents;Passé
+MCD;Modifier une fiche datant d'1 an;Autorisé;PermissionServiceTest;mcd_peutModifierFicheAncienne;Passé
+Caissier;Modifier une fiche de la veille;Autorisé;PermissionServiceTest;caissier_peutModifierFicheDeLaVeille;Passé
+Caissier;Modifier une fiche de 2 jours;Refusé (fenêtre 1 jour);PermissionServiceTest;caissier_nePeutPasModifierFicheDe2JoursOuPlus;Passé
+Responsable Caisse;Modifier une fiche de 30 jours;Autorisé (fenêtre 31 jours);PermissionServiceTest;responsable_peutModifierFicheDeMoinsDe31Jours;Passé
+Responsable Caisse;Modifier une fiche de 32 jours;Refusé;PermissionServiceTest;responsable_nePeutPasModifierFicheDePlusDe31Jours;Passé
+Caissier / MCD;Modifier une fiche dont la date est dans le futur;Refusé sauf pour MCD;PermissionServiceTest;peutModifierFiche_dateFutureRefusee;Passé
+Caissier;ensurePeutModifierFiche sur une fiche ancienne;Lève ForbiddenException (HTTP 403);PermissionServiceTest;ensurePeutModifierFiche_refus_leveForbidden;Passé
+MCD;ensurePeutModifierFiche sur une fiche ancienne;Ne lève aucune exception;PermissionServiceTest;ensurePeutModifierFiche_autorise_neLevePas;Passé
+Tous rôles;Tester peutSupprimerFiche par rôle;Seul MCD autorisé;PermissionServiceTest;seulMcd_peutSupprimerFiche;Passé
+Tous rôles;Tester peutSupprimerClient par rôle;Seul MCD autorisé;PermissionServiceTest;seulMcd_peutSupprimerClient;Passé
+Tous rôles;Tester la modification d'identité complète d'un client;MCD et Responsable Caisse autorisés;PermissionServiceTest;responsableEtMcd_peuventModifierClientComplet;Passé
+MCD;Créer un compte de chaque rôle (MCD, Responsable, Caissier);Autorisé pour tous les rôles;PermissionServiceTest;mcd_peutCreerTousLesRoles;Passé
+Responsable Caisse;Créer un compte selon le rôle cible;Caissier autorisé ; Responsable / MCD refusés;PermissionServiceTest;responsable_peutCreerSeulementCaissier;Passé
+Caissier;Créer un compte applicatif;Refusé quel que soit le rôle cible;PermissionServiceTest;caissier_neCreeAucunUtilisateur;Passé
+MCD;Tenter d'archiver son propre compte;Refusé (anti-blocage de l'administration);PermissionServiceTest;mcd_nePeutPasSAutoArchiver;Passé
+MCD;Archiver le compte d'un autre utilisateur;Autorisé;PermissionServiceTest;mcd_peutArchiverUnAutreCompte;Passé
+Responsable Caisse;Archiver un compte;Refusé;PermissionServiceTest;nonMcd_neArchivePas;Passé
+Tous rôles;Consulter le journal global d'audit;Seul MCD autorisé;PermissionServiceTest;seulMcd_litLeJournal;Passé
+Tous rôles;Consulter l'historique d'une fiche;Responsable Caisse et MCD autorisés;PermissionServiceTest;responsableEtMcd_lisentHistoriqueFiche;Passé
+Tous rôles;Importer des clients via Excel;Responsable Caisse et MCD autorisés;PermissionServiceTest;responsableEtMcd_importentClients;Passé
+Utilisateur authentifié;Créer deux sessions pour le même utilisateur;Deux tokens UUID distincts;SessionStoreTest;createSession_retourneTokenUnique;Passé
+Utilisateur authentifié;Récupérer l'utilisateur via un token valide;Renvoie l'utilisateur d'origine;SessionStoreTest;getUtilisateur_tokenValide_retourneUtilisateur;Passé
+Anonyme;Présenter un token inconnu;Renvoie null;SessionStoreTest;getUtilisateur_tokenInconnu_retourneNull;Passé
+Anonyme;Présenter un token null;Renvoie null;SessionStoreTest;getUtilisateur_tokenNull_retourneNull;Passé
+Utilisateur authentifié;Logout / invalidate;Session retirée du store;SessionStoreTest;invalidate_supprimeLaSession;Passé
+Système;Invalidate avec token null;Pas d'exception levée;SessionStoreTest;invalidate_tokenNull_neJettePas;Passé
+MCD;Archiver un compte ayant plusieurs sessions actives;Toutes les sessions du compte sont coupées sans toucher aux autres utilisateurs;SessionStoreTest;invalidateByUtilisateurId_supprimeToutesLesSessionsDuMemeCompte;Passé
+Système;invalidateByUtilisateurId avec id null;Pas d'effet, pas d'erreur;SessionStoreTest;invalidateByUtilisateurId_null_neJettePas;Passé
+Utilisateur authentifié;Login avec identifiants valides;Token retourné, action enregistrée dans le journal;AuthServiceTest;login_identifiantsValides_retourneTokenEtJournalise;Passé
+Anonyme;Login avec identifiant inconnu;Renvoie null, aucune session créée;AuthServiceTest;login_identifiantInconnu_retourneNull;Passé
+Anonyme;Login avec mauvais mot de passe;Renvoie null, aucune session créée;AuthServiceTest;login_motDePasseFaux_retourneNull;Passé
+Utilisateur archivé;Login d'un compte précédemment archivé;Renvoie null (compte inactif);AuthServiceTest;login_compteArchive_retourneNull;Passé
+Utilisateur authentifié;Login d'un compte avec hash SHA-256 hérité;Connexion réussie + migration silencieuse vers BCrypt;AuthServiceTest;login_hashLegacy_migreVersBcrypt;Passé
+Utilisateur authentifié;Logout d'un token valide;Session invalidée et action journalisée;AuthServiceTest;logout_journaliseLaDeconnexion;Passé
+Anonyme;Logout d'un token invalide;Pas de journal, pas d'exception;AuthServiceTest;logout_tokenInvalide_neJournalisePas;Passé
+Utilisateur authentifié;Lister les clients avec terme de recherche;Liste avec dernière activité par client;ClientServiceTest;listClients_appelleRepoEtDerniereActivite;Passé
+Utilisateur authentifié;Récupérer un client par id inconnu;NotFoundException (HTTP 404);ClientServiceTest;getClient_inexistant_leveNotFound;Passé
+Utilisateur authentifié;Récupérer un client existant;DTO détaillé avec nom et historique des fiches;ClientServiceTest;getClient_existant_renvoieDetail;Passé
+Utilisateur authentifié;Créer un nouveau client;Client persisté + entrée de journal;ClientServiceTest;createClient_persisteEtRetourneId;Passé
+Caissier;Modifier l'identité complète d'un client;ForbiddenException (HTTP 403);ClientServiceTest;updateClient_caissier_leveForbidden;Passé
+MCD;Modifier un client inexistant;NotFoundException;ClientServiceTest;updateClient_inexistant_leveNotFound;Passé
+Caissier;Modifier l'adresse et la pièce d'identité d'un client;Mise à jour acceptée + journal (autorisé à tous les rôles);ClientServiceTest;updateClientIdentification_metAJourAdresseEtPiece;Passé
+MCD;Supprimer un client ayant des fiches associées;BadRequest 400 — supprimer les fiches d'abord;ClientServiceTest;deleteClient_avecFiches_leveBadRequest;Passé
+MCD;Supprimer un client sans fiches associées;Client supprimé + journal;ClientServiceTest;deleteClient_sansFiches_supprime;Passé
+MCD;Supprimer un client inexistant;NotFound;ClientServiceTest;deleteClient_inexistant_leveNotFound;Passé
+Utilisateur authentifié;Lister les fiches sans dates de filtre;Utilise WorkDay.today() (pas LocalDate.now);FicheServiceTest;listFiches_datesParDefaut_utiliseJourDeTravail;Passé
+Utilisateur authentifié;Créer une fiche pour un client inconnu;NotFound;FicheServiceTest;createFiche_clientInconnu_leveNotFound;Passé
+Utilisateur authentifié;Créer une fiche sans aucune ligne (cas PPE);Création autorisée;FicheServiceTest;createFiche_sansLignes_estAutorise;Passé
+Utilisateur authentifié;Créer une fiche avec une ligne valide;Fiche et ligne persistées;FicheServiceTest;createFiche_avecUneLigne_persisteAvecLigne;Passé
+Utilisateur authentifié;Modifier une fiche inexistante;NotFound;FicheServiceTest;updateFiche_inexistante_leveNotFound;Passé
+MCD;Modifier une fiche en supprimant une ligne et en ajoutant une autre;flush() appelé AVANT update() pour que les DELETE partent avant les INSERT (fix duplication Docker);FicheServiceTest;updateFiche_suppressionLigne_appelleFlushEntreDeleteEtInsert;Passé
+MCD;Modifier une fiche sans supprimer de ligne;Pas de flush superflu;FicheServiceTest;updateFiche_aucuneSuppression_neFlushePas;Passé
+MCD;Modifier une fiche;dateModification et modifiePar mis à jour;FicheServiceTest;updateFiche_metAJourDateModification;Passé
+MCD;Supprimer une fiche inexistante;NotFound;FicheServiceTest;deleteFiche_inexistante_leveNotFound;Passé
+MCD;Supprimer une fiche;Fiche supprimée + journal;FicheServiceTest;deleteFiche_mcd_supprime;Passé
+Caissier;Supprimer une fiche;Forbidden;FicheServiceTest;deleteFiche_caissier_leveForbidden;Passé
+MCD;Lister les utilisateurs;Permission vérifiée puis liste retournée;UtilisateurServiceTest;listUtilisateurs_appliqueLaPermission;Passé
+Responsable Caisse;Demander includeArchives=true;Le drapeau est ignoré (réservé MCD);UtilisateurServiceTest;listUtilisateurs_archivesIgnoresPourNonMcd;Passé
+MCD;Créer un caissier avec un payload valide;Compte créé + journal;UtilisateurServiceTest;create_happyPath;Passé
+MCD;POST de création avec body absent;BadRequest;UtilisateurServiceTest;create_corpsNull_leveBadRequest;Passé
+MCD;Créer avec un identifiant déjà pris;BadRequest;UtilisateurServiceTest;create_identifiantDejaPris_leveBadRequest;Passé
+MCD;Créer avec un rôle invalide (ex WIZARD);BadRequest;UtilisateurServiceTest;create_roleInconnu_leveBadRequest;Passé
+MCD;Créer avec un champ obligatoire vide;BadRequest;UtilisateurServiceTest;create_champManquant_leveBadRequest;Passé
+MCD;Renommer l'identifiant d'un utilisateur;Mise à jour + entrée de journal listant le changement;UtilisateurServiceTest;update_renomme_journaliseLeChangement;Passé
+MCD;Modifier un compte archivé;BadRequest (il faut le désarchiver d'abord);UtilisateurServiceTest;update_utilisateurArchive_leveBadRequest;Passé
+MCD;Modifier un compte par id inconnu;NotFound;UtilisateurServiceTest;update_inexistant_leveNotFound;Passé
+MCD;Tenter de se rétrograder soi-même (MCD → Caissier);BadRequest (anti-blocage de l'administration);UtilisateurServiceTest;update_mcdSeRetrogradeLuiMeme_leveBadRequest;Passé
+MCD;Archiver un autre compte;Compte archivé + toutes ses sessions invalidées + journal;UtilisateurServiceTest;archiver_happyPath_invalideLesSessions;Passé
+MCD;Archiver un compte déjà archivé;Idempotent (pas de double journal, pas de double invalidation);UtilisateurServiceTest;archiver_dejaArchive_idempotent;Passé
+MCD;Archiver un id inconnu;NotFound;UtilisateurServiceTest;archiver_inexistant_leveNotFound;Passé
+MCD;Désarchiver un compte précédemment archivé;archive = false + journal;UtilisateurServiceTest;desarchiver_happyPath_resetFlagEtJournalise;Passé
+MCD;Désarchiver un compte actif;Idempotent (aucun update inutile);UtilisateurServiceTest;desarchiver_dejaActif_idempotent;Passé
+MCD;Désarchiver un id inconnu;NotFound;UtilisateurServiceTest;desarchiver_inexistant_leveNotFound;Passé
+Utilisateur authentifié;Logger une action métier dans le journal;Entrée persistée avec tous les champs (action, type entité, libellé, description);JournalServiceTest;log_creeUneEntreeAvecLesChampsAttendus;Passé
+MCD;Lire le journal global d'audit;Liste paginée retournée;JournalServiceTest;listGlobal_mcd_renvoieListe;Passé
+Caissier;Lire le journal global;Forbidden;JournalServiceTest;listGlobal_nonMcd_leveForbidden;Passé
+Caissier;Lire l'historique d'une fiche;Forbidden;JournalServiceTest;listHistoriqueFiche_caissier_leveForbidden;Passé
+Responsable Caisse;Lire l'historique d'une fiche;Liste retournée;JournalServiceTest;listHistoriqueFiche_responsable_renvoieListe;Passé
+Système;Chercher des suggestions d'adresses avec une requête vide;Liste vide;AdresseServiceTest;chercherSuggestions_chaineVide_retourneListeVide;Passé
+Système;Chercher des suggestions d'adresses avec null;Liste vide;AdresseServiceTest;chercherSuggestions_null_retourneListeVide;Passé
+Système;Chercher des suggestions d'adresses avec uniquement des espaces;Liste vide;AdresseServiceTest;chercherSuggestions_blanc_retourneListeVide;Passé
+Système;Chercher des lieux (ville) avec une requête vide/null/blanche;Liste vide;AdresseServiceTest;chercherLieux_chaineVide_retourneListeVide;Passé
+Système;Construire un SuggestionAdresseResponse (POJO);Champs publics accessibles (compatibilité JSON-B);AdresseServiceTest;suggestionAdresse_pojoExposeChamps;Passé
+Système;Construire un SuggestionLieuResponse (POJO);Champ label exposé publiquement;AdresseServiceTest;suggestionLieu_pojoExposeLabel;Passé
+Système;Résoudre une chaîne vide en adresse structurée;Retourne null;AdresseServiceTest;resoudre_chaineVide_retourneNull;Passé
+Système;Formater Marie / Dupont en libellé canonique;"Marie DUPONT" (nom en capitales);libelle.test.js;formate prénom + NOM en capitales;Passé
+Système;Formater avec espaces parasites autour des valeurs;Valeurs trimmées;libelle.test.js;trim les espaces parasites;Passé
+Système;Formater avec valeurs vides / null / undefined;Chaîne vide;libelle.test.js;renvoie chaîne vide si tout est vide;Passé
+Système;Formater avec uniquement le nom;Seul le nom en capitales;libelle.test.js;omet le prénom si vide;Passé
+Système;Formater avec uniquement le prénom;Seul le prénom;libelle.test.js;omet le nom si vide;Passé
+Système;Convertir une date ISO yyyy-MM-dd en format français;DD/MM/YYYY;formatters.test.js;convertit yyyy-MM-dd en DD/MM/YYYY;Passé
+Système;Convertir un datetime ISO complet;Ne garde que la date;formatters.test.js;accepte un datetime ISO en ne gardant que la date;Passé
+Système;Formater une date null / undefined / vide;Chaîne vide;formatters.test.js;renvoie chaîne vide pour null/undefined/vide;Passé
+Système;Formater un montant positif en euros;Contient le nombre et le symbole €;formatters.test.js;formate un nombre positif en euros;Passé
+Système;Formater null / 0 sans placeholder;Renvoie le placeholder "-";formatters.test.js;renvoie le placeholder pour null/0;Passé
+Système;Formater avec un placeholder personnalisé;Renvoie le placeholder fourni;formatters.test.js;accepte un placeholder personnalisé;Passé
+Système;Formater 1500,50 €;Séparateurs français (1.500,50);formatters.test.js;formate avec séparateurs français;Passé
+Système;Calculer workDay à 10h;Date du jour;formatters.test.js;renvoie la date du jour si l'heure est ≥ 6h;Passé
+Système;Calculer workDay à 3h;Veille;formatters.test.js;renvoie la veille si l'heure est < 6h;Passé
+Système;Calculer workDay à 6h pile;Date du jour;formatters.test.js;renvoie la date du jour à 6h pile;Passé
+Système;Calculer workDayYesterday;Veille du workDay;formatters.test.js;workDayYesterday est la veille du workDay;Passé
+Système;Vérifier la constante WORK_DAY_START_HOUR;Égale 6 (cohérence avec le backend);formatters.test.js;est à 6h pour aligner avec le backend;Passé
+Caissier;Calculer le jour de travail après 06h00 côté UI;Date du jour;permissions.test.js;renvoie la date du jour au format ISO si après 6h;Passé
+Caissier;Calculer le jour de travail avant 06h00 côté UI;Veille;permissions.test.js;renvoie la veille si avant 6h;Passé
+MCD;Modifier une fiche très ancienne côté UI;Autorisé;permissions.test.js;MCD peut modifier une fiche très ancienne;Passé
+Caissier;Modifier la fiche du jour ou de la veille;Autorisé;permissions.test.js;CAISSIER peut modifier la fiche du jour et de la veille;Passé
+Caissier;Modifier une fiche de 2 jours ou plus;Refusé;permissions.test.js;CAISSIER ne peut pas modifier une fiche de 2 jours ou plus;Passé
+Responsable Caisse;Modifier une fiche jusqu'à 31 jours dans le passé;Autorisé;permissions.test.js;RESPONSABLE_CAISSE peut modifier jusqu'à 31 jours dans le passé;Passé
+Responsable Caisse;Modifier une fiche au-delà de 31 jours;Refusé;permissions.test.js;RESPONSABLE_CAISSE refuse au-delà de 31 jours;Passé
+Caissier / Responsable;Modifier une fiche datée dans le futur;Refusé;permissions.test.js;refuse les dates futures pour les rôles non-MCD;Passé
+Anonyme;Tester peutModifierFiche sans rôle;Refusé (false);permissions.test.js;refuse si pas de rôle;Passé
+Tous rôles;Tester peutSupprimerFiche par rôle;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
+Tous rôles;Tester peutModifierClientComplet par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
+Tous rôles;Tester peutSupprimerClient par rôle;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
+Tous rôles;Tester peutListerUtilisateurs par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
+Tous rôles;Tester peutModifier/Archiver/Désarchiver Utilisateur;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
+Tous rôles;Tester peutLireJournal par rôle;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
+Tous rôles;Tester peutLireHistoriqueFiche par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
+Tous rôles;Tester peutImporterClients par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
+Système;Vérifier la non-vacuité de la liste des types de pièces;Liste non vide contenant au moins CNI;champsClient.test.js;TYPES_PIECE non vide;Passé
+Système;Vérifier la cohérence PIECES_AVEC_PREFECTURE;Sous-ensemble strict de TYPES_PIECE;champsClient.test.js;PIECES_AVEC_PREFECTURE est un sous-ensemble de TYPES_PIECE;Passé
+Système;Vérifier la cohérence PIECES_AVEC_PAYS;Sous-ensemble strict de TYPES_PIECE;champsClient.test.js;PIECES_AVEC_PAYS est un sous-ensemble de TYPES_PIECE;Passé
+Système;Mapper les clés de champs manquants vers leurs libellés;Renvoie les libellés français;champsClient.test.js;mappe les clés vers les libellés;Passé
+Système;Mapper avec null / undefined / liste vide;Tableau vide;champsClient.test.js;renvoie tableau vide pour null / undefined / vide;Passé
+Système;Mapper une clé inconnue;Conserve la clé brute;champsClient.test.js;conserve la clé brute pour un champ inconnu;Passé
+Système;Mapper la clé origineDelivrance;Libellé compact "Préfecture ou pays de délivrance";champsClient.test.js;mappe origineDelivrance vers son libellé compact;Passé
+Système;Convertir une liste de clés en texte avec virgules;Chaîne "Nom, Prénom";champsClient.test.js;joint avec virgule;Passé
+Système;Convertir une liste vide en texte;Chaîne vide;champsClient.test.js;chaîne vide pour vide;Passé
+Système;Construire un titre PDF pour un client identifié avec un type de jeu;Format "YYYY.MM.DD_NOM_Prenom_TYPE";print.test.js;client identifié avec un type de jeu;Passé
+Système;Construire un titre avec plusieurs types de jeu;Types séparés par "-" (ex MAS-JTE);print.test.js;client identifié, plusieurs types de jeu;Passé
+Système;Construire un titre pour client PPE;Suffixe _PPE ajouté;print.test.js;ajoute le suffixe PPE quand activé;Passé
+Système;Construire un titre pour client non identifié;Identité remplacée par ANONYME;print.test.js;client non identifié → ANONYME;Passé
+Système;Construire un titre pour fiche sans lignes;Pas de suffixe de type;print.test.js;aucune ligne → pas de suffixe types;Passé
+Système;Construire un titre avec typeOverride;Un seul type retenu (sous-fiche);print.test.js;typeOverride force un seul type;Passé
+Système;Construire un titre avec espaces dans nom/prénom;Espaces remplacés par tirets;print.test.js;remplace espaces dans prénom/nom par des tirets;Passé
+Système;Vérifier la constante ORDRE_TYPES_JEU;[MAS, JTE, JT] dans cet ordre;print.test.js;contient MAS, JTE, JT dans cet ordre;Passé
+Utilisateur authentifié;Affichage de la boîte de confirmation fermée;Aucun rendu DOM;ConfirmDialog.test.jsx;ne rend rien si open=false;Passé
+Utilisateur authentifié;Affichage de la boîte ouverte avec libellés par défaut;Titre, message, boutons "Confirmer" et "Annuler" visibles;ConfirmDialog.test.jsx;affiche titre, message et boutons par défaut;Passé
+Utilisateur authentifié;Affichage avec libellés de boutons personnalisés;Libellés appliqués;ConfirmDialog.test.jsx;libellés personnalisés;Passé
+Utilisateur authentifié;Affichage avec variant=danger;Le bouton de confirmation porte la classe btn-danger;ConfirmDialog.test.jsx;applique la classe danger au bouton de confirmation;Passé
+Utilisateur authentifié;Clic sur le bouton Confirmer;Callback onConfirm appelé une fois;ConfirmDialog.test.jsx;clic Confirmer appelle onConfirm;Passé
+Utilisateur authentifié;Clic sur le bouton Annuler;Callback onCancel appelé une fois;ConfirmDialog.test.jsx;clic Annuler appelle onCancel;Passé
+Utilisateur authentifié;Clic sur le fond gris (overlay);Callback onCancel appelé;ConfirmDialog.test.jsx;clic sur l'overlay appelle onCancel;Passé
+Utilisateur authentifié;Clic à l'intérieur de la boîte;onCancel non appelé (stopPropagation);ConfirmDialog.test.jsx;clic dans le modal n'appelle pas onCancel (stopPropagation);Passé
+Utilisateur authentifié;Détection doublons sans candidats;Aucun rendu DOM;ClientMatchDialog.test.jsx;ne rend rien sans candidats;Passé
+Utilisateur authentifié;Affichage d'un candidat unique;Libellé du client visible;ClientMatchDialog.test.jsx;affiche le libellé du candidat unique;Passé
+Utilisateur authentifié;Candidat marqué PPE;Badge PPE affiché;ClientMatchDialog.test.jsx;badge PPE affiché si candidat PPE;Passé
+Utilisateur authentifié;Différence détectée entre saisie et candidat;Message "Différences détectées" affiché;ClientMatchDialog.test.jsx;détecte les différences sur les champs;Passé
+Utilisateur authentifié;Aucune différence entre saisie et candidat;Bouton Fusionner désactivé;ClientMatchDialog.test.jsx;bouton Fusionner désactivé si pas de différence;Passé
+Utilisateur authentifié;Clic sur Fusionner avec différences;Bouton actif et callback onMerge appelé avec le candidat;ClientMatchDialog.test.jsx;bouton Fusionner actif si différence et appelle onMerge;Passé
+Utilisateur authentifié;Clic sur "Continuer sans fusionner";Callback onContinue appelé;ClientMatchDialog.test.jsx;bouton Continuer sans fusionner appelle onContinue;Passé
+Utilisateur authentifié;Clic sur Annuler;Callback onCancel appelé;ClientMatchDialog.test.jsx;bouton Annuler appelle onCancel;Passé
+Utilisateur authentifié;Plusieurs candidats potentiels;Résumé "N clients similaires" affiché;ClientMatchDialog.test.jsx;résumé pluriel pour plusieurs candidats;Passé
+Anonyme;Affichage du formulaire de connexion;Champs identifiant et mot de passe visibles;Login.test.jsx;affiche les champs identifiant et mot de passe;Passé
+Anonyme;Connexion avec identifiants corrects;signIn appelé et redirection vers /accueil;Login.test.jsx;login OK : appelle signIn et redirige vers /accueil;Passé
+Anonyme;Connexion avec identifiants invalides;Message d'erreur affiché, aucune redirection;Login.test.jsx;login KO : affiche message d'erreur, pas de redirection;Passé
+Anonyme;Soumission en cours;Bouton désactivé pendant l'appel API (libellé "Connexion…");Login.test.jsx;bouton désactivé pendant la requête;Passé
