@@ -14,7 +14,7 @@ import { searchLieux } from '../api/lieux.js'
  * @param {string} value
  * @param {(lieu: string) => void} onChange
  */
-export default function PlaceSearch({ value, onChange, placeholder = 'Lieu de naissance' }) {
+export default function PlaceSearch({ value, onChange, placeholder = 'Lieu de naissance', disabled }) {
   const fetchSuggestions = async (q, signal) => {
     const data = await searchLieux(q, 6)
     if (signal?.aborted) return []
@@ -30,6 +30,7 @@ export default function PlaceSearch({ value, onChange, placeholder = 'Lieu de na
       minChars={3}
       debounceMs={350}
       placeholder={placeholder}
+      disabled={disabled}
     />
   )
 }

@@ -87,3 +87,47 @@ export function peutLireHistoriqueFiche(role) {
 export function peutImporterClients(role) {
   return role === 'RESPONSABLE_CAISSE' || role === 'MCD'
 }
+
+/**
+ * Vrai si le libellé du lieu de naissance est conforme au format attendu :
+ * « Ville (NN) » pour la France (NN = numéro de département à 2-3 chiffres)
+ * ou « Ville (Pays) » pour l'international. Le mot « FRANCE » sans numéro
+ * est considéré comme non conforme — un CAISSIER peut alors corriger.
+ */
+export function lieuNaissanceEstConforme(lieu) {
+  if (!lieu) return false
+  const fr = /^[^()]+ \(\d{2,3}\)$/.test(lieu)
+  const intl = /^[^()]+ \([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ \-]+\)$/.test(lieu)
+                && !/\(FRANCE\)/i.test(lieu)
+  return fr || intl
+}
+
+/**
+ * Vrai si {@code role} peut écrire le lieu de naissance. Un MCD ou un
+ * RESPONSABLE_CAISSE peut toujours ; un CAISSIER ne peut qu'en cas de lieu
+ * vide ou de format non conforme — il ne peut pas changer « Besançon (25) »
+ * en « Lyon (69) ».
+ */
+export function peutModifierLieuNaissance(role, lieuActuel) {
+  if (peutModifierClientComplet(role)) return true
+  if (!lieuActuel || lieuActuel.trim() === '') return true
+  return !lieuNaissanceEstConforme(lieuActuel)
+}
+
+/**
+ * Vrai si {@code role} peut écrire la date de naissance. Un CAISSIER ne peut
+ * que la remplir quand elle est absente.
+ */
+export function peutModifierDateNaissance(role, dateActuelle) {
+  if (peutModifierClientComplet(role)) return true
+  return !dateActuelle
+}
+
+/**
+ * Vrai si {@code role} peut toucher au flag PPE. Un CAISSIER peut uniquement
+ * l'activer (passage false → true) ; il ne peut jamais l'enlever.
+ */
+export function peutToucherPpe(role, ppeActuel) {
+  if (peutModifierClientComplet(role)) return true
+  return !ppeActuel
+}

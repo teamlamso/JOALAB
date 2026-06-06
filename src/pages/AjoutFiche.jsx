@@ -281,9 +281,13 @@ export default function AjoutFiche() {
         lignes: lignesPayload,
       }
 
-      await createFiche(payload)
+      const created = await createFiche(payload)
       notify('Fiche enregistrée', 'success')
-      navigate('/accueil')
+      // replace: true → la page de création disparaît de l'historique. Le
+      // bouton « Retour » depuis DetailFiche revient ainsi à l'écran d'avant
+      // (Accueil, ListeClients, etc.), pas au formulaire de création.
+      const ficheId = created?.id
+      navigate(ficheId ? `/fiches/${ficheId}` : '/accueil', { replace: true })
     } catch (e) {
       setError(e.message)
       notify(`Erreur : ${e.message}`, 'error')

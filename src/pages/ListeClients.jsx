@@ -8,6 +8,7 @@ import { formatDateFr } from '../utils/formatters.js'
 export default function ListeClients() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const [seulementIncomplets, setSeulementIncomplets] = useState(false)
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -28,6 +29,14 @@ export default function ListeClients() {
     const t = setTimeout(load, 300)
     return () => clearTimeout(t)
   }, [load])
+
+  // Filtre côté client : laisse le tri serveur intact mais permet d'isoler
+  // visuellement les profils à compléter (cas d'usage métier : régularisation
+  // des fiches importées en masse).
+  const clientsAffiches = seulementIncomplets
+    ? clients.filter((c) => c.complet === false)
+    : clients
+  const nbIncomplets = clients.filter((c) => c.complet === false).length
 
   return (
     <div className="page">
@@ -57,6 +66,22 @@ export default function ListeClients() {
 
       {error && <div className="alert-error">{error}</div>}
 
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={seulementIncomplets}
+          onChange={(e) => setSeulementIncomplets(e.target.checked)}
+        />
+        <span>
+          Afficher uniquement les profils à compléter
+          {nbIncomplets > 0 && (
+            <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>
+              ({nbIncomplets} sur {clients.length})
+            </span>
+          )}
+        </span>
+      </label>
+
       {loading ? (
         <div className="loading">Chargement…</div>
       ) : (
@@ -73,14 +98,14 @@ export default function ListeClients() {
               </tr>
             </thead>
             <tbody>
-              {clients.length === 0 ? (
+              {clientsAffiches.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                    Aucun client trouvé.
+                    {seulementIncomplets ? 'Aucun profil incomplet.' : 'Aucun client trouvé.'}
                   </td>
                 </tr>
               ) : (
-                clients.map((c) => (
+                clientsAffiches.map((c) => (
                   <tr key={c.id}>
                     <td>
                       <strong>{c.libelle}</strong>

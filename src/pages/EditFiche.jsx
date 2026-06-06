@@ -306,7 +306,8 @@ export default function EditFiche() {
       }))
       await updateFiche(id, { lignes: lignesPayload })
       notify('Fiche mise à jour', 'success')
-      navigate(`/fiches/${id}`)
+      // replace: true → Retour depuis DetailFiche saute par-dessus EditFiche.
+      navigate(`/fiches/${id}`, { replace: true })
     } catch (e) {
       setError(e.message)
       notify(`Erreur : ${e.message}`, 'error')

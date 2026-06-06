@@ -21,6 +21,7 @@ export default function Autocomplete({
   debounceMs = 200,
   placeholder,
   required,
+  disabled,
 }) {
   const [suggestions, setSuggestions] = useState([])
   const [open, setOpen] = useState(false)
@@ -78,9 +79,10 @@ export default function Autocomplete({
         onChange={handleChange}
         placeholder={placeholder}
         required={required}
+        disabled={disabled}
         autoComplete="off"
       />
-      {open && (
+      {open && !disabled && (
         <ul className="address-suggestions">
           {suggestions.map((s, i) => (
             <li key={s.value ?? i} onClick={() => handleSelect(s)}>

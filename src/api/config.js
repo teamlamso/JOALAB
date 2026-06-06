@@ -16,7 +16,18 @@ export async function request(path, options = {}) {
   if (res.status === 204) return null
 
   if (res.status === 201) {
-    try { return await res.json() } catch { return null }
+    // 201 Created : on essaie d'abord de parser un body JSON. À défaut, on
+    // extrait l'id depuis le header Location (format /api/{ressource}/{id})
+    // pour que les callers puissent rediriger vers la ressource créée sans
+    // avoir à dupliquer du parsing partout.
+    try { return await res.json() } catch {
+      const loc = res.headers.get('Location')
+      if (loc) {
+        const match = loc.match(/\/(\d+)(?:\?.*)?$/)
+        if (match) return { id: Number(match[1]) }
+      }
+      return null
+    }
   }
 
   if (res.status === 401 && !path.includes('/auth/login')) {

@@ -12,7 +12,12 @@ import CountrySearch from '../components/CountrySearch.jsx'
 import PrefectureSearch from '../components/PrefectureSearch.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
-import { peutModifierClientComplet } from '../utils/permissions.js'
+import {
+  peutModifierClientComplet,
+  peutModifierLieuNaissance,
+  peutModifierDateNaissance,
+  peutToucherPpe,
+} from '../utils/permissions.js'
 import {
   TYPES_PIECE,
   PIECES_AVEC_PREFECTURE,
@@ -111,6 +116,10 @@ export default function EditClient() {
       if (editionComplete) {
         await updateClient(id, { identifie: client.identifie, ...form })
       } else {
+        // Un CAISSIER passe ici. Il complète l'adresse, la pièce d'identité,
+        // et peut aussi remplir les champs d'état civil restés vides ou
+        // corriger un lieu de naissance mal formaté. Le backend applique
+        // ces ajustements seulement quand ils sont autorisés.
         await updateClientIdentification(id, {
           rue:                  form.rue,
           complement:           form.complement,
@@ -122,10 +131,14 @@ export default function EditClient() {
           dateDelivrance:       form.dateDelivrance,
           prefectureDelivrance: form.prefectureDelivrance,
           paysDelivrance:       form.paysDelivrance,
+          dateNaissance:        form.dateNaissance || null,
+          lieuNaissance:        form.lieuNaissance || null,
+          ppe:                  form.ppe ? true : null,
         })
       }
       notify('Client mis à jour', 'success')
-      navigate(returnTo || `/clients/${id}`)
+      // replace: true → Retour saute la page d'édition.
+      navigate(returnTo || `/clients/${id}`, { replace: true })
     } catch (err) {
       setError(err.message)
       notify(`Erreur : ${err.message}`, 'error')
@@ -138,8 +151,14 @@ export default function EditClient() {
   if (error && !form) return <div className="page"><div className="alert-error">{error}</div></div>
   if (!form || !client) return null
 
-  // Champs d'état civil verrouillés pour un CAISSIER.
-  const lockIdentite = !editionComplete
+  // Pour un CAISSIER, certains champs d'état civil restent verrouillés ;
+  // d'autres sont éditables sous conditions (complément possible si vide ou
+  // mal formaté). Pour un MCD/RESPONSABLE_CAISSE, tout est éditable.
+  const lockIdentite       = !editionComplete
+  const lockNomPrenom      = lockIdentite
+  const lockDateNaissance  = !peutModifierDateNaissance(user?.role, client.dateNaissance)
+  const lockLieuNaissance  = !peutModifierLieuNaissance(user?.role, client.lieuNaissance)
+  const lockPpe            = !peutToucherPpe(user?.role, client.ppe)
 
   return (
     <div className="page">
@@ -178,11 +197,11 @@ export default function EditClient() {
                 <div className="form-row-2">
                   <div className={cls('nom')}>
                     <label>Nom :</label>
-                    <input type="text" value={form.nom} onChange={set('nom')} required disabled={lockIdentite} />
+                    <input type="text" value={form.nom} onChange={set('nom')} required disabled={lockNomPrenom} />
                   </div>
                   <div className={cls('prenom')}>
                     <label>Prénom :</label>
-                    <input type="text" value={form.prenom} onChange={set('prenom')} required disabled={lockIdentite} />
+                    <input type="text" value={form.prenom} onChange={set('prenom')} required disabled={lockNomPrenom} />
                   </div>
                 </div>
                 <div className="form-row-2">
@@ -191,7 +210,7 @@ export default function EditClient() {
                     <DateInput
                       value={form.dateNaissance}
                       onChange={(v) => setField('dateNaissance', v)}
-                      disabled={lockIdentite}
+                      disabled={lockDateNaissance}
                     />
                   </div>
                   <div className={cls('lieuNaissance')}>
@@ -199,7 +218,7 @@ export default function EditClient() {
                     <PlaceSearch
                       value={form.lieuNaissance}
                       onChange={(v) => setField('lieuNaissance', v)}
-                      disabled={lockIdentite}
+                      disabled={lockLieuNaissance}
                     />
                   </div>
                 </div>
@@ -210,7 +229,8 @@ export default function EditClient() {
                       type="checkbox"
                       checked={form.ppe}
                       onChange={(e) => setField('ppe', e.target.checked)}
-                      disabled={lockIdentite}
+                      disabled={lockPpe}
+                      title={lockPpe && form.ppe ? 'Seul un MCD ou un Responsable Caisse peut désactiver le flag PPE.' : undefined}
                     />
                     <span>Personne Politiquement Exposée (PPE)</span>
                   </label>

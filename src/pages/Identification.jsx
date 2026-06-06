@@ -17,7 +17,10 @@ export default function Identification() {
 
   useEffect(() => {
     if (preselectClient) {
-      navigate('/fiches/nouveau', { state: { clientData: { id: preselectClient.id, libelle: preselectClient.libelle, identifie: true, ppe: !!preselectClient.ppe } } })
+      navigate('/fiches/nouveau', {
+        state: { clientData: { id: preselectClient.id, libelle: preselectClient.libelle, identifie: true, ppe: !!preselectClient.ppe } },
+        replace: true,
+      })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -40,8 +43,12 @@ export default function Identification() {
   }, [search, doSearch])
 
   const selectClient = (c) => {
+    // replace: true — Identification est un écran de transition qu'on retire
+    // de l'historique pour que « Retour » depuis DetailFiche revienne sur
+    // Accueil et non sur la recherche.
     navigate('/fiches/nouveau', {
       state: { clientData: { id: c.id, libelle: c.libelle, identifie: true, ppe: c.ppe } },
+      replace: true,
     })
   }
 
@@ -49,6 +56,7 @@ export default function Identification() {
     if (!description.trim()) return
     navigate('/fiches/nouveau', {
       state: { clientData: { id: null, libelle: description, identifie: false, descriptionPhysique: description } },
+      replace: true,
     })
   }
 
