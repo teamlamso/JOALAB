@@ -9,9 +9,25 @@
         <jta-data-source>jdbc/LABFTDB</jta-data-source>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
 
+        <!-- Désactive le cache L2 (shared cache). EclipseLink garde par défaut
+             les entités en mémoire entre les transactions, ce qui produit des
+             lectures stale après un orphan removal sur les LigneTransaction
+             d'une FicheLABFT : les lignes supprimées réapparaissent et
+             deviennent impossibles à re-supprimer. En passant à NONE, chaque
+             requête JPA va directement en base. Coût mineur sur cette appli
+             qui n'a pas de charge de lecture massive. -->
+        <shared-cache-mode>NONE</shared-cache-mode>
+
         <properties>
-            <!-- Crée/met à jour le schéma automatiquement (à passer sur "none" en production) -->
-            <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
+            <!-- Crée les tables manquantes ET ajoute les nouvelles colonnes
+                 aux tables existantes (équivalent EclipseLink de
+                 hibernate.hbm2ddl.auto=update). « create-tables » seul
+                 n'ajoute PAS les colonnes manquantes sur un schéma déjà
+                 déployé : la première requête JPA qui utilisait la nouvelle
+                 colonne provoquait un rollback silencieux des transactions
+                 suivantes (« Client's transaction aborted »).
+                 À passer sur "none" en production avec un outil de migration. -->
+            <property name="eclipselink.ddl-generation" value="create-or-extend-tables"/>
             <property name="eclipselink.ddl-generation.output-mode" value="database"/>
             <property name="eclipselink.logging.level" value="WARNING"/>
             <property name="eclipselink.logging.level.sql" value="WARNING"/>

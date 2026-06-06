@@ -27,8 +27,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -110,7 +111,7 @@ class FicheServiceTest {
     }
 
     @Test
-    void updateFiche_suppressionLigne_appelleFlushEntreDeleteEtInsert() {
+    void updateFiche_suppressionLigne_retireLaLigneEtFlush() {
         // Setup : fiche en base avec 2 lignes (id=1, id=2).
         FicheLABFT fiche = TestEntities.fiche(7L, client, mcd, WorkDay.today().atStartOfDay());
         LigneTransaction l1 = TestEntities.ligne(1L, fiche);
@@ -132,19 +133,20 @@ class FicheServiceTest {
 
         service.updateFiche(7L, req, mcd);
 
-        // Vérification clé : flush() est appelé AVANT update(fiche), pour que
-        // les DELETE des orphelines partent avant les INSERT.
-        InOrder order = inOrder(ficheRepository);
-        order.verify(ficheRepository).flush();
-        order.verify(ficheRepository).update(fiche);
-
-        // La ligne 2 est bien retirée de la collection (orphan removal en cours).
+        // La ligne 2 est bien retirée de la collection (orphan removal).
         assertThat(fiche.getLignes()).extracting(LigneTransaction::getId)
                 .doesNotContain(2L);
+        // flush() est appelé au moins deux fois : une fois APRÈS le removeIf
+        // (pour faire partir le DELETE avant les INSERT) et une fois en fin
+        // de méthode pour propager toutes les modifs avant le log d'audit.
+        verify(ficheRepository, atLeast(2)).flush();
+        // Plus de em.merge() : la fiche est managée par em.find, le commit
+        // de la transaction JTA fait le reste.
+        verify(ficheRepository, never()).update(fiche);
     }
 
     @Test
-    void updateFiche_aucuneSuppression_neFlushePas() {
+    void updateFiche_aucuneSuppression_flushUneSeuleFois() {
         FicheLABFT fiche = TestEntities.fiche(7L, client, mcd, WorkDay.today().atStartOfDay());
         LigneTransaction l1 = TestEntities.ligne(1L, fiche);
         fiche.getLignes().add(l1);
@@ -158,8 +160,9 @@ class FicheServiceTest {
 
         service.updateFiche(7L, req, mcd);
 
-        verify(ficheRepository, never()).flush();
-        verify(ficheRepository).update(fiche);
+        // Pas de suppression : un seul flush en fin de méthode.
+        verify(ficheRepository, times(1)).flush();
+        verify(ficheRepository, never()).update(fiche);
     }
 
     @Test

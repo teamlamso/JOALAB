@@ -23,4 +23,16 @@ public class ClientIdentificationRequest {
     public String dateDelivrance;
     public String prefectureDelivrance;
     public String paysDelivrance;
+
+    // --- État civil partiellement éditable par un CAISSIER ---
+    // Règles appliquées côté ClientService.updateClientIdentification :
+    //   - dateNaissance n'est appliquée que si elle manque côté client.
+    //   - lieuNaissance est appliquée si manquant OU si le format actuel est
+    //     non conforme (sans numéro de département ni pays entre parenthèses).
+    //   - ppe ne peut passer que de false à true (jamais l'inverse).
+    /** Format ISO : yyyy-MM-dd */
+    public String dateNaissance;
+    public String lieuNaissance;
+    /** {@code null} = pas de changement demandé. {@code true} = activation PPE. */
+    public Boolean ppe;
 }

@@ -3,6 +3,8 @@ package com.amael.joalabft_backend.model.service;
 import com.amael.joalabft_backend.model.dto.response.SuggestionAdresseResponse;
 import com.amael.joalabft_backend.model.dto.response.SuggestionLieuResponse;
 import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
@@ -34,7 +36,15 @@ import java.util.Set;
  * de ville sans rue — on rejette pour laisser le caller faire un fallback.
  */
 @Stateless
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 public class AdresseService {
+
+    // NOT_SUPPORTED : ce service ne touche pas à JPA et fait des appels HTTP
+    // sortants pouvant durer plusieurs secondes (BAN, Nominatim). Sans cette
+    // annotation, chaque appel ouvre une transaction JTA + emprunte une
+    // connexion JDBC du pool — qui reste bloquée pendant tout l'aller-retour
+    // HTTP. Quelques appels concurrents suffisent à épuiser le pool de
+    // connexions et bloquer toute l'application.
 
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3))

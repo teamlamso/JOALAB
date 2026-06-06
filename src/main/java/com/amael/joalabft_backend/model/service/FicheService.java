@@ -183,7 +183,15 @@ public class FicheService {
         String libelle = fiche.getClient().getLibelle();
         String description = descriptionDiffModification(lignesApres, idsRequete, avant);
 
-        ficheRepository.update(fiche);
+        // Plus de em.merge ici : la fiche est déjà managed (issue de em.find),
+        // ses modifications seront écrites au commit de la transaction. Ajouter
+        // un merge sur une entité managed était un no-op fonctionnel mais
+        // pouvait interagir bizarrement avec le cache L2 d'EclipseLink quand
+        // celui-ci était actif (entités revivifiées depuis le cache stale).
+        // On force juste un flush final pour que tout parte en base avant le
+        // log d'audit, et qu'une éventuelle SQLException remonte ici plutôt
+        // qu'au commit JTA distant.
+        ficheRepository.flush();
 
         journalService.log(
                 modifiePar,

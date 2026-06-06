@@ -179,14 +179,69 @@ public class ClientService {
         c.setPrefectureDelivrance(req.prefectureDelivrance);
         c.setPaysDelivrance(req.paysDelivrance);
 
+        // Complément d'état civil autorisé au CAISSIER, dans des conditions
+        // strictes : on n'écrase jamais une donnée déjà conforme.
+        List<String> ajustements = appliquerAjustementsEtatCivil(c, req);
+
         clientRepository.update(c);
+
+        String description = ajustements.isEmpty()
+                ? "Modification de l'adresse ou de la pièce d'identité"
+                : "Modification de l'adresse, pièce d'identité et "
+                  + String.join(", ", ajustements);
         journalService.log(
                 utilisateur,
                 TypeActionJournal.MODIFICATION,
                 TypeEntiteJournal.CLIENT,
                 c.getId(),
                 c.getLibelle(),
-                "Modification de l'adresse ou de la pièce d'identité");
+                description);
+    }
+
+    /**
+     * Applique les éventuels champs d'état civil envoyés dans la requête
+     * d'identification, selon les règles métier suivantes :
+     * <ul>
+     *   <li>{@code dateNaissance} : appliquée uniquement si elle manque encore.</li>
+     *   <li>{@code lieuNaissance} : appliquée si le lieu actuel est vide
+     *       ou si son format n'est pas conforme (pas de parenthèses au
+     *       format {@code "(NN)"} ou {@code "(Pays)"}).</li>
+     *   <li>{@code ppe} : seul le passage {@code false → true} est accepté.</li>
+     * </ul>
+     * Retourne la liste lisible des ajustements effectués (pour le journal).
+     */
+    private List<String> appliquerAjustementsEtatCivil(Client c, ClientIdentificationRequest req) {
+        List<String> faits = new java.util.ArrayList<>();
+        if (req.dateNaissance != null && !req.dateNaissance.isBlank()
+                && c.getDateNaissance() == null) {
+            c.setDateNaissance(parseDate(req.dateNaissance));
+            faits.add("date de naissance ajoutée");
+        }
+        if (req.lieuNaissance != null && !req.lieuNaissance.isBlank()
+                && (c.getLieuNaissance() == null || c.getLieuNaissance().isBlank()
+                    || !lieuNaissanceConforme(c.getLieuNaissance()))) {
+            c.setLieuNaissance(req.lieuNaissance);
+            faits.add("lieu de naissance corrigé");
+        }
+        if (Boolean.TRUE.equals(req.ppe) && !c.isPpe()) {
+            c.setPpe(true);
+            faits.add("flag PPE activé");
+        }
+        return faits;
+    }
+
+    /**
+     * Vrai si le libellé du lieu de naissance suit le format attendu
+     * « Ville (XX) » avec XX numérique pour la France, ou « Ville (Pays) »
+     * avec un mot non numérique entre parenthèses pour l'international.
+     * Sert à autoriser un CAISSIER à corriger les lieux mal formatés
+     * (« BESANCON (FRANCE) ») sans pouvoir changer une ville déjà correcte.
+     */
+    private static boolean lieuNaissanceConforme(String lieu) {
+        if (lieu == null) return false;
+        return lieu.matches("^[^()]+ \\(\\d{2,3}\\)$")
+            || lieu.matches("^[^()]+ \\([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ \\-]+\\)$")
+                && !lieu.matches(".*\\(FRANCE\\).*");
     }
 
     /**
