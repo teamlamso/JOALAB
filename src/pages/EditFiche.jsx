@@ -306,8 +306,13 @@ export default function EditFiche() {
       }))
       await updateFiche(id, { lignes: lignesPayload })
       notify('Fiche mise à jour', 'success')
-      // replace: true → Retour depuis DetailFiche saute par-dessus EditFiche.
-      navigate(`/fiches/${id}`, { replace: true })
+      // navigate(-1) plutôt que `/fiches/${id}` avec replace : EditFiche est
+      // toujours ouvert depuis DetailFiche, donc revenir d'un cran dans
+      // l'historique nous y ramène. Le composant DetailFiche se remonte (URL
+      // identique mais clé de route différente) et re-fetch les données à
+      // jour. Conséquence côté UX : un seul clic « Retour » depuis cette
+      // page ramène à l'écran d'origine, au lieu de deux.
+      navigate(-1)
     } catch (e) {
       setError(e.message)
       notify(`Erreur : ${e.message}`, 'error')

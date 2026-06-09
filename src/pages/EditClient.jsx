@@ -137,8 +137,13 @@ export default function EditClient() {
         })
       }
       notify('Client mis à jour', 'success')
-      // replace: true → Retour saute la page d'édition.
-      navigate(returnTo || `/clients/${id}`, { replace: true })
+      // Si l'utilisateur a un returnTo explicite (ex. DetailFiche → Compléter
+      // le profil), on y va directement avec replace. Sinon on revient d'un
+      // cran : EditClient est toujours ouvert depuis DetailClient ou
+      // ListeClients, donc navigate(-1) ramène à l'écran d'avant sans
+      // empiler de doublon dans l'historique.
+      if (returnTo) navigate(returnTo, { replace: true })
+      else navigate(-1)
     } catch (err) {
       setError(err.message)
       notify(`Erreur : ${err.message}`, 'error')
