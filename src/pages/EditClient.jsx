@@ -14,7 +14,6 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
 import {
   peutModifierClientComplet,
-  peutModifierLieuNaissance,
   peutModifierDateNaissance,
   peutToucherPpe,
 } from '../utils/permissions.js'
@@ -157,12 +156,18 @@ export default function EditClient() {
   if (!form || !client) return null
 
   // Pour un CAISSIER, certains champs d'état civil restent verrouillés ;
-  // d'autres sont éditables sous conditions (complément possible si vide ou
-  // mal formaté). Pour un MCD/RESPONSABLE_CAISSE, tout est éditable.
+  // d'autres sont éditables sous conditions. Pour un MCD/RESPONSABLE_CAISSE,
+  // tout est éditable.
+  //
+  // Cas particulier du lieu de naissance : on laisse le champ ÉDITABLE même
+  // quand la modification ne sera pas appliquée (lieu déjà conforme), pour
+  // que le caissier puisse essayer et recevoir un message d'erreur clair
+  // au submit plutôt que d'être face à un champ grisé sans explication.
+  // La logique de filtrage vit côté backend.
   const lockIdentite       = !editionComplete
   const lockNomPrenom      = lockIdentite
   const lockDateNaissance  = !peutModifierDateNaissance(user?.role, client.dateNaissance)
-  const lockLieuNaissance  = !peutModifierLieuNaissance(user?.role, client.lieuNaissance)
+  const lockLieuNaissance  = false
   const lockPpe            = !peutToucherPpe(user?.role, client.ppe)
 
   return (
