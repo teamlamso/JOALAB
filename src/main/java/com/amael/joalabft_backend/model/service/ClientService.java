@@ -217,11 +217,27 @@ public class ClientService {
             c.setDateNaissance(parseDate(req.dateNaissance));
             faits.add("date de naissance ajoutée");
         }
-        if (req.lieuNaissance != null && !req.lieuNaissance.isBlank()
-                && (c.getLieuNaissance() == null || c.getLieuNaissance().isBlank()
-                    || !lieuNaissanceConforme(c.getLieuNaissance()))) {
-            c.setLieuNaissance(req.lieuNaissance);
-            faits.add("lieu de naissance corrigé");
+        if (req.lieuNaissance != null && !req.lieuNaissance.isBlank()) {
+            String avant = c.getLieuNaissance();
+            if (avant == null || avant.isBlank()) {
+                c.setLieuNaissance(req.lieuNaissance);
+                faits.add("lieu de naissance ajouté");
+            } else if (!lieuNaissanceConforme(avant)) {
+                // Format incomplet : on n'accepte qu'une correction qui garde
+                // la même ville (« BESANCON (FRANCE) » → « Besançon (25) »).
+                // Changer Besançon en Lyon doit passer par un Responsable.
+                if (memeVille(avant, req.lieuNaissance)) {
+                    c.setLieuNaissance(req.lieuNaissance);
+                    faits.add("lieu de naissance corrigé");
+                } else {
+                    throw new BadRequestException(
+                            "Votre rôle vous permet de corriger le format du lieu de naissance, "
+                          + "mais pas de changer la ville. Demandez à un responsable de caisse pour "
+                          + "modifier « " + avant + " » → « " + req.lieuNaissance + " ».");
+                }
+            }
+            // Sinon : lieu déjà conforme. La saisie est ignorée silencieusement
+            // (le champ est désactivé côté UI pour les CAISSIER).
         }
         if (Boolean.TRUE.equals(req.ppe) && !c.isPpe()) {
             c.setPpe(true);
@@ -242,6 +258,25 @@ public class ClientService {
         return lieu.matches("^[^()]+ \\(\\d{2,3}\\)$")
             || lieu.matches("^[^()]+ \\([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ \\-]+\\)$")
                 && !lieu.matches(".*\\(FRANCE\\).*");
+    }
+
+    /**
+     * Compare la partie « ville » de deux libellés de lieu en ignorant
+     * la casse, les accents et les ponctuations. Permet d'accepter
+     * « BESANCON (FRANCE) » → « Besançon (25) » mais de rejeter
+     * « Besançon (25) » → « Lyon (69) ».
+     */
+    private static boolean memeVille(String a, String b) {
+        return extraireVille(a).equals(extraireVille(b));
+    }
+
+    private static String extraireVille(String lieu) {
+        if (lieu == null) return "";
+        int paren = lieu.indexOf('(');
+        String ville = paren > 0 ? lieu.substring(0, paren) : lieu;
+        String sansAccents = java.text.Normalizer.normalize(ville.trim(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        return sansAccents.toLowerCase().replaceAll("[^a-z]", "");
     }
 
     /**
