@@ -219,25 +219,36 @@ public class ClientService {
         }
         if (req.lieuNaissance != null && !req.lieuNaissance.isBlank()) {
             String avant = c.getLieuNaissance();
+            String envoye = req.lieuNaissance.trim();
             if (avant == null || avant.isBlank()) {
-                c.setLieuNaissance(req.lieuNaissance);
+                c.setLieuNaissance(envoye);
                 faits.add("lieu de naissance ajouté");
+            } else if (envoye.equals(avant)) {
+                // Valeur inchangée — la requête contient juste l'état courant
+                // du formulaire. On ne touche pas et on ne journalise pas.
             } else if (!lieuNaissanceConforme(avant)) {
                 // Format incomplet : on n'accepte qu'une correction qui garde
                 // la même ville (« BESANCON (FRANCE) » → « Besançon (25) »).
                 // Changer Besançon en Lyon doit passer par un Responsable.
-                if (memeVille(avant, req.lieuNaissance)) {
-                    c.setLieuNaissance(req.lieuNaissance);
+                if (memeVille(avant, envoye)) {
+                    c.setLieuNaissance(envoye);
                     faits.add("lieu de naissance corrigé");
                 } else {
                     throw new BadRequestException(
                             "Votre rôle vous permet de corriger le format du lieu de naissance, "
                           + "mais pas de changer la ville. Demandez à un responsable de caisse pour "
-                          + "modifier « " + avant + " » → « " + req.lieuNaissance + " ».");
+                          + "modifier « " + avant + " » → « " + envoye + " ».");
                 }
+            } else {
+                // Lieu déjà au bon format : un CAISSIER ne doit pas pouvoir
+                // le modifier du tout (même si la nouvelle valeur a la même
+                // ville). C'était jusqu'ici ignoré silencieusement — on
+                // remonte désormais un message clair.
+                throw new BadRequestException(
+                        "Votre rôle ne vous permet pas de modifier un lieu de naissance déjà "
+                      + "saisi au format attendu. Demandez à un responsable de caisse pour "
+                      + "modifier « " + avant + " » → « " + envoye + " ».");
             }
-            // Sinon : lieu déjà conforme. La saisie est ignorée silencieusement
-            // (le champ est désactivé côté UI pour les CAISSIER).
         }
         if (Boolean.TRUE.equals(req.ppe) && !c.isPpe()) {
             c.setPpe(true);
