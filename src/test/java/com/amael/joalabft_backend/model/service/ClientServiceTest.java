@@ -151,4 +151,275 @@ class ClientServiceTest {
         assertThatThrownBy(() -> service.deleteClient(99L, mcd))
                 .isInstanceOf(NotFoundException.class);
     }
+
+    // ---------------------------------------------------------------------
+    // updateClientIdentification — branches lieu de naissance / dateN / ppe
+    //
+    // Ces tests couvrent les règles métier d'`appliquerAjustementsEtatCivil`
+    // qui autorisent un CAISSIER à compléter ou corriger un état civil
+    // partiel sans pouvoir le réécrire.
+    // ---------------------------------------------------------------------
+
+    @Test
+    void updateClientIdentification_lieuNaissanceAbsent_estAjoute() {
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setLieuNaissance(null);
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.lieuNaissance = "Lyon (69)";
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.getLieuNaissance()).isEqualTo("Lyon (69)");
+    }
+
+    @Test
+    void updateClientIdentification_lieuNaissanceIdentique_silencieux() {
+        // Le frontend renvoie tout le formulaire, y compris la valeur inchangée.
+        // On ne doit ni jeter ni journaliser un changement fictif.
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setLieuNaissance("Lyon (69)");
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.lieuNaissance = "Lyon (69)";
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.getLieuNaissance()).isEqualTo("Lyon (69)");
+    }
+
+    @Test
+    void updateClientIdentification_lieuNonConformeEtMemeVille_corrige() {
+        // BESANCON (FRANCE) → Besançon (25) : correction de format autorisée
+        // au CAISSIER tant que la ville est la même (accents/casse ignorés).
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setLieuNaissance("BESANCON (FRANCE)");
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.lieuNaissance = "Besançon (25)";
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.getLieuNaissance()).isEqualTo("Besançon (25)");
+    }
+
+    @Test
+    void updateClientIdentification_lieuNonConformeEtVilleDifferente_leveBadRequest() {
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setLieuNaissance("BESANCON (FRANCE)");
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.lieuNaissance = "Lyon (69)";
+
+        assertThatThrownBy(() -> service.updateClientIdentification(10L, req, caissier))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("changer la ville")
+                .hasMessageContaining("BESANCON (FRANCE)")
+                .hasMessageContaining("Lyon (69)");
+    }
+
+    @Test
+    void updateClientIdentification_lieuDejaConforme_leveBadRequestAvecMessage() {
+        // Bug historique : un CAISSIER pouvait passer cette modif en silence.
+        // On veut désormais un message explicite côté toast.
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setLieuNaissance("Lyon (69)");
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.lieuNaissance = "Lyon (75)";
+
+        assertThatThrownBy(() -> service.updateClientIdentification(10L, req, caissier))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("déjà")
+                .hasMessageContaining("Lyon (69)")
+                .hasMessageContaining("Lyon (75)");
+    }
+
+    @Test
+    void updateClientIdentification_franceMinuscule_estNonConforme() {
+        // Régression : « (France) » en mixed-case était considéré conforme à
+        // tort, ce qui empêchait toute correction par le CAISSIER.
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setLieuNaissance("Lons-le-Saunier (France)");
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.lieuNaissance = "Lons-le-Saunier (39)";
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.getLieuNaissance()).isEqualTo("Lons-le-Saunier (39)");
+    }
+
+    @Test
+    void updateClientIdentification_lieuInternationalConforme_estProtege() {
+        // « Tokyo (Japon) » est un format international valide → un CAISSIER
+        // ne doit pas pouvoir le toucher, même vers une autre orthographe.
+        Client c = TestEntities.client(10L, "Sato", "Akiko");
+        c.setLieuNaissance("Tokyo (Japon)");
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.lieuNaissance = "Tōkyō (Japon)";
+
+        assertThatThrownBy(() -> service.updateClientIdentification(10L, req, caissier))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("déjà");
+    }
+
+    @Test
+    void updateClientIdentification_dateNaissanceAbsente_estAjoutee() {
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setDateNaissance(null);
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.dateNaissance = "1990-06-15";
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.getDateNaissance()).isEqualTo(java.time.LocalDate.of(1990, 6, 15));
+    }
+
+    @Test
+    void updateClientIdentification_dateNaissanceDejaPresente_nEstPasEcrasee() {
+        // Garde-fou : un CAISSIER ne doit pas pouvoir remplacer une date de
+        // naissance déjà saisie, même en envoyant une autre date.
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setDateNaissance(java.time.LocalDate.of(1980, 1, 1));
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.dateNaissance = "1990-06-15";
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.getDateNaissance()).isEqualTo(java.time.LocalDate.of(1980, 1, 1));
+    }
+
+    @Test
+    void updateClientIdentification_ppePasseDeFauxAVrai_estActive() {
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setPpe(false);
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.ppe = true;
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.isPpe()).isTrue();
+    }
+
+    @Test
+    void updateClientIdentification_ppeFauxSurClientDejaPpe_nEstPasDesactive() {
+        // Désactiver le flag PPE est une décision sensible réservée à un
+        // responsable — un CAISSIER ne doit jamais l'enlever.
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setPpe(true);
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.ppe = false;
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.isPpe()).isTrue();
+    }
+
+    @Test
+    void updateClientIdentification_ppeNull_neTouchePas() {
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        c.setPpe(true);
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientIdentificationRequest req = new ClientIdentificationRequest();
+        req.ppe = null;
+
+        service.updateClientIdentification(10L, req, caissier);
+
+        assertThat(c.isPpe()).isTrue();
+    }
+
+    @Test
+    void updateClientIdentification_inexistant_leveNotFound() {
+        when(clientRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.updateClientIdentification(
+                99L, new ClientIdentificationRequest(), caissier))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    // ---------------------------------------------------------------------
+    // Journalisation et helpers
+    // ---------------------------------------------------------------------
+
+    @Test
+    void createClient_journaliseLAction() {
+        ClientRequest req = new ClientRequest();
+        req.identifie = true;
+        req.nom = "Dupont";
+        req.prenom = "Jean";
+
+        service.createClient(req, mcd);
+
+        verify(journalService).log(
+                org.mockito.Mockito.eq(mcd),
+                org.mockito.Mockito.eq(com.amael.joalabft_backend.model.enums.TypeActionJournal.CREATION),
+                org.mockito.Mockito.eq(com.amael.joalabft_backend.model.enums.TypeEntiteJournal.CLIENT),
+                any(),
+                any(),
+                org.mockito.Mockito.contains("Création"));
+    }
+
+    @Test
+    void updateClient_mcd_metAJourEtJournalise() {
+        Client c = TestEntities.client(10L, "Dupont", "Marie");
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(c));
+
+        ClientRequest req = new ClientRequest();
+        req.identifie = true;
+        req.nom = "Martin";
+        req.prenom = "Marie";
+
+        service.updateClient(10L, req, mcd);
+
+        assertThat(c.getNom()).isEqualTo("Martin");
+        verify(clientRepository).update(c);
+        verify(journalService).log(
+                org.mockito.Mockito.eq(mcd),
+                org.mockito.Mockito.eq(com.amael.joalabft_backend.model.enums.TypeActionJournal.MODIFICATION),
+                org.mockito.Mockito.eq(com.amael.joalabft_backend.model.enums.TypeEntiteJournal.CLIENT),
+                org.mockito.Mockito.eq(10L),
+                any(),
+                any());
+    }
+
+    @Test
+    void findSimilar_delegueAuRepoEtRecharge() {
+        Client c = TestEntities.client(20L, "Durand", "Paul");
+        when(clientRepository.findSimilar(
+                org.mockito.Mockito.eq("Durand"),
+                org.mockito.Mockito.eq("Paul"),
+                any(),
+                org.mockito.Mockito.eq("ABC")))
+                .thenReturn(List.of(c));
+        when(clientRepository.findById(20L)).thenReturn(Optional.of(c));
+        when(ficheRepository.findByClientId(20L)).thenReturn(List.of());
+
+        ClientRequest req = new ClientRequest();
+        req.nom = "Durand";
+        req.prenom = "Paul";
+        req.dateNaissance = "1985-03-20";
+        req.numeroPiece = "ABC";
+
+        var res = service.findSimilar(req);
+
+        assertThat(res).hasSize(1);
+        assertThat(res.get(0).id).isEqualTo(20L);
+    }
 }
