@@ -266,9 +266,14 @@ public class ClientService {
      */
     private static boolean lieuNaissanceConforme(String lieu) {
         if (lieu == null) return false;
-        return lieu.matches("^[^()]+ \\(\\d{2,3}\\)$")
-            || lieu.matches("^[^()]+ \\([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ \\-]+\\)$")
-                && !lieu.matches(".*\\(FRANCE\\).*");
+        // Format français propre : « Ville (NN) » avec NN = département.
+        if (lieu.matches("^[^()]+ \\(\\d{2,3}\\)$")) return true;
+        // Format international : « Ville (Pays) » avec Pays alphabétique.
+        // Exclusion de « France » sous n'importe quelle casse — pour la
+        // France, on attend impérativement le numéro de département.
+        boolean formatIntl = lieu.matches("^[^()]+ \\([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ \\-]+\\)$");
+        boolean contientFrance = lieu.toUpperCase().matches(".*\\(FRANCE\\).*");
+        return formatIntl && !contientFrance;
     }
 
     /**
