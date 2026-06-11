@@ -12,6 +12,10 @@ import {
   peutLireJournal,
   peutLireHistoriqueFiche,
   peutImporterClients,
+  lieuNaissanceEstConforme,
+  peutModifierLieuNaissance,
+  peutModifierDateNaissance,
+  peutToucherPpe,
 } from '../permissions.js'
 
 beforeEach(() => {
@@ -130,5 +134,89 @@ describe('peutImporterClients', () => {
     expect(peutImporterClients('MCD')).toBe(true)
     expect(peutImporterClients('RESPONSABLE_CAISSE')).toBe(true)
     expect(peutImporterClients('CAISSIER')).toBe(false)
+  })
+})
+
+// --- Lieu de naissance : doit rester aligné sur le backend ClientService -----
+// Ces tests reflètent les règles exactes du backend (Java) pour qu'un drift
+// entre front et back ne passe pas inaperçu.
+
+describe('lieuNaissanceEstConforme', () => {
+  it('accepte « Ville (NN) » pour la France', () => {
+    expect(lieuNaissanceEstConforme('Besançon (25)')).toBe(true)
+    expect(lieuNaissanceEstConforme('Lyon (69)')).toBe(true)
+    expect(lieuNaissanceEstConforme('Saint-Denis (974)')).toBe(true)
+  })
+
+  it('accepte « Ville (Pays) » à l\'international', () => {
+    expect(lieuNaissanceEstConforme('Tokyo (Japon)')).toBe(true)
+    expect(lieuNaissanceEstConforme('São Paulo (Brésil)')).toBe(true)
+  })
+
+  it('refuse « (FRANCE) » et « (France) » (format ambigu, dpt attendu)', () => {
+    // Régression du fix récent : « (France) » mixed-case était toléré à tort.
+    expect(lieuNaissanceEstConforme('BESANCON (FRANCE)')).toBe(false)
+    expect(lieuNaissanceEstConforme('Lons-le-Saunier (France)')).toBe(false)
+    expect(lieuNaissanceEstConforme('Lons-le-Saunier (france)')).toBe(false)
+  })
+
+  it('refuse les formats sans parenthèses', () => {
+    expect(lieuNaissanceEstConforme('Paris')).toBe(false)
+    expect(lieuNaissanceEstConforme('')).toBe(false)
+    expect(lieuNaissanceEstConforme(null)).toBe(false)
+  })
+
+  it('refuse un département non numérique entre parenthèses français', () => {
+    expect(lieuNaissanceEstConforme('Ville (AB)')).toBe(true)  // accepté comme intl, vu comme un pays
+    expect(lieuNaissanceEstConforme('Ville (1)')).toBe(false)  // chiffre seul refusé
+  })
+})
+
+describe('peutModifierLieuNaissance', () => {
+  it('MCD / RESPONSABLE_CAISSE : toujours', () => {
+    expect(peutModifierLieuNaissance('MCD', 'Lyon (69)')).toBe(true)
+    expect(peutModifierLieuNaissance('RESPONSABLE_CAISSE', 'Lyon (69)')).toBe(true)
+  })
+
+  it('CAISSIER : oui si lieu vide', () => {
+    expect(peutModifierLieuNaissance('CAISSIER', '')).toBe(true)
+    expect(peutModifierLieuNaissance('CAISSIER', null)).toBe(true)
+    expect(peutModifierLieuNaissance('CAISSIER', '   ')).toBe(true)
+  })
+
+  it('CAISSIER : oui si lieu non conforme (peut corriger le format)', () => {
+    expect(peutModifierLieuNaissance('CAISSIER', 'BESANCON (FRANCE)')).toBe(true)
+    expect(peutModifierLieuNaissance('CAISSIER', 'Paris')).toBe(true)
+  })
+
+  it('CAISSIER : non si lieu déjà conforme (réservé au Responsable)', () => {
+    expect(peutModifierLieuNaissance('CAISSIER', 'Lyon (69)')).toBe(false)
+    expect(peutModifierLieuNaissance('CAISSIER', 'Tokyo (Japon)')).toBe(false)
+  })
+})
+
+describe('peutModifierDateNaissance', () => {
+  it('MCD / RESPONSABLE_CAISSE : toujours', () => {
+    expect(peutModifierDateNaissance('MCD', '1980-01-01')).toBe(true)
+    expect(peutModifierDateNaissance('RESPONSABLE_CAISSE', '1980-01-01')).toBe(true)
+  })
+
+  it('CAISSIER : seulement si la date n\'est pas déjà renseignée', () => {
+    expect(peutModifierDateNaissance('CAISSIER', null)).toBe(true)
+    expect(peutModifierDateNaissance('CAISSIER', '')).toBe(true)
+    expect(peutModifierDateNaissance('CAISSIER', '1980-01-01')).toBe(false)
+  })
+})
+
+describe('peutToucherPpe', () => {
+  it('MCD / RESPONSABLE_CAISSE : peuvent activer comme désactiver', () => {
+    expect(peutToucherPpe('MCD', true)).toBe(true)
+    expect(peutToucherPpe('MCD', false)).toBe(true)
+    expect(peutToucherPpe('RESPONSABLE_CAISSE', true)).toBe(true)
+  })
+
+  it('CAISSIER : peut activer (false → true) mais jamais désactiver', () => {
+    expect(peutToucherPpe('CAISSIER', false)).toBe(true)
+    expect(peutToucherPpe('CAISSIER', true)).toBe(false)
   })
 })
