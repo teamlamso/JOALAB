@@ -31,6 +31,12 @@ public class GeoService {
             .connectTimeout(Duration.ofSeconds(3))
             .build();
 
+    /** URL de base de l'API. Surchargeable côté test pour pointer un HttpServer local. */
+    private String baseUrl = "https://geo.api.gouv.fr";
+
+    /** Test-only : permet de pointer l'API sur un HttpServer local. */
+    void setBaseUrlForTests(String url) { this.baseUrl = url; }
+
     /**
      * Si {@code ville} correspond à une commune française, retourne le format
      * « Ville (codeDépartement) ». En cas d'ambiguïté (plusieurs communes
@@ -47,7 +53,7 @@ public class GeoService {
         if (ville == null || ville.isBlank()) return null;
         String demande = ville.trim();
         try {
-            String url = "https://geo.api.gouv.fr/communes?nom="
+            String url = baseUrl + "/communes?nom="
                     + URLEncoder.encode(demande, StandardCharsets.UTF_8)
                     + "&fields=codeDepartement,nom&limit=20";
             HttpRequest req = HttpRequest.newBuilder(URI.create(url))
