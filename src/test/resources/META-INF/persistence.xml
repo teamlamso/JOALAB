@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd"
+             version="3.2">
+
+    <!--
+        Unité de persistance dédiée aux tests d'intégration JPA.
+
+        - transaction-type=RESOURCE_LOCAL : on n'a pas de container EJB en test,
+          chaque test ouvre/commit sa transaction manuellement.
+        - provider explicite EclipseLink : Payara ne le fournit qu'au runtime,
+          en test on dépend du jar org.eclipse.persistence.jpa.
+        - shared-cache-mode=NONE : reproduit le comportement prod (le cache L2
+          a déjà causé des résurrections silencieuses d'orphelins).
+        - exclude-unlisted-classes=false : scan toutes les entités du classpath.
+    -->
+    <persistence-unit name="LABFTPU-TEST" transaction-type="RESOURCE_LOCAL">
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+        <!-- En test, le scan auto des entités via exclude-unlisted-classes=false
+             ne descend pas dans src/main/java (deux modules sources distincts).
+             On liste explicitement chaque entité. -->
+        <class>com.amael.joalabft_backend.model.entity.Client</class>
+        <class>com.amael.joalabft_backend.model.entity.FicheLABFT</class>
+        <class>com.amael.joalabft_backend.model.entity.LigneTransaction</class>
+        <class>com.amael.joalabft_backend.model.entity.Utilisateur</class>
+        <class>com.amael.joalabft_backend.model.entity.JournalAction</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <shared-cache-mode>NONE</shared-cache-mode>
+
+        <properties>
+            <!-- MODE=LEGACY : H2 2.x retire la syntaxe « BIGINT IDENTITY »
+                 utilisée par EclipseLink. MODE=LEGACY la réautorise sans
+                 forcer un dialecte SGBD particulier (PG/MySQL) qui aurait
+                 d'autres effets. -->
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:h2:mem:labftest;MODE=LEGACY;DB_CLOSE_DELAY=-1"/>
+            <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <property name="jakarta.persistence.jdbc.user" value="sa"/>
+            <property name="jakarta.persistence.jdbc.password" value=""/>
+
+            <!-- Force le dialecte H2 — sans ça EclipseLink génère un DDL
+                 générique avec la syntaxe « BIGINT IDENTITY » qui n'est pas
+                 acceptée par H2 (qui veut « GENERATED ALWAYS AS IDENTITY »).
+                 Avec H2Platform, le DDL généré est syntaxiquement correct. -->
+            <property name="eclipselink.target-database"
+                      value="org.eclipse.persistence.platform.database.H2Platform"/>
+
+            <!-- Recrée le schéma à chaque démarrage du test runner. La
+                 propriété EclipseLink-spécifique est plus fiable que la
+                 standard, qui dépend du parsing du schéma cible. -->
+            <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="database"/>
+            <property name="eclipselink.deploy-on-startup" value="true"/>
+
+            <property name="eclipselink.logging.level" value="WARNING"/>
+            <property name="eclipselink.logging.level.sql" value="WARNING"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>

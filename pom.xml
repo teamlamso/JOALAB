@@ -95,6 +95,23 @@
             <version>1.1.8</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Tests d'intégration JPA : EclipseLink + H2 en mémoire.
+             Permet de valider les requêtes JPQL custom (findSimilar,
+             getDerniereActivitePourIds…) qui ont déjà causé des bugs en prod
+             — sans avoir besoin d'un Payara embedded. -->
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>org.eclipse.persistence.jpa</artifactId>
+            <version>4.0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.3.232</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
