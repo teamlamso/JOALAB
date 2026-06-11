@@ -67,13 +67,29 @@ Caissier;Modifier l'adresse et la pièce d'identité d'un client;Mise à jour ac
 MCD;Supprimer un client ayant des fiches associées;BadRequest 400 — supprimer les fiches d'abord;ClientServiceTest;deleteClient_avecFiches_leveBadRequest;Passé
 MCD;Supprimer un client sans fiches associées;Client supprimé + journal;ClientServiceTest;deleteClient_sansFiches_supprime;Passé
 MCD;Supprimer un client inexistant;NotFound;ClientServiceTest;deleteClient_inexistant_leveNotFound;Passé
+Caissier;Compléter un lieu de naissance absent;Lieu enregistré, journal annoté « lieu de naissance ajouté »;ClientServiceTest;updateClientIdentification_lieuNaissanceAbsent_estAjoute;Passé
+Caissier;Renvoyer le même lieu de naissance que celui en base;Aucune écriture, aucun journal (no-op silencieux);ClientServiceTest;updateClientIdentification_lieuNaissanceIdentique_silencieux;Passé
+Caissier;Corriger le format du lieu de naissance pour la même ville;Lieu accepté (« BESANCON (FRANCE) » → « Besançon (25) »);ClientServiceTest;updateClientIdentification_lieuNonConformeEtMemeVille_corrige;Passé
+Caissier;Tenter de changer la ville quand le format n'est pas conforme;BadRequest avec message « pas changer la ville »;ClientServiceTest;updateClientIdentification_lieuNonConformeEtVilleDifferente_leveBadRequest;Passé
+Caissier;Tenter de modifier un lieu de naissance déjà conforme;BadRequest avec message explicite « déjà saisi au format attendu »;ClientServiceTest;updateClientIdentification_lieuDejaConforme_leveBadRequestAvecMessage;Passé
+Caissier;Lieu actuel « (France) » (casse mixte);Considéré non conforme, correction acceptée;ClientServiceTest;updateClientIdentification_franceMinuscule_estNonConforme;Passé
+Caissier;Tenter de modifier un lieu international déjà conforme « Tokyo (Japon) »;BadRequest (format international protégé);ClientServiceTest;updateClientIdentification_lieuInternationalConforme_estProtege;Passé
+Caissier;Renseigner la date de naissance quand elle est absente;Date enregistrée;ClientServiceTest;updateClientIdentification_dateNaissanceAbsente_estAjoutee;Passé
+Caissier;Tenter d'écraser une date de naissance déjà saisie;Date inchangée silencieusement;ClientServiceTest;updateClientIdentification_dateNaissanceDejaPresente_nEstPasEcrasee;Passé
+Caissier;Activer le flag PPE sur un client non PPE;PPE activé;ClientServiceTest;updateClientIdentification_ppePasseDeFauxAVrai_estActive;Passé
+Caissier;Tenter de désactiver le flag PPE d'un client PPE;PPE reste actif (jamais désactivé par un caissier);ClientServiceTest;updateClientIdentification_ppeFauxSurClientDejaPpe_nEstPasDesactive;Passé
+Caissier;Envoyer ppe = null;Flag PPE inchangé;ClientServiceTest;updateClientIdentification_ppeNull_neTouchePas;Passé
+Caissier;PATCH identification sur un client inexistant;NotFound;ClientServiceTest;updateClientIdentification_inexistant_leveNotFound;Passé
+MCD;Vérifier la journalisation lors de la création d'un client;Entrée CREATION enregistrée avec description « Création »;ClientServiceTest;createClient_journaliseLAction;Passé
+MCD;Mettre à jour un client complet;update + entrée MODIFICATION journalisée;ClientServiceTest;updateClient_mcd_metAJourEtJournalise;Passé
+Utilisateur authentifié;Rechercher les clients similaires (avant création);Délègue au repo puis recharge chaque candidat;ClientServiceTest;findSimilar_delegueAuRepoEtRecharge;Passé
 Utilisateur authentifié;Lister les fiches sans dates de filtre;Utilise WorkDay.today() (pas LocalDate.now);FicheServiceTest;listFiches_datesParDefaut_utiliseJourDeTravail;Passé
 Utilisateur authentifié;Créer une fiche pour un client inconnu;NotFound;FicheServiceTest;createFiche_clientInconnu_leveNotFound;Passé
 Utilisateur authentifié;Créer une fiche sans aucune ligne (cas PPE);Création autorisée;FicheServiceTest;createFiche_sansLignes_estAutorise;Passé
 Utilisateur authentifié;Créer une fiche avec une ligne valide;Fiche et ligne persistées;FicheServiceTest;createFiche_avecUneLigne_persisteAvecLigne;Passé
 Utilisateur authentifié;Modifier une fiche inexistante;NotFound;FicheServiceTest;updateFiche_inexistante_leveNotFound;Passé
-MCD;Modifier une fiche en supprimant une ligne et en ajoutant une autre;flush() appelé AVANT update() pour que les DELETE partent avant les INSERT (fix duplication Docker);FicheServiceTest;updateFiche_suppressionLigne_appelleFlushEntreDeleteEtInsert;Passé
-MCD;Modifier une fiche sans supprimer de ligne;Pas de flush superflu;FicheServiceTest;updateFiche_aucuneSuppression_neFlushePas;Passé
+MCD;Modifier une fiche en supprimant une ligne et en ajoutant une autre;flush() appelé AVANT update() pour que les DELETE partent avant les INSERT (fix duplication Docker);FicheServiceTest;updateFiche_suppressionLigne_retireLaLigneEtFlush;Passé
+MCD;Modifier une fiche sans supprimer de ligne;Pas de flush superflu;FicheServiceTest;updateFiche_aucuneSuppression_flushUneSeuleFois;Passé
 MCD;Modifier une fiche;dateModification et modifiePar mis à jour;FicheServiceTest;updateFiche_metAJourDateModification;Passé
 MCD;Supprimer une fiche inexistante;NotFound;FicheServiceTest;deleteFiche_inexistante_leveNotFound;Passé
 MCD;Supprimer une fiche;Fiche supprimée + journal;FicheServiceTest;deleteFiche_mcd_supprime;Passé
@@ -107,6 +123,158 @@ Système;Chercher des lieux (ville) avec une requête vide/null/blanche;Liste vi
 Système;Construire un SuggestionAdresseResponse (POJO);Champs publics accessibles (compatibilité JSON-B);AdresseServiceTest;suggestionAdresse_pojoExposeChamps;Passé
 Système;Construire un SuggestionLieuResponse (POJO);Champ label exposé publiquement;AdresseServiceTest;suggestionLieu_pojoExposeLabel;Passé
 Système;Résoudre une chaîne vide en adresse structurée;Retourne null;AdresseServiceTest;resoudre_chaineVide_retourneNull;Passé
+Système;Mapper une BadRequestException directe;Réponse 400 JSON {message: ...};GlobalExceptionMapperTest;badRequestException_directe_donne400EtMessage;Passé
+Système;Mapper une NotFoundException directe;Réponse 404 JSON {message: ...};GlobalExceptionMapperTest;notFoundException_directe_donne404EtMessage;Passé
+Système;Mapper une ForbiddenException directe;Réponse 403 JSON {message: ...};GlobalExceptionMapperTest;forbiddenException_directe_donne403EtMessage;Passé
+Système;Mapper une EJBException qui wrappe une BadRequest;Status et message déballés (le container EJB ne masque plus l'erreur métier);GlobalExceptionMapperTest;ejbException_wrappantBadRequest_debobineLeStatusEtLeMessage;Passé
+Système;Mapper une EJBException qui wrappe une NotFound;Statut 404 + message;GlobalExceptionMapperTest;ejbException_wrappantNotFound_donne404;Passé
+Système;Mapper une EJBException sans cause attachée;Statut 500 + message générique;GlobalExceptionMapperTest;ejbException_sansCause_donne500EtMessageGenerique;Passé
+Système;Mapper une RuntimeException inconnue;Statut 500 + message présent;GlobalExceptionMapperTest;runtimeExceptionInconnue_donne500;Passé
+Système;Mapper une exception sans message (ex NullPointerException);Statut 500 + « Erreur interne du serveur »;GlobalExceptionMapperTest;exceptionSansMessage_retombeSurMessageGenerique;Passé
+Système;Mapper une exception au message blanc;Statut 500 + message générique;GlobalExceptionMapperTest;exceptionAvecMessageBlanc_retombeSurMessageGenerique;Passé
+Système;Content-Type de la réponse;application/json sur tous les cas (pas de text/plain);GlobalExceptionMapperTest;mediaTypeEstToujoursJson;Passé
+Anonyme;POST /api/auth/login sans token;Laissé passer (bypass légitime);AuthFilterTest;postAuthLogin_passe_sansToken;Passé
+Anonyme;Preflight OPTIONS sans token;Laissé passer;AuthFilterTest;optionsPreflight_passe_sansToken;Passé
+Anonyme;OPTIONS sur /auth/login;Laissé passer aussi;AuthFilterTest;optionsLogin_passe_aussi;Passé
+Anonyme;Requête protégée sans header Authorization;401 Unauthorized;AuthFilterTest;sansHeaderAuthorization_renvoie401;Passé
+Anonyme;Header au mauvais préfixe (« Token abc » au lieu de « Bearer abc »);401 (le lookup session n'est pas même tenté);AuthFilterTest;headerSansPrefixeBearer_renvoie401;Passé
+Anonyme;Header « Bearer » avec valeur vide;401;AuthFilterTest;headerBearerVide_renvoie401;Passé
+Anonyme;Token inconnu en session;401 + JSON {error: "Token manquant ou invalide"};AuthFilterTest;tokenInconnu_renvoie401;Passé
+Utilisateur authentifié;Token valide;L'utilisateur et le token sont injectés via setProperty dans le contexte;AuthFilterTest;tokenValide_exposeUtilisateurEtTokenDansLeContexte;Passé
+Utilisateur authentifié;Token avec espaces (proxies parfois fautifs);Trim avant lookup, requête acceptée;AuthFilterTest;tokenAvecEspaces_estTrim;Passé
+Système;Chemin se terminant par « auth/login »;Bypass autorisé (gel du comportement endsWith);AuthFilterTest;cheminSeTerminantParAuthLogin_passe_documentationDuComportement;Passé
+Anonyme;Chemin proche mais différent (« auth/login-public »);Protégé normalement (pas de startsWith piégeux);AuthFilterTest;cheminSemblableAuthLogin_maisDifferent_estProtege;Passé
+Anonyme;Toutes méthodes HTTP non-OPTIONS sans token;Toutes refusées (paramétrique GET/POST/PUT/PATCH/DELETE/HEAD);AuthFilterTest;methodesHttpNonOptions_sansToken_sontToutesRefusees;Passé
+Anonyme;Preflight OPTIONS;Court-circuité 200 + Allow-Origin/Headers/Methods/Max-Age;CorsFilterTest;optionsPreflight_estCourtCircuiteAvec200EtEntetesCors;Passé
+Système;Variante de casse « options » minuscule;Court-circuit fonctionne aussi;CorsFilterTest;optionsCaseInsensitive_estAussiCourtCircuite;Passé
+Système;Méthode non-OPTIONS;Pas d'interruption (laisse passer aux ressources);CorsFilterTest;requeteNonOptions_neSeFaitPasInterrompre;Passé
+Système;Réponse normale du backend;Headers CORS posés sur toutes les réponses (y compris erreurs);CorsFilterTest;responseFilter_ajouteLesEntetesCorsSurToutesLesReponses;Passé
+Système;Pose des headers CORS;Pas d'interrogation du status / méthode (les 4xx/5xx conservent leurs headers);CorsFilterTest;responseFilter_neLitPasLaMethodeOuLeStatus;Passé
+Caissier;Importer un Excel sans avoir le rôle requis;Forbidden;ClientImportServiceTest;roleNonAutorise_leveForbidden;Passé
+Responsable Caisse;Importer un fichier non-Excel;BadRequest « Impossible de lire »;ClientImportServiceTest;fichierIllisible_leveBadRequest;Passé
+Responsable Caisse;Importer un Excel vide;BadRequest;ClientImportServiceTest;fichierVide_leveBadRequest;Passé
+Responsable Caisse;Importer un Excel nominal d'un client identifié;Client persisté + entrée de journal « Import Excel : création »;ClientImportServiceTest;importNominal_creeUnClientEtJournalise;Passé
+Responsable Caisse;Headers en MAJUSCULES sans accents (PRENOM, NOM DE FAMILLE);Reconnu et import OK;ClientImportServiceTest;headersInsensibles_aLaCasseEtAuxAccents;Passé
+Responsable Caisse;Headers contenant des espaces insécables (export Dynamics);Reconnu et import OK;ClientImportServiceTest;headersAvecEspacesInsecables_sontReconnus;Passé
+Responsable Caisse;Importer un fichier avec des lignes vides intercalées;Lignes vides ignorées en silence;ClientImportServiceTest;ligneEntierementVide_estIgnoreeSansErreur;Passé
+Responsable Caisse;Ligne sans nom ni prénom (uniquement PPE/identifiant);Ignorée sans erreur (pas de Client créé);ClientImportServiceTest;ligneSansNomNiPrenom_estIgnoreeSansErreur;Passé
+Responsable Caisse;Valeurs PPE Oui/OUI/Yes/1/Non/vide;Lues comme true/true/true/true/false/false;ClientImportServiceTest;ppe_acceptePlusieursLibellesEnLecture;Passé
+Responsable Caisse;Mapping des types de pièce (CNI, Permis carte, Passeport francais, …);Reformatés vers les libellés métier; valeur inconnue conservée telle quelle;ClientImportServiceTest;typePiece_remappeLesLibellesMetier;Passé
+Responsable Caisse;Date textuelle en plusieurs formats (dd/MM/yyyy, dd-MM-yyyy, ISO);Tous parsés vers le même LocalDate;ClientImportServiceTest;date_acceptePlusieursFormatsTexte;Passé
+Responsable Caisse;Date au format cellule Excel typée Date;Lue directement;ClientImportServiceTest;date_celluleTypeeDate_estLueDirectement;Passé
+Responsable Caisse;Date textuelle au format inconnu (01.06.1985);Reportée en erreur de ligne (« Ligne 2 : Date non reconnue »);ClientImportServiceTest;date_formatInconnu_estReporteeEnErreurDeLigne;Passé
+Responsable Caisse;Adresse multi-ligne « rue \\n CP ville \\n pays »;Décomposée en rue/codePostal/ville/pays;ClientImportServiceTest;adresseMultiLigne_estDecomposeeEnRueCpVillePays;Passé
+Responsable Caisse;Adresse mono-ligne avec CP (« 10 rue X, 75012 Paris, France »);CP détecté par regex, ville et pays extraits;ClientImportServiceTest;adresseMonoLigneAvecCP_estDecomposeeViaCpDetectionRegex;Passé
+Responsable Caisse;Adresse non structurée;Fallback vers AdresseService.resoudre (BAN);ClientImportServiceTest;adresseIncomplete_declencheLeFallbackAdresseService;Passé
+Responsable Caisse;Adresse avec saut de ligne échappé « _x000A_ »;Normalisé en \\n et décomposé;ClientImportServiceTest;adresse_sautDeLigneExcelEchappe_x000A_estTraite;Passé
+Responsable Caisse;Lieu de naissance pour la France;GeoService.formatVilleFrance consulté → « Ville (XX) »;ClientImportServiceTest;lieuNaissanceFrance_passeParGeoServicePourLeFormat;Passé
+Responsable Caisse;Lieu de naissance international;Combiné « Ville (Pays) » sans appel GeoService;ClientImportServiceTest;lieuNaissanceInternational_combineVillePays;Passé
+Responsable Caisse;Lieu de naissance sans pays renseigné;Traité comme France implicite + appel GeoService;ClientImportServiceTest;lieuNaissance_paysVide_estTraiteCommeFranceImplicite;Passé
+Responsable Caisse;Client en double détecté (nom+prénom+date OU numéro de pièce);Skipped incrémenté, pas de save;ClientImportServiceTest;doublonDetecte_incrementeSkippedSansSauvegarder;Passé
+Responsable Caisse;Client créé avec des champs obligatoires manquants;Imported et incomplete incrémentés;ClientImportServiceTest;clientCreeIncomplet_incrementeIncomplete;Passé
+Système;GeoService avec ville null/blanche;Retourne null sans appel HTTP;GeoServiceTest;villeNullOuBlanche_renvoieNullSansAppelHttp;Passé
+Système;GeoService — réponse HTTP non-200;Retourne null silencieusement;GeoServiceTest;statusNon200_renvoieNull;Passé
+Système;GeoService — réponse [] vide;Retourne null;GeoServiceTest;reponseVide_renvoieNull;Passé
+Système;GeoService — JSON malformé;Retourne null (catch défensif, pas d'exception qui casse l'import);GeoServiceTest;reponseInvalide_silencieusementNull;Passé
+Système;GeoService — une seule commune match;Format « Ville (codeDépartement) »;GeoServiceTest;uniqueCommune_renvoieVilleAvecDepartement;Passé
+Système;GeoService — encodage URL d'une ville avec espaces (« Le Mans »);URL correcte (nom=Le+Mans);GeoServiceTest;encodageUrl_villeAvecEspaces;Passé
+Système;GeoService — appel HTTP;URL inclut limit=20 et fields=codeDepartement;GeoServiceTest;appelleUneURLAvecLimit20;Passé
+Système;GeoService — saisie sans accent contre réponse accentuée;Match exact (« besancon » → « Besançon »);GeoServiceTest;matchExact_insensibleAuxAccents;Passé
+Système;GeoService — saisie en MAJUSCULES;Match exact (LYON → Lyon);GeoServiceTest;matchExact_insensibleALaCasse;Passé
+Système;GeoService — homonymes dans plusieurs départements (Saint-Denis 93/974);Renvoie juste le nom sans département (ambigu);GeoServiceTest;homonymesPlusieursDepartements_renvoieJusteLeNomSansDpt;Passé
+Système;GeoService — plusieurs résultats mais même département;Annote avec le département;GeoServiceTest;plusieursMatchsMaisMemeDpt_renvoieLeNomAvecCeDpt;Passé
+Système;GeoService — uniquement des matchs approchants;Renvoie l'orthographe officielle sans département;GeoServiceTest;matchsApprochantsSeulementSansEgalite_renvoieLeNomSansDpt;Passé
+Système;GeoService — filtre strict du nom normalisé;Ignore les résultats hors égalité (anti tri-par-score);GeoServiceTest;filtreSurEgaliteStricteDuNomNormalise;Passé
+Système;GeoService — serveur HTTP down;Retourne null sans lever d'exception;GeoServiceTest;serveurDown_renvoieNullSansLeverException;Passé
+Utilisateur authentifié;ClientRepository — findAll sans recherche;Liste triée par nom (en majuscules) puis prénom;ClientRepositoryTest;findAll_sansRecherche_renvoieToutTrieParNomPuisPrenom;Passé
+Utilisateur authentifié;ClientRepository — search avec espaces seuls;Équivalent à sans recherche;ClientRepositoryTest;findAll_searchBlank_estEquivalentASansRecherche;Passé
+Utilisateur authentifié;ClientRepository — search mono-token;Match partiel sur nom OU prénom OU description physique;ClientRepositoryTest;findAll_searchMonotoken_matchePartielSurNomOuPrenomOuDescription;Passé
+Utilisateur authentifié;ClientRepository — search en MAJUSCULES;Insensible à la casse;ClientRepositoryTest;findAll_searchInsensibleALaCasse;Passé
+Utilisateur authentifié;ClientRepository — search multi-tokens « Alexis Duchat »;Chaque token matche un champ (AND entre tokens, OR entre champs);ClientRepositoryTest;findAll_searchMultiTokens_chaqueTokenDoitMatcherUnChamp_AND;Passé
+Utilisateur authentifié;ClientRepository — search dans l'ordre inverse « Duchat Alexis »;Aussi accepté;ClientRepositoryTest;findAll_searchMultiTokens_ordreInverse_matcheAussi;Passé
+Utilisateur authentifié;ClientRepository — findSimilar avec MAJUSCULES contre une casse mixte;Match (la requête lowercase chaque côté);ClientRepositoryTest;findSimilar_matcheNomPrenomDate_meme_casse;Passé
+Utilisateur authentifié;ClientRepository — findSimilar avec date différente;Pas de match;ClientRepositoryTest;findSimilar_dateDifferente_neMatchePas;Passé
+Utilisateur authentifié;ClientRepository — findSimilar via numéro de pièce identique;Match même si nom/prénom différents;ClientRepositoryTest;findSimilar_matcheParNumeroPieceMemeSiAutresDifferent;Passé
+Utilisateur authentifié;ClientRepository — findSimilar avec numéro de pièce vide ou blanc;Traité comme null (pas de match accidentel sur tous les clients sans pièce);ClientRepositoryTest;findSimilar_numeroPieceVideOuBlanc_estTraiteCommeNull;Passé
+Utilisateur authentifié;ClientRepository — findSimilar ignore les clients non identifiés;Description physique homonyme exclue du résultat;ClientRepositoryTest;findSimilar_neRamenePasLesClientsNonIdentifies;Passé
+Utilisateur authentifié;ClientRepository — countFiches sans fiches;Renvoie 0;ClientRepositoryTest;countFiches_renvoieZeroSiAucuneFiche;Passé
+Utilisateur authentifié;ClientRepository — countFiches avec plusieurs fiches sur deux clients;Compte exact par client;ClientRepositoryTest;countFiches_comptePourLeClientCible;Passé
+Utilisateur authentifié;ClientRepository — getDerniereActivitePourIds liste vide;Map vide sans requête;ClientRepositoryTest;getDerniereActivitePourIds_listeVide_renvoieMapVideSansRequete;Passé
+Utilisateur authentifié;ClientRepository — getDerniereActivitePourIds batch sur plusieurs clients;Retourne le MAX(date) par client;ClientRepositoryTest;getDerniereActivitePourIds_renvoieLeMaxParClient;Passé
+Utilisateur authentifié;ClientRepository — client sans fiche dans la liste;Clé absente (pas de null inattendu);ClientRepositoryTest;getDerniereActivitePourIds_clientSansFiche_estAbsentDeLaMap;Passé
+Utilisateur authentifié;ClientRepository — save d'un nouveau client;ID auto-généré (IDENTITY);ClientRepositoryTest;save_genereId;Passé
+Utilisateur authentifié;ClientRepository — delete d'un client;Plus retrouvable via findById;ClientRepositoryTest;delete_supprimeLeClient;Passé
+Utilisateur authentifié;FicheRepository — fenêtre journée de travail 06h00 → 06h00 le lendemain;Inclut la fiche créée à 06h00, exclut celle de 05h59 (jour précédent);FicheLABFTRepositoryTest;findWithFilters_fenetreInclutLeDebutDuJourATravers06h;Passé
+Utilisateur authentifié;FicheRepository — fenêtre exclut l'aube du jour suivant;Fiche à 23h et celle à 5h59 du lendemain (= même jour de travail) incluses; la 6h00 du lendemain exclue;FicheLABFTRepositoryTest;findWithFilters_fenetreExcluLAubeDuJourSuivant;Passé
+Utilisateur authentifié;FicheRepository — tri par COALESCE(modification, création) DESC;Fiche modifiée à 15h passe devant celle créée à 14h, derrière celle créée à 16h;FicheLABFTRepositoryTest;findWithFilters_trieParDateModificationCoalesceCreation;Passé
+Utilisateur authentifié;FicheRepository — search filtré sur le client;Seules les fiches du client matchant sont retenues;FicheLABFTRepositoryTest;findWithFilters_searchFiltreSurNomDuClient;Passé
+Utilisateur authentifié;FicheRepository — search multi-tokens;AND entre les tokens (« Alexis Duchat »);FicheLABFTRepositoryTest;findWithFilters_searchMultiTokens_AND;Passé
+Utilisateur authentifié;FicheRepository — search match sur description physique;Inclut le client non identifié dont la description matche;FicheLABFTRepositoryTest;findWithFilters_searchMatcheLaDescriptionPhysique;Passé
+Utilisateur authentifié;FicheRepository — findByClientId;Toutes les fiches du client, plus récent en premier;FicheLABFTRepositoryTest;findByClientId_renvoieToutesLesFichesDuClientTriees;Passé
+Utilisateur authentifié;FicheRepository — findByClientId sur un client sans fiche;Liste vide;FicheLABFTRepositoryTest;findByClientId_clientSansFiche_renvoieListeVide;Passé
+MCD;JournalActionRepository — findAll;Trié horodatage DESC (plus récent en premier);JournalActionRepositoryTest;findAll_trieLesEntreesDuPlusRecentAuPlusAncien;Passé
+MCD;JournalActionRepository — deux entrées même milliseconde;Tri secondaire par id DESC (export d'audit reproductible);JournalActionRepositoryTest;findAll_horodatageIdentique_trieParIdDecroissant;Passé
+MCD;JournalActionRepository — limit borne les résultats;Renvoie au maximum limit entrées;JournalActionRepositoryTest;findAll_limit_borneLesResultats;Passé
+MCD;JournalActionRepository — findByEntite;Filtre sur le couple (type, entiteId);JournalActionRepositoryTest;findByEntite_filtreSurLeCoupleTypeEtId;Passé
+MCD;JournalActionRepository — findByEntite sur une entité sans trace;Liste vide;JournalActionRepositoryTest;findByEntite_entiteSansTrace_renvoieListeVide;Passé
+MCD;JournalActionRepository — save avec libellé/description;Toutes les propriétés sont persistées;JournalActionRepositoryTest;save_persisteLEntreeAvecToutesSesProprietes;Passé
+Utilisateur authentifié;UtilisateurRepository — findByIdentifiant match exact;Renvoie l'utilisateur;UtilisateurRepositoryTest;findByIdentifiant_renvoieLeMatchExact;Passé
+Anonyme;UtilisateurRepository — findByIdentifiant inexistant;Optional empty;UtilisateurRepositoryTest;findByIdentifiant_inexistant_renvoieEmpty;Passé
+Anonyme;UtilisateurRepository — identifiant en MAJUSCULES contre une saisie lowercase;Pas de match (la requête est case-sensitive);UtilisateurRepositoryTest;findByIdentifiant_estSensibleALaCasse;Passé
+MCD;UtilisateurRepository — findAll exclut les archives par défaut;Seul l'actif est renvoyé;UtilisateurRepositoryTest;findAll_excluLesArchivesParDefaut;Passé
+MCD;UtilisateurRepository — findAll includeArchives=true;Actifs d'abord, archivés en fin (tri alphabétique sur le rôle stocké en STRING);UtilisateurRepositoryTest;findAll_includeArchives_remetLesArchivesEnFin;Passé
+MCD;UtilisateurRepository — tri composé par rôle puis nom;Documente le tri ALPHABÉTIQUE du rôle (CAISSIER < MCD < RESPONSABLE_CAISSE);UtilisateurRepositoryTest;findAll_trieAlphabetiquementParRolePuisNom;Passé
+MCD;UtilisateurRepository — existsByIdentifiant;True si identifiant présent;UtilisateurRepositoryTest;existsByIdentifiant_trueSiPresent;Passé
+MCD;UtilisateurRepository — existsByIdentifiant inclut les archives;Empêche les collisions avec un compte archivé;UtilisateurRepositoryTest;existsByIdentifiant_inclutLesArchives;Passé
+MCD;UtilisateurRepository — existsByIdentifiant avec excludeId;Ignore le record exclu (cas modification sans renommer l'identifiant);UtilisateurRepositoryTest;existsByIdentifiant_excludeId_ignoreLeMatchSurLEnregistrementExclu;Passé
+MCD;UtilisateurRepository — save d'un nouvel utilisateur;ID auto-généré;UtilisateurRepositoryTest;save_genereId;Passé
+MCD;UtilisateurRepository — update d'un détaché puis relecture;Les champs modifiés sont persistés;UtilisateurRepositoryTest;update_metAJourLesChampsModifies;Passé
+Utilisateur authentifié;GET /api/clients sans search;200 et listClients(null) appelé;ClientResourceTest;getClients_sansSearch_renvoie200EtAppelleListClientsAvecNull;Passé
+Utilisateur authentifié;GET /api/clients?search=Dupont;Propage le QueryParam au service;ClientResourceTest;getClients_avecSearch_propageQueryParam;Passé
+Utilisateur authentifié;GET /api/clients?search=Besançon;Décodage UTF-8 correct;ClientResourceTest;getClients_decodeLesCaracteresUTF8_dansSearch;Passé
+Utilisateur authentifié;GET /api/clients;DTO sérialisé en JSON (id, libelle…);ClientResourceTest;getClients_sérialise_lesDtoEnJson;Passé
+Utilisateur authentifié;GET /api/clients/{id};PathParam décodé en Long;ClientResourceTest;getClient_pathParamDecodeEnLong;Passé
+Utilisateur authentifié;GET /api/clients/{id} sur id inexistant;404 + message du mapper;ClientResourceTest;getClient_inexistant_remonteLeMessageDuMapper;Passé
+Utilisateur authentifié;GET /api/clients/abc (path non numérique);404 (no route match);ClientResourceTest;getClient_pathParamNonNumerique_donne404;Passé
+MCD;POST /api/clients;201 Created + header Location + body {id};ClientResourceTest;createClient_renvoie201EtLocationEtIdDansBody;Passé
+Responsable Caisse;POST /api/clients;L'utilisateur courant est propagé au service;ClientResourceTest;createClient_propageLUtilisateurCourantAuService;Passé
+Utilisateur authentifié;POST /api/clients/match;Liste des candidats sérialisée;ClientResourceTest;matchClient_renvoieLaListeDeCandidats;Passé
+MCD;PUT /api/clients/{id};204 No Content sans body;ClientResourceTest;updateClient_renvoie204AvecBodyVide;Passé
+Caissier;PUT /api/clients/{id};403 avec message du mapper;ClientResourceTest;updateClient_caissier_remonte403DuMapper;Passé
+Caissier;PATCH /api/clients/{id}/identification;204;ClientResourceTest;updateIdentification_caissier_renvoie204;Passé
+Caissier;PATCH /api/clients/{id}/identification sur lieu déjà conforme;400 avec message « ne vous permet pas… » (verrouillage du fix mapper);ClientResourceTest;updateIdentification_caissier_lieuDejaConforme_remonteMessageMetier;Passé
+MCD;DELETE /api/clients/{id};204;ClientResourceTest;deleteClient_renvoie204;Passé
+MCD;DELETE /api/clients/{id} sur client avec fiches;400 avec message « 3 fiche(s) associée(s) »;ClientResourceTest;deleteClient_avecFiches_remonteBadRequestMessage;Passé
+Utilisateur authentifié;Content-Type des réponses;application/json;ClientResourceTest;content_type_des_réponses_estJson;Passé
+Utilisateur authentifié;POST /api/auth/login OK;200 + LoginResponse complet (token, identifiant, role);AuthResourceTest;login_OK_renvoie200EtLoginResponseComplet;Passé
+Anonyme;POST /api/auth/login avec mauvais identifiants;401 + message « incorrect »;AuthResourceTest;login_identifiantsIncorrects_renvoie401EtMessage;Passé
+Anonyme;POST /api/auth/login avec body vide;400;AuthResourceTest;login_bodyVide_renvoie400;Passé
+Anonyme;POST /api/auth/login sans mot de passe;400 + message « requis »;AuthResourceTest;login_sansMotDePasse_renvoie400;Passé
+Utilisateur authentifié;POST /api/auth/logout;204 et logout appelé avec le token courant;AuthResourceTest;logout_renvoie204AvecBodyVide;Passé
+MCD;GET /api/utilisateurs sans QueryParam;Utilise includeArchives=false par défaut;UtilisateurResourceTest;list_sansQueryParam_appelleAvecFalseParDefaut;Passé
+MCD;GET /api/utilisateurs?includeArchives=true;Transmis au service;UtilisateurResourceTest;list_avecIncludeArchivesTrue_estTransmis;Passé
+MCD;POST /api/utilisateurs;201 + Location + body (id renvoyé);UtilisateurResourceTest;create_renvoie201EtBody;Passé
+Responsable Caisse;POST /api/utilisateurs avec rôle MCD;403 du mapper;UtilisateurResourceTest;create_responsable_creantUnMcd_remonte403;Passé
+MCD;PATCH /api/utilisateurs/{id};PathParam et body transmis;UtilisateurResourceTest;update_pathParamEtBodyTransmis;Passé
+MCD;POST /api/utilisateurs/{id}/archiver;200 et appel service;UtilisateurResourceTest;archiver_appelleLeService;Passé
+MCD;POST /api/utilisateurs/{id}/desarchiver;200 et appel service;UtilisateurResourceTest;desarchiver_appelleLeService;Passé
+Anonyme;POST /api/utilisateurs/abc/desarchiver;404 (path non numérique);UtilisateurResourceTest;desarchiver_pathParamNonNumerique_donne404;Passé
+Utilisateur authentifié;GET /api/fiches sans paramètres;Appelle listFiches(null, null, null);FicheResourceTest;list_sansParametres_appelleAvecNullPartout;Passé
+Utilisateur authentifié;GET /api/fiches?dateDebut=2026-06-10&dateFin=…;Dates parsées en LocalDate ISO;FicheResourceTest;list_avecDatesISO_estParseEnLocalDate;Passé
+Utilisateur authentifié;GET /api/fiches avec date malformée;500 via mapper (DateTimeParseException non WebApplicationException);FicheResourceTest;list_dateMalformee_remonteUneErreurServeur500_viaMapper;Passé
+Utilisateur authentifié;GET /api/fiches/{id};PathParam Long;FicheResourceTest;getFiche_pathParamLong;Passé
+Responsable Caisse;GET /api/fiches/{id}/historique;Utilisateur et ficheId transmis au journalService;FicheResourceTest;historique_transmetUtilisateurEtFicheId;Passé
+Caissier;POST /api/fiches;201 + header Location;FicheResourceTest;createFiche_renvoie201AvecLocation;Passé
+Caissier;POST /api/fiches avec client inexistant;400 + message du mapper;FicheResourceTest;createFiche_clientInexistant_remonte400DuMapper;Passé
+Caissier;PUT /api/fiches/{id};204;FicheResourceTest;updateFiche_renvoie204;Passé
+MCD;DELETE /api/fiches/{id};204;FicheResourceTest;deleteFiche_renvoie204;Passé
+MCD;GET /api/journal;200 et utilisateur transmis;JournalResourceTest;list_MCD_renvoie200EtTransmetUtilisateur;Passé
+Caissier;GET /api/journal;403 + message du mapper;JournalResourceTest;list_caissier_remonte403DuMapper;Passé
+Utilisateur authentifié;GET /api/adresses/search?q=paris&limit=6;200 + paramètres transmis au service;AdresseResourceTest;search_avecQueryParametres_transmetQEtLimit;Passé
+Utilisateur authentifié;GET /api/adresses/search sans limit;@DefaultValue("6") appliqué;AdresseResourceTest;search_sansLimit_utiliseDefaut6;Passé
+Utilisateur authentifié;GET /api/adresses/search?limit=abc;404 (paramètre int non décodable);AdresseResourceTest;search_limitNonNumerique_donne404DuMatcher;Passé
+Utilisateur authentifié;GET /api/lieux/search;Appelle chercherLieux avec la query;LieuResourceTest;search_appelleChercherLieuxAvecLaQuery;Passé
+Utilisateur authentifié;GET /api/lieux/search?limit=10;Limit personnalisé transmis;LieuResourceTest;search_limitPersonnalise_estTransmis;Passé
 Système;Formater Marie / Dupont en libellé canonique;"Marie DUPONT" (nom en capitales);libelle.test.js;formate prénom + NOM en capitales;Passé
 Système;Formater avec espaces parasites autour des valeurs;Valeurs trimmées;libelle.test.js;trim les espaces parasites;Passé
 Système;Formater avec valeurs vides / null / undefined;Chaîne vide;libelle.test.js;renvoie chaîne vide si tout est vide;Passé
@@ -133,14 +301,27 @@ Responsable Caisse;Modifier une fiche jusqu'à 31 jours dans le passé;Autorisé
 Responsable Caisse;Modifier une fiche au-delà de 31 jours;Refusé;permissions.test.js;RESPONSABLE_CAISSE refuse au-delà de 31 jours;Passé
 Caissier / Responsable;Modifier une fiche datée dans le futur;Refusé;permissions.test.js;refuse les dates futures pour les rôles non-MCD;Passé
 Anonyme;Tester peutModifierFiche sans rôle;Refusé (false);permissions.test.js;refuse si pas de rôle;Passé
-Tous rôles;Tester peutSupprimerFiche par rôle;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
-Tous rôles;Tester peutModifierClientComplet par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
-Tous rôles;Tester peutSupprimerClient par rôle;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
-Tous rôles;Tester peutListerUtilisateurs par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
-Tous rôles;Tester peutModifier/Archiver/Désarchiver Utilisateur;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
-Tous rôles;Tester peutLireJournal par rôle;Seul MCD autorisé;permissions.test.js;seulement MCD;Passé
-Tous rôles;Tester peutLireHistoriqueFiche par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
-Tous rôles;Tester peutImporterClients par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE;Passé
+Tous rôles;Tester peutSupprimerFiche par rôle (UI);Seul MCD autorisé;permissions.test.js;seulement MCD (peutSupprimerFiche);Passé
+Tous rôles;Tester peutModifierClientComplet par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE (peutModifierClientComplet);Passé
+Tous rôles;Tester peutSupprimerClient par rôle (UI);Seul MCD autorisé;permissions.test.js;seulement MCD (peutSupprimerClient);Passé
+Tous rôles;Tester peutListerUtilisateurs par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE (peutListerUtilisateurs);Passé
+Tous rôles;Tester peutModifier/Archiver/Désarchiver Utilisateur (UI);Seul MCD autorisé;permissions.test.js;seulement MCD (utilisateurs);Passé
+Tous rôles;Tester peutLireJournal par rôle (UI);Seul MCD autorisé;permissions.test.js;seulement MCD (peutLireJournal);Passé
+Tous rôles;Tester peutLireHistoriqueFiche par rôle;MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE (peutLireHistoriqueFiche);Passé
+Tous rôles;Tester peutImporterClients par rôle (UI);MCD et Responsable Caisse autorisés;permissions.test.js;MCD et RESPONSABLE_CAISSE (peutImporterClients);Passé
+Système;lieuNaissanceEstConforme « Ville (NN) » France;Accepté;permissions.test.js;accepte « Ville (NN) » pour la France;Passé
+Système;lieuNaissanceEstConforme « Ville (Pays) » international;Accepté;permissions.test.js;accepte « Ville (Pays) » à l'international;Passé
+Système;lieuNaissanceEstConforme « (FRANCE) » / « (France) »;Refusé (format ambigu, département attendu);permissions.test.js;refuse « (FRANCE) » et « (France) » (format ambigu, dpt attendu);Passé
+Système;lieuNaissanceEstConforme sans parenthèses;Refusé;permissions.test.js;refuse les formats sans parenthèses;Passé
+Système;lieuNaissanceEstConforme département non numérique;Garde-fou regex (chiffre seul refusé);permissions.test.js;refuse un département non numérique entre parenthèses français;Passé
+MCD / Responsable Caisse;peutModifierLieuNaissance;Toujours autorisé;permissions.test.js;MCD / RESPONSABLE_CAISSE : toujours (peutModifierLieuNaissance);Passé
+Caissier;peutModifierLieuNaissance lieu vide;Autorisé;permissions.test.js;CAISSIER : oui si lieu vide;Passé
+Caissier;peutModifierLieuNaissance lieu non conforme;Autorisé (correction);permissions.test.js;CAISSIER : oui si lieu non conforme (peut corriger le format);Passé
+Caissier;peutModifierLieuNaissance lieu déjà conforme;Refusé;permissions.test.js;CAISSIER : non si lieu déjà conforme (réservé au Responsable);Passé
+MCD / Responsable Caisse;peutModifierDateNaissance;Toujours autorisé;permissions.test.js;MCD / RESPONSABLE_CAISSE : toujours (peutModifierDateNaissance);Passé
+Caissier;peutModifierDateNaissance;Seulement si la date est absente;permissions.test.js;CAISSIER : seulement si la date n'est pas déjà renseignée;Passé
+MCD / Responsable Caisse;peutToucherPpe;Activer ou désactiver autorisé;permissions.test.js;MCD / RESPONSABLE_CAISSE : peuvent activer comme désactiver;Passé
+Caissier;peutToucherPpe;Peut activer (false → true) mais pas désactiver;permissions.test.js;CAISSIER : peut activer (false → true) mais jamais désactiver;Passé
 Système;Vérifier la non-vacuité de la liste des types de pièces;Liste non vide contenant au moins CNI;champsClient.test.js;TYPES_PIECE non vide;Passé
 Système;Vérifier la cohérence PIECES_AVEC_PREFECTURE;Sous-ensemble strict de TYPES_PIECE;champsClient.test.js;PIECES_AVEC_PREFECTURE est un sous-ensemble de TYPES_PIECE;Passé
 Système;Vérifier la cohérence PIECES_AVEC_PAYS;Sous-ensemble strict de TYPES_PIECE;champsClient.test.js;PIECES_AVEC_PAYS est un sous-ensemble de TYPES_PIECE;Passé
@@ -158,6 +339,24 @@ Système;Construire un titre pour fiche sans lignes;Pas de suffixe de type;print
 Système;Construire un titre avec typeOverride;Un seul type retenu (sous-fiche);print.test.js;typeOverride force un seul type;Passé
 Système;Construire un titre avec espaces dans nom/prénom;Espaces remplacés par tirets;print.test.js;remplace espaces dans prénom/nom par des tirets;Passé
 Système;Vérifier la constante ORDRE_TYPES_JEU;[MAS, JTE, JT] dans cet ordre;print.test.js;contient MAS, JTE, JT dans cet ordre;Passé
+Système;request() — 200;Renvoie le JSON parsé;config.test.js;200 renvoie le JSON parsé;Passé
+Système;request() — 204;Renvoie null sans tenter de parser le body;config.test.js;204 renvoie null sans tenter de parser;Passé
+Système;request() — 201 avec body JSON;Renvoie le body parsé;config.test.js;201 avec body JSON renvoie le body;Passé
+Système;request() — 201 sans body, avec header Location;Extrait l'id du Location;config.test.js;201 sans body parsable extrait l'id du header Location;Passé
+Système;request() — 201 sans body ni Location;Renvoie null;config.test.js;201 sans body ni Location renvoie null;Passé
+Système;request() — 400 avec {message};Throw Error avec le message (contrat avec GlobalExceptionMapper);config.test.js;400 avec message remonte le message tel quel;Passé
+Système;request() — 400 avec {error};Throw Error avec error (fallback ancien format);config.test.js;400 avec error remonte error;Passé
+Système;request() — body contient message ET error;message prend la priorité;config.test.js;message prime sur error si les deux sont présents;Passé
+Système;request() — 500 sans body parsable;Throw Error « Erreur 500 »;config.test.js;500 sans body JSON parsable retombe sur « Erreur status »;Passé
+Système;request() — 403 avec body vide;Throw Error « Erreur 403 »;config.test.js;403 avec body vide retombe sur « Erreur status »;Passé
+Utilisateur authentifié;request() — 401 hors login;Token et user effacés, redirection vers /;config.test.js;401 hors login efface le token, redirige et jette;Passé
+Anonyme;request() — 401 sur /auth/login;Token non touché, pas de redirect;config.test.js;401 sur /auth/login n'efface pas le token et ne redirige pas;Passé
+Utilisateur authentifié;request() — token présent;Ajoute Authorization Bearer;config.test.js;ajoute Authorization Bearer quand un token est en localStorage;Passé
+Anonyme;request() — sans token;Pas de header Authorization;config.test.js;omet Authorization si pas de token;Passé
+Utilisateur authentifié;request() — body JSON par défaut;Content-Type application/json;config.test.js;pose Content-Type application/json par défaut;Passé
+Utilisateur authentifié;request() — body FormData;Pas de Content-Type forcé (boundary multipart laissé au navigateur);config.test.js;omet Content-Type quand body est un FormData;Passé
+Utilisateur authentifié;request() — caller fournit ses propres headers;Override des défauts;config.test.js;les headers du caller surchargent les défauts;Passé
+Utilisateur authentifié;request() — préfixe;Chemins sont préfixés par /api;config.test.js;préfixe le chemin par /api;Passé
 Utilisateur authentifié;Affichage de la boîte de confirmation fermée;Aucun rendu DOM;ConfirmDialog.test.jsx;ne rend rien si open=false;Passé
 Utilisateur authentifié;Affichage de la boîte ouverte avec libellés par défaut;Titre, message, boutons "Confirmer" et "Annuler" visibles;ConfirmDialog.test.jsx;affiche titre, message et boutons par défaut;Passé
 Utilisateur authentifié;Affichage avec libellés de boutons personnalisés;Libellés appliqués;ConfirmDialog.test.jsx;libellés personnalisés;Passé
@@ -175,7 +374,261 @@ Utilisateur authentifié;Clic sur Fusionner avec différences;Bouton actif et ca
 Utilisateur authentifié;Clic sur "Continuer sans fusionner";Callback onContinue appelé;ClientMatchDialog.test.jsx;bouton Continuer sans fusionner appelle onContinue;Passé
 Utilisateur authentifié;Clic sur Annuler;Callback onCancel appelé;ClientMatchDialog.test.jsx;bouton Annuler appelle onCancel;Passé
 Utilisateur authentifié;Plusieurs candidats potentiels;Résumé "N clients similaires" affiché;ClientMatchDialog.test.jsx;résumé pluriel pour plusieurs candidats;Passé
+Utilisateur authentifié;DateInput — rendu d'une value ISO;Affichage en dd/mm/yyyy;DateInput.test.jsx;rend une value ISO comme dd/mm/yyyy;Passé
+Utilisateur authentifié;DateInput — value vide/null;Champ vide;DateInput.test.jsx;rend vide pour value vide / null / undefined;Passé
+Utilisateur authentifié;DateInput — value ISO incomplète;Champ vide;DateInput.test.jsx;rend vide pour une value ISO invalide (sans 3 segments);Passé
+Utilisateur authentifié;DateInput — saisie progressive;Slashes auto-insérés (15 → 15/, 1506 → 15/06);DateInput.test.jsx;insère les slashes automatiquement au fur et à mesure;Passé
+Utilisateur authentifié;DateInput — caractères non numériques;Ignorés;DateInput.test.jsx;ignore les caractères non numériques;Passé
+Utilisateur authentifié;DateInput — saisie de plus de 8 chiffres;Tronqué à 8;DateInput.test.jsx;tronque à 8 chiffres (date complète);Passé
+Utilisateur authentifié;DateInput — date valide complète;Émet la date au format ISO;DateInput.test.jsx;émet la date ISO une fois les 8 chiffres saisis sur une date valide;Passé
+Utilisateur authentifié;DateInput — saisie partielle;Pas de propagation onChange;DateInput.test.jsx;ne propage rien tant que la saisie est incomplète;Passé
+Utilisateur authentifié;DateInput — clear de la saisie;Émet chaîne vide;DateInput.test.jsx;émet chaîne vide quand l'utilisateur efface le champ;Passé
+Utilisateur authentifié;DateInput — date impossible (10/20/2000);aria-invalid + pas de propagation;DateInput.test.jsx;refuse une date impossible (10/20/2000 — mois 20) et ne propage pas;Passé
+Utilisateur authentifié;DateInput — 31/04 (avril 30 jours);Refusé;DateInput.test.jsx;refuse 31/04 (avril a 30 jours);Passé
+Utilisateur authentifié;DateInput — 29/02 hors année bissextile;Refusé;DateInput.test.jsx;refuse 29/02 sur une année non bissextile;Passé
+Utilisateur authentifié;DateInput — 29/02 année bissextile classique (2000);Accepté;DateInput.test.jsx;accepte 29/02 sur une année bissextile classique (2000);Passé
+Utilisateur authentifié;DateInput — 29/02 sur 1900 (div. 100 non div. 400);Refusé;DateInput.test.jsx;refuse 29/02 sur 1900 (divisible par 100, pas par 400);Passé
+Utilisateur authentifié;DateInput — 29/02 sur 2000 (div. 400);Accepté;DateInput.test.jsx;accepte 29/02 sur 2000 (divisible par 400 — bissextile);Passé
+Utilisateur authentifié;DateInput — année hors plage [1900, 2100];Refusé;DateInput.test.jsx;refuse une année hors plage [1900, 2100];Passé
+Utilisateur authentifié;DateInput — année > 2100;Refusé;DateInput.test.jsx;refuse une année > 2100;Passé
+Utilisateur authentifié;DateInput — jour 0;Refusé;DateInput.test.jsx;refuse jour 0;Passé
+Utilisateur authentifié;DateInput — mois 0;Refusé;DateInput.test.jsx;refuse mois 0;Passé
+Utilisateur authentifié;DateInput — tooltip d'erreur;title explicite quand invalide;DateInput.test.jsx;expose un tooltip explicite quand la date est invalide;Passé
+Utilisateur authentifié;DateInput — props HTML supplémentaires;Transmises au <input>;DateInput.test.jsx;passe les props HTML supplémentaires au <input>;Passé
+Utilisateur authentifié;DateInput — changement de la prop value après coup;Resynchronisation visuelle;DateInput.test.jsx;se resynchronise quand la prop value change après coup;Passé
+Utilisateur authentifié;PrivateRoute — aucun user;Redirige vers /;PrivateRoute.test.jsx;redirige vers / quand aucun user n'est connecté;Passé
+Utilisateur authentifié;PrivateRoute — user undefined (état de chargement);Redirige vers / (garde-fou);PrivateRoute.test.jsx;redirige aussi quand user est undefined (état de chargement non géré);Passé
+Utilisateur authentifié;PrivateRoute — user connecté;Rend Header + Outlet;PrivateRoute.test.jsx;rend Header + Outlet quand un user est connecté;Passé
+Caissier;PrivateRoute — CAISSIER sur route protégée;Laissé passer (filtrage par rôle délégué aux pages);PrivateRoute.test.jsx;laisse passer un CAISSIER sur une route protégée;Passé
+Utilisateur authentifié;Autocomplete — saisie texte libre;onChange appelé à chaque frappe;Autocomplete.test.jsx;appelle onChange à chaque frappe (texte libre, pas seulement sur sélection);Passé
+Utilisateur authentifié;Autocomplete — saisie en dessous de minChars;Pas de fetch déclenché;Autocomplete.test.jsx;respecte minChars : pas de fetch avant le seuil;Passé
+Utilisateur authentifié;Autocomplete — saisie >= minChars;fetchSuggestions appelé après debounce;Autocomplete.test.jsx;déclenche fetchSuggestions après minChars + debounce;Passé
+Utilisateur authentifié;Autocomplete — réponse vide;Dropdown fermé;Autocomplete.test.jsx;liste vide : n'ouvre pas le dropdown;Passé
+Utilisateur authentifié;Autocomplete — clic sur suggestion;onSelect appelé avec l'item complet, dropdown fermé;Autocomplete.test.jsx;clic sur une suggestion : appelle onSelect avec l'item complet et ferme;Passé
+Utilisateur authentifié;Autocomplete — debounce;Une seule frappe finale déclenche le fetch;Autocomplete.test.jsx;debounce : seule la dernière frappe déclenche un fetch;Passé
+Utilisateur authentifié;Autocomplete — erreur de fetch;Suggestions vides, dropdown fermé;Autocomplete.test.jsx;erreur de fetch : suggestion vide, dropdown fermé;Passé
+Utilisateur authentifié;Autocomplete — clic en dehors;Dropdown fermé;Autocomplete.test.jsx;clic en dehors : ferme le dropdown;Passé
+Utilisateur authentifié;Autocomplete — descend sous minChars après ouverture;Dropdown fermé, suggestions vidées;Autocomplete.test.jsx;descend en dessous de minChars : ferme le dropdown et vide les suggestions;Passé
+Utilisateur authentifié;Autocomplete — flag disabled;Input désactivé, pas de dropdown;Autocomplete.test.jsx;disabled : ne rend pas la liste même si suggestions existent;Passé
+Utilisateur authentifié;Autocomplete — props HTML;value/placeholder/required passés au <input>;Autocomplete.test.jsx;value/placeholder/required passés au <input>;Passé
+Système;normalize() — retire les accents et passe en minuscules;Besançon → besancon;Autocomplete.test.jsx;retire les accents et passe en minuscules;Passé
+Système;normalize() — null/undefined;Chaîne vide;Autocomplete.test.jsx;tolère null/undefined;Passé
+Utilisateur authentifié;Header — anonyme;Logo + titre, pas de menu;Header.test.jsx;sans utilisateur connecté : juste logo + titre, pas de menu;Passé
+Utilisateur authentifié;Header — connecté;Rôle formaté + « Prénom NOM » en capitales;Header.test.jsx;affiche le rôle formaté et le nom complet (prénom + NOM en capitales);Passé
+Utilisateur authentifié;Header — clic sur le nom;Menu ouvert;Header.test.jsx;menu fermé par défaut, ouvert au clic;Passé
+Caissier;Header — menu déroulant CAISSIER;Seulement « Se déconnecter »;Header.test.jsx;CAISSIER : seulement « Se déconnecter » dans le menu;Passé
+Responsable Caisse;Header — menu déroulant RESPONSABLE;Utilisateurs + Import, pas Journal;Header.test.jsx;RESPONSABLE_CAISSE : Utilisateurs et Import, pas Journal;Passé
+MCD;Header — menu déroulant MCD;Les trois entrées admin + déconnexion;Header.test.jsx;MCD : les trois entrées admin + déconnexion;Passé
+MCD;Header — clic Utilisateurs;Navigue vers /utilisateurs;Header.test.jsx;clic sur « Utilisateurs » : navigue vers /utilisateurs;Passé
+Caissier;Header — clic Se déconnecter;signOut puis navigate("/");Header.test.jsx;« Se déconnecter » : appelle signOut puis navigate("/");Passé
+MCD;Header — clic en dehors du menu ouvert;Menu refermé;Header.test.jsx;clic en dehors du menu : le referme;Passé
+Utilisateur authentifié;AddressSearch — sélection;onSelect reçoit rue/codePostal/ville/pays;SearchWrappers.test.jsx;appelle searchAdresses et expose l'objet structuré dans onSelect;Passé
+Utilisateur authentifié;AddressSearch — API sans pays;Pays par défaut « France »;SearchWrappers.test.jsx;résultat API sans pays : pays par défaut « France » dans l'item;Passé
+Utilisateur authentifié;PlaceSearch — sélection;Émet le label de la suggestion;SearchWrappers.test.jsx;propose les suggestions retournées par searchLieux et émet le label sur sélection;Passé
+Utilisateur authentifié;PlaceSearch — flag disabled;Input grisé, pas de dropdown;SearchWrappers.test.jsx;disabled : input grisé, pas de dropdown;Passé
+Utilisateur authentifié;CountrySearch — saisie sans accent;Match liste statique avec accents (Brésil);SearchWrappers.test.jsx;filtre la liste statique des pays (insensible aux accents);Passé
+Utilisateur authentifié;CountrySearch — clic;Émet le nom complet (France);SearchWrappers.test.jsx;clic sur un pays : émet son nom complet;Passé
+Utilisateur authentifié;PrefectureSearch — saisie;Lieux de délivrance filtrés par ville;SearchWrappers.test.jsx;filtre les lieux de délivrance par ville;Passé
+Utilisateur authentifié;PrefectureSearch — clic;Valeur sans le tiret cadratin du badge d'affichage;SearchWrappers.test.jsx;clic sur une suggestion : émet une valeur libellée (sans tiret cadratin de badge);Passé
+Utilisateur authentifié;DatePickerInput — rendu d'une value ISO;Affichage en dd/mm/yyyy;DatePickerInput.test.jsx;rend une value ISO en dd/mm/yyyy;Passé
+Utilisateur authentifié;DatePickerInput — saisie progressive;Slashes auto-insérés;DatePickerInput.test.jsx;insère les slashes automatiquement;Passé
+Utilisateur authentifié;DatePickerInput — date valide;Émet la date au format ISO;DatePickerInput.test.jsx;émet la date ISO une fois les 8 chiffres saisis;Passé
+Utilisateur authentifié;DatePickerInput — clear;Émet chaîne vide;DatePickerInput.test.jsx;émet chaîne vide quand le champ est vidé;Passé
+Utilisateur authentifié;DatePickerInput — saisie partielle;Pas de propagation;DatePickerInput.test.jsx;ne propage rien tant que la saisie est incomplète;Passé
+Utilisateur authentifié;DatePickerInput — clic sur l'icône calendrier;showPicker() appelé sur l'input date caché;DatePickerInput.test.jsx;le bouton calendrier appelle showPicker() de l'input date caché;Passé
+Utilisateur authentifié;DatePickerInput — sélection via le picker;onChange reçoit la valeur ISO directement;DatePickerInput.test.jsx;changement via l'input date caché émet directement la valeur ISO;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — pendant l'appel API;Affiche « Chargement… »;HistoriqueFicheDialog.test.jsx;Chargement… pendant l'appel API;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — liste vide;Placeholder « Aucune action enregistrée »;HistoriqueFicheDialog.test.jsx;liste vide : affiche le placeholder;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — entrées avec badges;Badges d'action stylés par classe CSS;HistoriqueFicheDialog.test.jsx;liste les entrées avec leur badge d'action;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — utilisateurNom null;Affiche « utilisateur inconnu »;HistoriqueFicheDialog.test.jsx;utilisateurNom null → libellé « utilisateur inconnu »;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — API en erreur;Affiche le message;HistoriqueFicheDialog.test.jsx;affiche l'erreur quand l'API rejette;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — clic Fermer;Callback onClose;HistoriqueFicheDialog.test.jsx;« Fermer » appelle onClose;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — clic overlay;Callback onClose;HistoriqueFicheDialog.test.jsx;clic sur le voile (overlay) ferme la modale;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — clic dans la modale;Pas de fermeture (stopPropagation);HistoriqueFicheDialog.test.jsx;clic dans la modale (pas l'overlay) ne ferme pas;Passé
+Utilisateur authentifié;HistoriqueFicheDialog — ficheId change;Refait l'appel API;HistoriqueFicheDialog.test.jsx;change de ficheId : refait l'appel API;Passé
+Utilisateur authentifié;FichePapier — sans typeFiltre;Affiche toutes les lignes et garde les totaux de la fiche;FichePapier.test.jsx;sans typeFiltre : affiche toutes les lignes et garde les totaux de la fiche;Passé
+Utilisateur authentifié;FichePapier — typeFiltre=MAS;data-type posé et lignes filtrées;FichePapier.test.jsx;typeFiltre=MAS : data-type posé et lignes filtrées;Passé
+Utilisateur authentifié;FichePapier — totaux recalculés;Sommes basées uniquement sur le type filtré;FichePapier.test.jsx;typeFiltre recalcule les totaux à partir des lignes filtrées;Passé
+Utilisateur authentifié;FichePapier — pageBreakBefore;Applique la classe fiche-papier-page-break;FichePapier.test.jsx;pageBreakBefore : applique la classe « fiche-papier-page-break »;Passé
+Utilisateur authentifié;FichePapier — fiche sans lignes;Lignes vides ajoutées (≥ 6) pour le format papier;FichePapier.test.jsx;fiche sans lignes : padding minimum (lignes vides ajoutées pour atteindre le format papier);Passé
+Utilisateur authentifié;FichePapier — data-fiche-id;Exposé pour l'export PDF;FichePapier.test.jsx;expose data-fiche-id pour l'export PDF;Passé
+Utilisateur authentifié;FichePapier — client non identifié;Description physique au lieu de l'adresse;FichePapier.test.jsx;client non identifié : affiche la description physique (et pas l'adresse);Passé
 Anonyme;Affichage du formulaire de connexion;Champs identifiant et mot de passe visibles;Login.test.jsx;affiche les champs identifiant et mot de passe;Passé
 Anonyme;Connexion avec identifiants corrects;signIn appelé et redirection vers /accueil;Login.test.jsx;login OK : appelle signIn et redirige vers /accueil;Passé
 Anonyme;Connexion avec identifiants invalides;Message d'erreur affiché, aucune redirection;Login.test.jsx;login KO : affiche message d'erreur, pas de redirection;Passé
 Anonyme;Soumission en cours;Bouton désactivé pendant l'appel API (libellé "Connexion…");Login.test.jsx;bouton désactivé pendant la requête;Passé
+Utilisateur authentifié;Accueil — chargement initial;« Chargement… » puis affichage des fiches;Accueil.test.jsx;affiche Chargement… puis les fiches;Passé
+Utilisateur authentifié;Accueil — plage de dates par défaut;listFiches appelé sur workDayYesterday → workDay;Accueil.test.jsx;appelle listFiches avec la plage de dates par défaut (hier → aujourd'hui);Passé
+Utilisateur authentifié;Accueil — liste vide;Empty-state contextualisé;Accueil.test.jsx;aucune fiche : empty-state contextualisé selon la recherche;Passé
+Utilisateur authentifié;Accueil — recherche sans résultat;« Aucune fiche ni client correspondant »;Accueil.test.jsx;recherche active et aucun résultat : message « ni fiche ni client »;Passé
+Utilisateur authentifié;Accueil — séparation jour/veille;Sections « Fiches du jour » et « Fiches de la veille » distinctes;Accueil.test.jsx;sépare fiches du jour et fiches de la veille;Passé
+Utilisateur authentifié;Accueil — sous-bloc « Dépassant 2 000 € »;Mis en haut de la veille;Accueil.test.jsx;met en haut le sous-bloc « Dépassant 2 000 € » sur la veille;Passé
+Utilisateur authentifié;Accueil — recherche debounce;listFiches+listClients déclenchés;Accueil.test.jsx;saisie d'une recherche : déclenche listFiches+listClients (debounce);Passé
+Utilisateur authentifié;Accueil — badge PPE;Affiché quand clientPpe=true;Accueil.test.jsx;affiche le badge PPE quand clientPpe=true;Passé
+Utilisateur authentifié;Accueil — picto warning client incomplet;Tooltip avec champs manquants;Accueil.test.jsx;affiche un picto warning quand clientComplet=false avec champs manquants en tooltip;Passé
+Utilisateur authentifié;Accueil — boutons d'action sur la carte;Modifier → /fiches/{id}/modifier; Œil → /fiches/{id};Accueil.test.jsx;boutons Modifier/Eye sur les cartes : naviguent vers /fiches/{id}/modifier et /fiches/{id};Passé
+Caissier;Accueil — fiche très ancienne;Pas de bouton Modifier;Accueil.test.jsx;CAISSIER : pas de bouton « Modifier » sur une fiche d'avant-hier;Passé
+Utilisateur authentifié;Accueil — bouton « Voir les clients »;Navigue vers /clients;Accueil.test.jsx;« Voir les clients » → /clients;Passé
+Utilisateur authentifié;Accueil — bouton « + Ajouter une fiche »;Navigue vers /fiches/identification;Accueil.test.jsx;« + Ajouter une fiche » → /fiches/identification;Passé
+Utilisateur authentifié;Accueil — bouton « Visualiser toutes les fiches de la veille »;Navigue vers /fiches/imprimer?ids=1,2;Accueil.test.jsx;« Visualiser toutes les fiches de la veille » → /fiches/imprimer?ids=…;Passé
+Caissier;AjoutFiche — sans clientData en state;Redirige vers /fiches/identification;AjoutFiche.test.jsx;sans clientData en state : redirige vers /fiches/identification;Passé
+Caissier;AjoutFiche — rendu initial;Bandeau client + une ligne vide;AjoutFiche.test.jsx;affiche le bandeau client et une ligne vide;Passé
+Caissier;AjoutFiche — bouton « Changer »;Navigue vers /fiches/identification;AjoutFiche.test.jsx;« Changer » → /fiches/identification;Passé
+Caissier;AjoutFiche — bouton « Ajouter une ligne »;Empile une nouvelle ligne;AjoutFiche.test.jsx;Ajouter une ligne empile une nouvelle ligne;Passé
+Caissier;AjoutFiche — bouton corbeille;Demande confirmation puis retire la ligne;AjoutFiche.test.jsx;Supprimer demande confirmation;Passé
+Caissier;AjoutFiche — ligne sans montant;Refus + message;AjoutFiche.test.jsx;refuse de soumettre une ligne sans montant;Passé
+Caissier;AjoutFiche — client PPE avec ligne vide;Submit autorisé (rien à signaler);AjoutFiche.test.jsx;client PPE : peut soumettre avec une ligne vide (« rien à signaler »);Passé
+Caissier;AjoutFiche — submit client identifié;clientId envoyé, redirect /fiches/{id} avec replace;AjoutFiche.test.jsx;submit identifié : envoie clientId et redirige avec replace vers /fiches/{id};Passé
+Caissier;AjoutFiche — createFiche sans id renvoyé;Redirect /accueil (fallback gracieux);AjoutFiche.test.jsx;createFiche sans id → redirect vers /accueil (fallback gracieux);Passé
+Caissier;AjoutFiche — submit client non identifié;createClient d'abord puis createFiche;AjoutFiche.test.jsx;non identifié : crée d'abord le client puis la fiche;Passé
+Caissier;AjoutFiche — createClient sans id;Pas de createFiche, message d'erreur;AjoutFiche.test.jsx;non identifié + createClient échoue : pas de createFiche;Passé
+Caissier;AjoutFiche — createFiche échoue;Message du mapper affiché tel quel;AjoutFiche.test.jsx;createFiche échoue : message du mapper affiché tel quel;Passé
+Utilisateur authentifié;DetailClient — chargement;Chargement… puis affichage du client;DetailClient.test.jsx;Chargement… puis affichage du client;Passé
+Utilisateur authentifié;DetailClient — getClient en erreur;Message d'erreur affiché;DetailClient.test.jsx;affiche l'erreur quand getClient échoue;Passé
+Utilisateur authentifié;DetailClient — client non identifié;Description physique au lieu de l'adresse;DetailClient.test.jsx;client non identifié : affiche la description physique au lieu de l'adresse;Passé
+Utilisateur authentifié;DetailClient — profil incomplet;Alerte « incomplète » + champs manquants;DetailClient.test.jsx;alerte « profil incomplet » avec liste des champs manquants;Passé
+Caissier;DetailClient — pas de bouton Supprimer;Réservé MCD;DetailClient.test.jsx;CAISSIER : pas de bouton « Supprimer » (réservé MCD);Passé
+MCD;DetailClient — Supprimer;Confirmation puis deleteClient + redirect /clients;DetailClient.test.jsx;MCD : « Supprimer » ouvre la confirmation puis appelle deleteClient;Passé
+MCD;DetailClient — Supprimer en erreur;Notif d'erreur, reste sur la page;DetailClient.test.jsx;Supprimer en erreur : notif d'erreur, reste sur la page;Passé
+Utilisateur authentifié;DetailClient — bouton Modifier;Navigue vers /clients/{id}/modifier;DetailClient.test.jsx;« Modifier » → /clients/{id}/modifier;Passé
+Utilisateur authentifié;DetailClient — bouton « + Ajouter une fiche »;preselectClient passé pour skipper l'identification;DetailClient.test.jsx;« + Ajouter une fiche » : passe preselectClient pour skipper l'identification;Passé
+Utilisateur authentifié;DetailClient — bouton Retour;navigate(-1);DetailClient.test.jsx;« Retour » → navigate(-1) (revient à la liste ou l'écran précédent);Passé
+Utilisateur authentifié;DetailClient — fiches associées;Listées dans le tableau;DetailClient.test.jsx;affiche les fiches associées dans le tableau;Passé
+Utilisateur authentifié;DetailClient — aucune fiche;« Aucune fiche »;DetailClient.test.jsx;liste vide de fiches : affiche « Aucune fiche »;Passé
+Utilisateur authentifié;DetailFiche — chargement;Sous-fiches par type de jeu (MAS, JTE, JT);DetailFiche.test.jsx;Chargement… puis affichage des sous-fiches par type de jeu;Passé
+Utilisateur authentifié;DetailFiche — fiche sans lignes;Un papier « tout » (typeFiltre=null);DetailFiche.test.jsx;fiche sans lignes : affiche un papier « tout » (typeFiltre=null);Passé
+Caissier;DetailFiche — fiche très ancienne;Pas de bouton Compléter ni Supprimer;DetailFiche.test.jsx;CAISSIER (fiche très ancienne) : pas de bouton « Compléter » ni « Supprimer »;Passé
+Caissier;DetailFiche — fiche du jour;Pas de bouton Historique (réservé Responsable/MCD);DetailFiche.test.jsx;CAISSIER (fiche d'aujourd'hui) : pas de bouton « Historique » (réservé Responsable/MCD);Passé
+MCD;DetailFiche — bouton Historique;Ouvre la modale d'historique;DetailFiche.test.jsx;MCD : affiche « Historique » et bouton ouvre la modale;Passé
+MCD;DetailFiche — bouton Imprimer cette fiche;imprimerSousFiche avec le type courant;DetailFiche.test.jsx;« Imprimer cette fiche » appelle imprimerSousFiche pour le type courant;Passé
+MCD;DetailFiche — bouton Voir le client;Navigue vers /clients/{clientId};DetailFiche.test.jsx;« Voir le client » → /clients/{clientId};Passé
+MCD;DetailFiche — bouton Compléter la fiche;Navigue vers /fiches/{id}/modifier;DetailFiche.test.jsx;« Compléter la fiche » → /fiches/{id}/modifier (MCD, fiche modifiable);Passé
+MCD;DetailFiche — bouton Supprimer;Confirmation + deleteFiche + /accueil;DetailFiche.test.jsx;Supprimer ouvre la confirmation puis appelle deleteFiche puis /accueil;Passé
+MCD;DetailFiche — client incomplet + peut modifier;Bouton « Compléter le profil » avec returnTo;DetailFiche.test.jsx;Profil client incomplet + peut modifier : bouton « Compléter le profil » avec returnTo;Passé
+Utilisateur authentifié;DetailFiche — bouton Retour;navigate(-1);DetailFiche.test.jsx;« Retour » → navigate(-1);Passé
+Utilisateur authentifié;EditClient — chargement;« Chargement… » pendant getClient;EditClient.test.jsx;affiche « Chargement… » tant que getClient est en cours;Passé
+Utilisateur authentifié;EditClient — getClient en erreur;Message d'erreur, pas de formulaire;EditClient.test.jsx;affiche l'erreur si getClient échoue et n'affiche pas le formulaire;Passé
+MCD;EditClient — submit complet;Appelle updateClient, navigate(-1);EditClient.test.jsx;MCD : envoie le formulaire complet via updateClient et revient en arrière;Passé
+MCD;EditClient — aucun champ grisé;Nom, prénom, date, lieu, PPE éditables;EditClient.test.jsx;MCD : ne désactive ni nom/prénom, ni date, ni lieu, ni PPE;Passé
+Caissier;EditClient — bannière explicative;Texte « ne permet de modifier que l'adresse… »;EditClient.test.jsx;CAISSIER : affiche la bannière explicative et grise nom/prénom;Passé
+Caissier;EditClient — lieu de naissance reste éditable;Le caissier peut tenter, le backend remontera l'erreur claire;EditClient.test.jsx;CAISSIER : lieu de naissance reste ÉDITABLE (le backend remontera l'erreur);Passé
+Caissier;EditClient — date de naissance déjà saisie;Champ date grisé;EditClient.test.jsx;CAISSIER : date de naissance désactivée quand elle est déjà saisie;Passé
+Caissier;EditClient — date de naissance absente;Champ date éditable;EditClient.test.jsx;CAISSIER : date de naissance ÉDITABLE quand elle est absente;Passé
+Caissier;EditClient — submit identification;Payload avec sentinelles null pour lieu/date/ppe;EditClient.test.jsx;CAISSIER : appelle updateClientIdentification avec lieu+date sentinelles à null;Passé
+Caissier;EditClient — coche PPE;Transmet ppe=true (jamais false);EditClient.test.jsx;CAISSIER : transmet ppe=true uniquement quand activé (jamais false);Passé
+Caissier;EditClient — PPE déjà actif;Checkbox grisée (jamais désactivable);EditClient.test.jsx;CAISSIER : ne peut pas désactiver le PPE déjà actif (checkbox grisée);Passé
+Caissier;EditClient — PUT échoue;Affiche le message du backend dans le toast et l'alerte;EditClient.test.jsx;affiche le message du backend tel quel quand le PUT échoue;Passé
+Utilisateur authentifié;EditClient — succès par défaut;navigate(-1);EditClient.test.jsx;navigate(-1) par défaut après succès;Passé
+Utilisateur authentifié;EditClient — location.state.returnTo défini;Redirige vers returnTo avec replace;EditClient.test.jsx;si location.state.returnTo est défini : redirige dessus avec replace;Passé
+Utilisateur authentifié;EditClient — bouton Retour du header;navigate(-1) sans soumettre;EditClient.test.jsx;le bouton « Retour » du header appelle navigate(-1) sans envoyer de PUT;Passé
+Utilisateur authentifié;EditClient — champ manquant côté backend;Classe « champ-manquant » sur le form-group;EditClient.test.jsx;met la classe « champ-manquant » sur les champs listés par le backend;Passé
+Utilisateur authentifié;EditClient — saisie sur un champ manquant;Surlignage retiré;EditClient.test.jsx;retire le surlignage dès qu'on saisit le champ manquant;Passé
+Utilisateur authentifié;EditClient — choix d'une suggestion d'adresse;Rue/CP/ville/pays préremplis;EditClient.test.jsx;AddressSearch pré-remplit rue/CP/ville/pays quand on choisit une suggestion;Passé
+Utilisateur authentifié;EditFiche — chargement;« Chargement… »;EditFiche.test.jsx;affiche « Chargement… » tant que getFiche n'a pas répondu;Passé
+Utilisateur authentifié;EditFiche — getFiche en erreur;Affiche le message;EditFiche.test.jsx;affiche l'erreur si getFiche échoue;Passé
+Caissier;EditFiche — fiche trop ancienne;Redirige vers /fiches/{id} (consultation);EditFiche.test.jsx;CAISSIER sur une fiche trop ancienne : redirige vers le détail (consultation);Passé
+Utilisateur authentifié;EditFiche — affichage du libellé client;Visible dans le bandeau;EditFiche.test.jsx;charge la fiche et rend le libellé du client;Passé
+Utilisateur authentifié;EditFiche — bouton Ajouter une ligne;Empile une ligne;EditFiche.test.jsx;« Ajouter une ligne » empile une nouvelle ligne;Passé
+Utilisateur authentifié;EditFiche — corbeille avec une seule ligne;Bouton grisé;EditFiche.test.jsx;le bouton « Supprimer la ligne » est grisé quand il ne reste qu'une ligne;Passé
+Utilisateur authentifié;EditFiche — suppression d'une ligne;Confirmation puis retrait;EditFiche.test.jsx;la suppression demande confirmation puis retire la ligne;Passé
+Utilisateur authentifié;EditFiche — submit ligne sans montant;Refus + message;EditFiche.test.jsx;refuse de soumettre une ligne sans aucun montant;Passé
+Utilisateur authentifié;EditFiche — submit RGM sans numéro de socle;Refus + message « numéro de socle est obligatoire »;EditFiche.test.jsx;refuse RGM sans numéro de socle;Passé
+Utilisateur authentifié;EditFiche — submit change sans observation;Refus + message « observation est obligatoire »;EditFiche.test.jsx;refuse change entrant/sortant sans observation;Passé
+MCD;EditFiche — submit OK;Payload nettoyé puis navigate(-1) (fix double Retour);EditFiche.test.jsx;submit OK : POST le payload nettoyé puis navigate(-1);Passé
+Utilisateur authentifié;EditFiche — ligne vide ajoutée hors PPE;Validation rejette (pas de ligne fantôme);EditFiche.test.jsx;ajouter une ligne vide fait échouer la validation (les vides ne sont pas tolérées hors PPE);Passé
+MCD;EditFiche — client PPE avec toutes les lignes vides;Submit autorisé;EditFiche.test.jsx;client PPE : autorise un submit avec uniquement des lignes vides;Passé
+MCD;EditFiche — updateFiche échoue;Message du backend affiché;EditFiche.test.jsx;affiche le message d'erreur du backend tel quel et ne navigue pas;Passé
+MCD;EditFiche — bouton Retour;Vers /fiches/{id} (consultation), pas navigate(-1);EditFiche.test.jsx;bouton « Retour » → /fiches/{id} (vue détail), pas navigate(-1);Passé
+Caissier;EditUtilisateur — accès refusé;Redirige vers /accueil;EditUtilisateur.test.jsx;CAISSIER : redirige vers /accueil sans rien charger;Passé
+Responsable Caisse;EditUtilisateur — accès refusé;Redirige vers /accueil;EditUtilisateur.test.jsx;RESPONSABLE_CAISSE : aussi redirigé (modification utilisateur = MCD only);Passé
+MCD;EditUtilisateur — location.state fourni;Aucun appel à listUtilisateurs (hydrate depuis le state);EditUtilisateur.test.jsx;utilise location.state.utilisateur si fourni (skip listUtilisateurs);Passé
+MCD;EditUtilisateur — sans state;fetch listUtilisateurs et filtre par id;EditUtilisateur.test.jsx;sans state : fetch listUtilisateurs et filtre par id;Passé
+MCD;EditUtilisateur — id introuvable;Message « Utilisateur introuvable »;EditUtilisateur.test.jsx;utilisateur introuvable : affiche le message d'erreur;Passé
+MCD;EditUtilisateur — submit sans changement;Notif « Aucune modification », pas de PATCH;EditUtilisateur.test.jsx;submit sans changement : notif « Aucune modification » sans PATCH;Passé
+MCD;EditUtilisateur — submit après modification;PATCH partiel (diff uniquement);EditUtilisateur.test.jsx;submit envoie UNIQUEMENT les champs modifiés (PATCH diff);Passé
+MCD;EditUtilisateur — change le rôle;Envoie role dans le PATCH;EditUtilisateur.test.jsx;change le rôle via le select et l'envoie au backend;Passé
+MCD;EditUtilisateur — succès;Notif success + redirect /utilisateurs;EditUtilisateur.test.jsx;après succès : notif + redirect /utilisateurs;Passé
+MCD;EditUtilisateur — erreur backend;Message du mapper affiché;EditUtilisateur.test.jsx;erreur backend remonte le message tel quel;Passé
+MCD;EditUtilisateur — compte archivé;Champs et bouton Enregistrer désactivés, bannière visible;EditUtilisateur.test.jsx;compte archivé : champs et bouton Enregistrer désactivés, bannière visible;Passé
+MCD;EditUtilisateur — auto-rétrogradation MCD;Avertissement « Vous ne pouvez pas vous retirer… »;EditUtilisateur.test.jsx;utilisateur courant rétrogradant son propre rôle MCD : affiche un avertissement;Passé
+MCD;EditUtilisateur — bouton Retour;Navigue vers /utilisateurs;EditUtilisateur.test.jsx;bouton Retour → /utilisateurs;Passé
+Caissier;Identification — preselectClient en state;Redirige vers /fiches/nouveau direct;Identification.test.jsx;preselectClient en location.state : redirige direct vers /fiches/nouveau;Passé
+Caissier;Identification — recherche;listClients après debounce, filtre identifie=true;Identification.test.jsx;recherche : déclenche listClients après debounce, filtre identifie=true;Passé
+Caissier;Identification — bouton Sélectionner;Navigue /fiches/nouveau avec clientData;Identification.test.jsx;« Sélectionner » navigue vers /fiches/nouveau avec clientData;Passé
+Caissier;Identification — bouton Voir le client;Navigue vers /clients/{id};Identification.test.jsx;« Voir le client » navigue vers /clients/{id} sans toucher à la fiche;Passé
+Caissier;Identification — recherche vide;Aucun appel listClients;Identification.test.jsx;recherche vide : aucun listClients appelé;Passé
+Caissier;Identification — aucun résultat;Placeholder « Aucun résultat »;Identification.test.jsx;« Aucun résultat » quand le backend renvoie une liste vide;Passé
+Caissier;Identification — onglet non-identifié;Bouton Continuer désactivé tant que description vide;Identification.test.jsx;onglet non-identifié : bouton Continuer désactivé tant que la description est vide;Passé
+Caissier;Identification — Continuer non-identifié;Description passée comme libelle et descriptionPhysique;Identification.test.jsx;onglet non-identifié : Continuer envoie la description comme libelle vers /fiches/nouveau;Passé
+Caissier;Identification — description blanche;Continuer ne navigue pas;Identification.test.jsx;onglet non-identifié : Continuer ne navigue pas si description blanche;Passé
+Caissier;Identification — bouton « Créer un nouveau client »;Pousse returnTo=fiche;Identification.test.jsx;« Créer un nouveau client » passe returnTo=fiche pour boucler le flow;Passé
+Caissier;Identification — bouton Retour;Navigue vers /accueil;Identification.test.jsx;bouton « Retour » → /accueil;Passé
+Caissier;Identification — switch d'onglet;Vide les résultats précédents;Identification.test.jsx;switch d'onglet vide les résultats précédents;Passé
+Caissier;ImporterClients — accès refusé;Redirige vers /accueil;ImporterClients.test.jsx;CAISSIER : redirige vers /accueil (réservé Responsable et MCD);Passé
+Responsable Caisse;ImporterClients — bouton Importer sans fichier;Désactivé;ImporterClients.test.jsx;bouton « Importer » désactivé tant qu'aucun fichier n'est choisi;Passé
+Responsable Caisse;ImporterClients — soumet un FormData;Résumé affiché, notif success;ImporterClients.test.jsx;soumet un FormData et affiche le résumé;Passé
+Responsable Caisse;ImporterClients — réponse avec errors[];Notif warning + liste détaillée des erreurs;ImporterClients.test.jsx;résumé avec erreurs : notification warning et liste détaillée;Passé
+Responsable Caisse;ImporterClients — erreur réseau;Affiche le message, pas de résumé;ImporterClients.test.jsx;erreur réseau : affiche le message et n'affiche pas de résumé;Passé
+Responsable Caisse;ImporterClients — bouton « Voir la liste des clients »;Navigue vers /clients;ImporterClients.test.jsx;« Voir la liste des clients » après import OK → /clients;Passé
+Responsable Caisse;ImporterClients — bouton Retour;Navigue vers /clients;ImporterClients.test.jsx;« Retour » → /clients;Passé
+Utilisateur authentifié;ImprimerFiches — sans ids dans l'URL;Placeholder « Aucune fiche à imprimer »;ImprimerFiches.test.jsx;sans ids dans l'URL : affiche le placeholder « Aucune fiche à imprimer »;Passé
+Utilisateur authentifié;ImprimerFiches — plusieurs ids;getFiche en parallèle, un papier par fiche;ImprimerFiches.test.jsx;lance getFiche pour chaque id et affiche un papier par fiche;Passé
+Utilisateur authentifié;ImprimerFiches — fiche multi-types;Sous-fiches dans l'ordre MAS → JTE → JT;ImprimerFiches.test.jsx;éclate une fiche multi-types en sous-fiches dans l'ordre MAS → JTE → JT;Passé
+Utilisateur authentifié;ImprimerFiches — getFiche en erreur;Affiche le message;ImprimerFiches.test.jsx;erreur réseau : affiche le message;Passé
+Utilisateur authentifié;ImprimerFiches — titre au pluriel;« 2 fiches »;ImprimerFiches.test.jsx;affiche le pluriel correct dans le titre;Passé
+Utilisateur authentifié;ImprimerFiches — bouton « Imprimer cette fiche »;imprimerSousFiche avec le bon type;ImprimerFiches.test.jsx;bouton « Imprimer cette fiche » appelle imprimerSousFiche avec le bon type;Passé
+Utilisateur authentifié;ImprimerFiches — bouton Retour;Navigue vers /accueil;ImprimerFiches.test.jsx;« Retour » → /accueil;Passé
+Caissier;Journal (UI) — accès refusé;Redirige vers /accueil sans afficher le journal;Journal.test.jsx;CAISSIER : redirige vers /accueil sans afficher le journal;Passé
+Responsable Caisse;Journal (UI) — accès refusé;Redirige vers /accueil (réservé MCD);Journal.test.jsx;RESPONSABLE_CAISSE : aussi redirigé (journal réservé MCD);Passé
+MCD;Journal (UI) — accès autorisé;Reste sur la page;Journal.test.jsx;MCD : reste sur la page;Passé
+MCD;Journal (UI) — chargement;« Chargement… » pendant listJournal;Journal.test.jsx;affiche « Chargement… » pendant l'appel listJournal;Passé
+MCD;Journal (UI) — sous-titre;Compteur « N dernières actions »;Journal.test.jsx;affiche le compteur d'entrées dans le sous-titre;Passé
+MCD;Journal (UI) — liste vide;Placeholder « Aucune action enregistrée »;Journal.test.jsx;liste vide : affiche le placeholder;Passé
+MCD;Journal (UI) — backend rejette;Affiche le message d'erreur;Journal.test.jsx;affiche l'erreur quand le backend rejette;Passé
+MCD;Journal (UI) — badges d'action;Libellés + classes CSS appropriés;Journal.test.jsx;mappe l'action sur son libellé et applique la classe correspondante;Passé
+MCD;Journal (UI) — entité;type + #id + libelleEntite affichés;Journal.test.jsx;affiche l'entité avec son id et son libellé;Passé
+MCD;Journal (UI) — utilisateur supprimé / description nulle;Placeholder « — »;Journal.test.jsx;affiche « — » comme placeholder quand utilisateur ou description manquent;Passé
+MCD;Journal (UI) — entité sans id;Affiche juste le type;Journal.test.jsx;entité sans id : affiche juste le type;Passé
+MCD;Journal (UI) — bouton Retour;Navigue vers /accueil;Journal.test.jsx;bouton Retour → /accueil;Passé
+Utilisateur authentifié;ListeClients — chargement;Liste affichée;ListeClients.test.jsx;charge la liste au montage et affiche les clients;Passé
+Utilisateur authentifié;ListeClients — appel initial;listClients(« »);ListeClients.test.jsx;appelle listClients avec la query vide au premier rendu;Passé
+Utilisateur authentifié;ListeClients — liste vide;Placeholder « Aucun client trouvé »;ListeClients.test.jsx;affiche le placeholder « Aucun client trouvé » quand la liste est vide;Passé
+Utilisateur authentifié;ListeClients — listClients en erreur;Message d'erreur affiché;ListeClients.test.jsx;affiche l'erreur si listClients échoue;Passé
+Utilisateur authentifié;ListeClients — recherche debounce;Appel listClients avec la query;ListeClients.test.jsx;la saisie déclenche un appel listClients avec la query saisie;Passé
+Utilisateur authentifié;ListeClients — compteur incomplets;« X sur Y » basé sur le flag complet;ListeClients.test.jsx;compteur (X sur Y) basé sur le flag complet;Passé
+Utilisateur authentifié;ListeClients — filtre profils à compléter;Masque les complets;ListeClients.test.jsx;coché : masque les clients complets;Passé
+Utilisateur authentifié;ListeClients — filtre + aucun incomplet;Placeholder « Aucun profil incomplet »;ListeClients.test.jsx;coché + aucun incomplet : placeholder spécifique;Passé
+Utilisateur authentifié;ListeClients — badges PPE et À compléter;Visibles avec classes CSS;ListeClients.test.jsx;affiche le badge PPE et le badge « À compléter »;Passé
+Utilisateur authentifié;ListeClients — tooltip badge À compléter;Mentionne les champs manquants;ListeClients.test.jsx;badge « À compléter » mentionne les champs manquants en title;Passé
+Utilisateur authentifié;ListeClients — bouton Voir le profil;Navigue vers /clients/{id};ListeClients.test.jsx;« Voir le profil » → /clients/{id};Passé
+Utilisateur authentifié;ListeClients — bouton + Ajouter un client;Navigue vers /clients/nouveau;ListeClients.test.jsx;« + Ajouter un client » → /clients/nouveau;Passé
+Utilisateur authentifié;ListeClients — bouton Retour;Navigue vers /accueil;ListeClients.test.jsx;« Retour » → /accueil;Passé
+Caissier;ListeUtilisateurs — accès refusé;Redirige vers /accueil;ListeUtilisateurs.test.jsx;CAISSIER : redirige vers /accueil;Passé
+MCD;ListeUtilisateurs — chargement;Liste des utilisateurs affichée;ListeUtilisateurs.test.jsx;charge la liste et affiche les utilisateurs;Passé
+MCD;ListeUtilisateurs — checkbox archives;Recharge avec includeArchives=true;ListeUtilisateurs.test.jsx;checkbox archives : recharge avec includeArchives=true;Passé
+MCD;ListeUtilisateurs — filtre client;Sur nom/prénom/identifiant;ListeUtilisateurs.test.jsx;filtre client par nom/prénom/identifiant;Passé
+MCD;ListeUtilisateurs — bouton Modifier;Navigue avec utilisateur en state;ListeUtilisateurs.test.jsx;Modifier : navigue avec utilisateur en state;Passé
+MCD;ListeUtilisateurs — bouton Archiver;window.confirm puis archiverUtilisateur;ListeUtilisateurs.test.jsx;Archiver demande confirmation puis appelle l'API;Passé
+MCD;ListeUtilisateurs — Archiver annulé;Confirm refuse → pas d'appel API;ListeUtilisateurs.test.jsx;Archiver : si confirm() refuse, n'appelle pas l'API;Passé
+MCD;ListeUtilisateurs — son propre compte;Bouton Archiver désactivé;ListeUtilisateurs.test.jsx;on ne peut pas archiver son propre compte (bouton désactivé);Passé
+MCD;ListeUtilisateurs — bouton Réactiver;desarchiverUtilisateur sur un compte archivé;ListeUtilisateurs.test.jsx;Réactiver : appelle desarchiverUtilisateur sur les comptes archivés;Passé
+MCD;ListeUtilisateurs — liste vide;Placeholder « Aucun utilisateur trouvé »;ListeUtilisateurs.test.jsx;liste vide : affiche le placeholder;Passé
+MCD;ListeUtilisateurs — bouton Retour;Navigue vers /accueil;ListeUtilisateurs.test.jsx;bouton Retour → /accueil;Passé
+Caissier;NouveauClient — sans doublon;createClient + redirect /clients/{id};NouveauClient.test.jsx;aucun doublon → crée le client et redirige vers /clients/{id};Passé
+Caissier;NouveauClient — payload;identifie=true (mode identifié);NouveauClient.test.jsx;createClient envoie identifie=true (le formulaire est toujours en mode identifié);Passé
+Caissier;NouveauClient — doublon détecté;Ouvre la modale, pas de création;NouveauClient.test.jsx;un doublon détecté → ouvre la modale et NE crée PAS le client;Passé
+Caissier;NouveauClient — Fusionner;updateClient sur le candidat puis redirect;NouveauClient.test.jsx;action Fusionner : updateClient sur le candidat puis redirection;Passé
+Caissier;NouveauClient — « Créer quand même »;createClient malgré le doublon;NouveauClient.test.jsx;action « Créer quand même » : appelle createClient malgré le doublon;Passé
+Caissier;NouveauClient — Annuler;Ferme la modale sans rien créer;NouveauClient.test.jsx;action Annuler : ferme la modale sans rien créer;Passé
+Caissier;NouveauClient — matchClient en erreur;Message d'erreur, pas de create;NouveauClient.test.jsx;matchClient en erreur → affiche le message et n'appelle pas create;Passé
+Caissier;NouveauClient — createClient en erreur;Reste sur la page avec l'erreur;NouveauClient.test.jsx;createClient en erreur après fusion : reste sur la page avec l'erreur;Passé
+Caissier;NouveauClient — createClient sans id retourné;Affiche « Impossible de créer le client »;NouveauClient.test.jsx;createClient sans id retourné : remonte une erreur;Passé
+Caissier;NouveauClient — returnTo=fiche;Redirige vers /fiches/identification avec preselectClient;NouveauClient.test.jsx;returnTo=fiche : redirige vers /fiches/identification avec preselectClient;Passé
+Caissier;NouveauClient — bouton Enregistrer pendant l'appel API;Désactivé;NouveauClient.test.jsx;le bouton Enregistrer est désactivé pendant l'appel matchClient;Passé
+Caissier;NouveauClient — bouton Retour;navigate(-1) sans soumettre;NouveauClient.test.jsx;le bouton Retour appelle navigate(-1) sans rien soumettre;Passé
+Caissier;NouveauUtilisateur — accès refusé;Redirige vers /accueil;NouveauUtilisateur.test.jsx;CAISSIER : redirige vers /accueil sans rendre le formulaire;Passé
+Responsable Caisse;NouveauUtilisateur — matrice des rôles créables;Seul le rôle CAISSIER proposé;NouveauUtilisateur.test.jsx;RESPONSABLE_CAISSE : ne propose QUE le rôle CAISSIER;Passé
+MCD;NouveauUtilisateur — matrice des rôles créables;Les trois rôles proposés;NouveauUtilisateur.test.jsx;MCD : propose les trois rôles;Passé
+MCD;NouveauUtilisateur — submit;Création + redirect /utilisateurs;NouveauUtilisateur.test.jsx;submit envoie le formulaire complet et redirige vers /utilisateurs;Passé
+MCD;NouveauUtilisateur — erreur backend;Affiche le message;NouveauUtilisateur.test.jsx;erreur backend : reste sur la page avec le message;Passé
+MCD;NouveauUtilisateur — bouton Retour;Navigue vers /utilisateurs;NouveauUtilisateur.test.jsx;bouton Retour → /utilisateurs;Passé
