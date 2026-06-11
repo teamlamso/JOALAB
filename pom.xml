@@ -112,6 +112,48 @@
             <version>2.3.232</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- JerseyTest : exerce la pipeline JAX-RS (path matching, sérialisation
+             DTO, @PathParam/@QueryParam) sans démarrer Payara. Transport
+             in-memory pour rester sur la JVM. -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-grizzly2-http</artifactId>
+            <version>3.1.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework</groupId>
+            <artifactId>jersey-test-framework-core</artifactId>
+            <version>3.1.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+            <artifactId>jersey-test-framework-provider-inmemory</artifactId>
+            <version>3.1.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>3.1.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-binding</artifactId>
+            <version>3.1.10</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Eclipse Yasson pour la sérialisation JSON-B des DTO (le frontend
+             ne lit que du JSON ; sans provider, Jersey renvoie du XML). -->
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>3.0.4</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
