@@ -34,7 +34,7 @@ Tous rôles;Tester peutSupprimerFiche par rôle;Seul MCD autorisé;PermissionSer
 Tous rôles;Tester peutSupprimerClient par rôle;Seul MCD autorisé;PermissionServiceTest;seulMcd_peutSupprimerClient;Passé
 Tous rôles;Tester la modification d'identité complète d'un client;MCD et Responsable Caisse autorisés;PermissionServiceTest;responsableEtMcd_peuventModifierClientComplet;Passé
 MCD;Créer un compte de chaque rôle (MCD, Responsable, Caissier);Autorisé pour tous les rôles;PermissionServiceTest;mcd_peutCreerTousLesRoles;Passé
-Responsable Caisse;Créer un compte selon le rôle cible;Caissier autorisé ; Responsable / MCD refusés;PermissionServiceTest;responsable_peutCreerSeulementCaissier;Passé
+Responsable Caisse;Créer un compte selon le rôle cible;Caissier autorisé, Responsable / MCD refusés;PermissionServiceTest;responsable_peutCreerSeulementCaissier;Passé
 Caissier;Créer un compte applicatif;Refusé quel que soit le rôle cible;PermissionServiceTest;caissier_neCreeAucunUtilisateur;Passé
 MCD;Tenter d'archiver son propre compte;Refusé (anti-blocage de l'administration);PermissionServiceTest;mcd_nePeutPasSAutoArchiver;Passé
 MCD;Archiver le compte d'un autre utilisateur;Autorisé;PermissionServiceTest;mcd_peutArchiverUnAutreCompte;Passé
@@ -159,7 +159,7 @@ Responsable Caisse;Headers contenant des espaces insécables (export Dynamics);R
 Responsable Caisse;Importer un fichier avec des lignes vides intercalées;Lignes vides ignorées en silence;ClientImportServiceTest;ligneEntierementVide_estIgnoreeSansErreur;Passé
 Responsable Caisse;Ligne sans nom ni prénom (uniquement PPE/identifiant);Ignorée sans erreur (pas de Client créé);ClientImportServiceTest;ligneSansNomNiPrenom_estIgnoreeSansErreur;Passé
 Responsable Caisse;Valeurs PPE Oui/OUI/Yes/1/Non/vide;Lues comme true/true/true/true/false/false;ClientImportServiceTest;ppe_acceptePlusieursLibellesEnLecture;Passé
-Responsable Caisse;Mapping des types de pièce (CNI, Permis carte, Passeport francais, …);Reformatés vers les libellés métier; valeur inconnue conservée telle quelle;ClientImportServiceTest;typePiece_remappeLesLibellesMetier;Passé
+Responsable Caisse;Mapping des types de pièce (CNI, Permis carte, Passeport francais, …);Reformatés vers les libellés métier, valeur inconnue conservée telle quelle;ClientImportServiceTest;typePiece_remappeLesLibellesMetier;Passé
 Responsable Caisse;Date textuelle en plusieurs formats (dd/MM/yyyy, dd-MM-yyyy, ISO);Tous parsés vers le même LocalDate;ClientImportServiceTest;date_acceptePlusieursFormatsTexte;Passé
 Responsable Caisse;Date au format cellule Excel typée Date;Lue directement;ClientImportServiceTest;date_celluleTypeeDate_estLueDirectement;Passé
 Responsable Caisse;Date textuelle au format inconnu (01.06.1985);Reportée en erreur de ligne (« Ligne 2 : Date non reconnue »);ClientImportServiceTest;date_formatInconnu_estReporteeEnErreurDeLigne;Passé
@@ -205,7 +205,7 @@ Utilisateur authentifié;ClientRepository — client sans fiche dans la liste;Cl
 Utilisateur authentifié;ClientRepository — save d'un nouveau client;ID auto-généré (IDENTITY);ClientRepositoryTest;save_genereId;Passé
 Utilisateur authentifié;ClientRepository — delete d'un client;Plus retrouvable via findById;ClientRepositoryTest;delete_supprimeLeClient;Passé
 Utilisateur authentifié;FicheRepository — fenêtre journée de travail 06h00 → 06h00 le lendemain;Inclut la fiche créée à 06h00, exclut celle de 05h59 (jour précédent);FicheLABFTRepositoryTest;findWithFilters_fenetreInclutLeDebutDuJourATravers06h;Passé
-Utilisateur authentifié;FicheRepository — fenêtre exclut l'aube du jour suivant;Fiche à 23h et celle à 5h59 du lendemain (= même jour de travail) incluses; la 6h00 du lendemain exclue;FicheLABFTRepositoryTest;findWithFilters_fenetreExcluLAubeDuJourSuivant;Passé
+Utilisateur authentifié;FicheRepository — fenêtre exclut l'aube du jour suivant;Fiche à 23h et celle à 5h59 du lendemain (= même jour de travail) incluses, la 6h00 du lendemain exclue;FicheLABFTRepositoryTest;findWithFilters_fenetreExcluLAubeDuJourSuivant;Passé
 Utilisateur authentifié;FicheRepository — tri par COALESCE(modification, création) DESC;Fiche modifiée à 15h passe devant celle créée à 14h, derrière celle créée à 16h;FicheLABFTRepositoryTest;findWithFilters_trieParDateModificationCoalesceCreation;Passé
 Utilisateur authentifié;FicheRepository — search filtré sur le client;Seules les fiches du client matchant sont retenues;FicheLABFTRepositoryTest;findWithFilters_searchFiltreSurNomDuClient;Passé
 Utilisateur authentifié;FicheRepository — search multi-tokens;AND entre les tokens (« Alexis Duchat »);FicheLABFTRepositoryTest;findWithFilters_searchMultiTokens_AND;Passé
@@ -466,7 +466,7 @@ Utilisateur authentifié;Accueil — sous-bloc « Dépassant 2 000 € »;Mis en
 Utilisateur authentifié;Accueil — recherche debounce;listFiches+listClients déclenchés;Accueil.test.jsx;saisie d'une recherche : déclenche listFiches+listClients (debounce);Passé
 Utilisateur authentifié;Accueil — badge PPE;Affiché quand clientPpe=true;Accueil.test.jsx;affiche le badge PPE quand clientPpe=true;Passé
 Utilisateur authentifié;Accueil — picto warning client incomplet;Tooltip avec champs manquants;Accueil.test.jsx;affiche un picto warning quand clientComplet=false avec champs manquants en tooltip;Passé
-Utilisateur authentifié;Accueil — boutons d'action sur la carte;Modifier → /fiches/{id}/modifier; Œil → /fiches/{id};Accueil.test.jsx;boutons Modifier/Eye sur les cartes : naviguent vers /fiches/{id}/modifier et /fiches/{id};Passé
+Utilisateur authentifié;Accueil — boutons d'action sur la carte;Modifier → /fiches/{id}/modifier, Œil → /fiches/{id};Accueil.test.jsx;boutons Modifier/Eye sur les cartes : naviguent vers /fiches/{id}/modifier et /fiches/{id};Passé
 Caissier;Accueil — fiche très ancienne;Pas de bouton Modifier;Accueil.test.jsx;CAISSIER : pas de bouton « Modifier » sur une fiche d'avant-hier;Passé
 Utilisateur authentifié;Accueil — bouton « Voir les clients »;Navigue vers /clients;Accueil.test.jsx;« Voir les clients » → /clients;Passé
 Utilisateur authentifié;Accueil — bouton « + Ajouter une fiche »;Navigue vers /fiches/identification;Accueil.test.jsx;« + Ajouter une fiche » → /fiches/identification;Passé
