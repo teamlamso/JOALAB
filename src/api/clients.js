@@ -23,13 +23,6 @@ export function updateClient(id, data) {
   })
 }
 
-/**
- * Met à jour uniquement l'adresse et la pièce d'identité d'un client.
- * Endpoint accessible à tous les rôles (y compris CAISSIER).
- *
- * @param {number} id
- * @param {object} data — sous-ensemble adresse + pièce d'identité.
- */
 export function updateClientIdentification(id, data) {
   return request(`/clients/${id}/identification`, {
     method: 'PATCH',
