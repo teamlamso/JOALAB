@@ -10,23 +10,6 @@ import jakarta.ws.rs.ForbiddenException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-/**
- * Centralise la matrice de droits par rôle utilisateur.
- *
- * <p>Règles métier appliquées :
- * <ul>
- *   <li>{@code CAISSIER} — peut modifier les fiches du jour de travail courant
- *       et de la veille ; peut modifier les papiers d'identité et l'adresse d'un
- *       client.</li>
- *   <li>{@code RESPONSABLE_CAISSE} — peut modifier les fiches jusqu'à 31 jours
- *       dans le passé (inclus) ; peut modifier l'identité complète d'un client.</li>
- *   <li>{@code MCD} — peut modifier toute fiche quelle que soit son ancienneté ;
- *       peut supprimer fiches et clients.</li>
- * </ul>
- *
- * <p>Toutes les méthodes {@code ensure...} lèvent une {@link ForbiddenException}
- * (HTTP 403) si la condition n'est pas remplie.
- */
 @Stateless
 public class PermissionService {
 
@@ -36,11 +19,6 @@ public class PermissionService {
     /** Fenêtre d'édition des fiches pour un RESPONSABLE_CAISSE (31 jours). */
     private static final int RESPONSABLE_FENETRE_JOURS = 31;
 
-    /**
-     * Indique si {@code utilisateur} a le droit de modifier une fiche dont la
-     * date de travail est {@code dateFiche}. L'écart est mesuré en jours entiers
-     * entre la date de la fiche et le jour de travail courant.
-     */
     public boolean peutModifierFiche(Utilisateur utilisateur, LocalDate dateFiche) {
         if (utilisateur == null || dateFiche == null) return false;
         if (utilisateur.getRole() == RoleUtilisateur.MCD) return true;

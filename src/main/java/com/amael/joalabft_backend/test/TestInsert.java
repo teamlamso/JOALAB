@@ -21,20 +21,7 @@ import com.amael.joalabft_backend.model.service.PasswordHasher;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Bean de démarrage qui insère les données de test au premier lancement.
- *
- * <p>S'exécute automatiquement après le déploiement grâce à {@code @Singleton + @Startup}.
- * Comme EclipseLink est configuré en {@code drop-and-create-tables}, les tables sont
- * recréées à chaque redémarrage et les données sont réinsérées systématiquement.
- *
- * <p><strong>Comptes de test</strong> — mot de passe : {@code password}
- * <ul>
- *   <li>{@code aduchat} — Caissier</li>
- *   <li>{@code mcurie}  — Responsable caisse</li>
- *   <li>{@code jbond}   — MCD</li>
- * </ul>
- */
+
 @Singleton
 @Startup
 public class TestInsert {
@@ -50,9 +37,6 @@ public class TestInsert {
 
     @PostConstruct
     public void init() {
-        // Idempotent : si les utilisateurs de seed existent déjà (cas où Payara
-        // a loupé un drop-and-create), on ne réinsère rien — le startup ne
-        // doit pas casser à cause d'une violation de clé unique.
         if (utilisateurRepository.existsByIdentifiant("aduchat")) {
             return;
         }

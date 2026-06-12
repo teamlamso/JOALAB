@@ -12,24 +12,12 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Accès aux données des {@link FicheLABFT}.
- */
 @Stateless
 public class FicheLABFTRepository {
 
     @PersistenceContext(unitName = "LABFTPU")
     private EntityManager em;
 
-    /**
-     * Recherche les fiches dans une plage de dates, avec filtre texte optionnel
-     * sur le nom, prénom ou description physique du client.
-     *
-     * @param from     date de début (incluse)
-     * @param to       date de fin (incluse)
-     * @param search   terme de recherche (nullable)
-     */
-    /** Heure de début d'une journée de travail casino (06h00). */
     private static final LocalTime DEBUT_JOURNEE = LocalTime.of(6, 0);
 
     public List<FicheLABFT> findWithFilters(LocalDate from, LocalDate to, String search) {
@@ -85,12 +73,6 @@ public class FicheLABFTRepository {
         return em.merge(fiche);
     }
 
-    /**
-     * Force la synchronisation immédiate du contexte de persistance avec la
-     * base. À utiliser quand on a besoin de garantir l'ordre des opérations
-     * SQL — typiquement des DELETE d'orphelines avant des INSERT pour éviter
-     * une duplication ou un conflit de contrainte.
-     */
     public void flush() {
         em.flush();
     }

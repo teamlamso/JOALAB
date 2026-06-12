@@ -47,11 +47,6 @@ public class UtilisateurRepository {
         return em.merge(utilisateur);
     }
 
-    /**
-     * Retourne les utilisateurs triés par rôle (MCD, RESPONSABLE_CAISSE, CAISSIER)
-     * puis nom + prénom. Les utilisateurs archivés sont exclus par défaut ;
-     * {@code includeArchives = true} les réintroduit (pour l'écran d'audit MCD).
-     */
     public List<Utilisateur> findAll(boolean includeArchives) {
         String jpql = includeArchives
                 ? "SELECT u FROM Utilisateur u ORDER BY u.archive ASC, u.role ASC, u.nom ASC, u.prenom ASC"
@@ -64,12 +59,6 @@ public class UtilisateurRepository {
         return findAll(false);
     }
 
-    /**
-     * Vrai si un utilisateur (actif ou archivé) avec cet identifiant existe déjà.
-     * L'unicité est globale pour éviter une collision lors d'un éventuel désarchivage.
-     * Un utilisateur peut être exclu de la vérification via {@code excludeId} (utile
-     * lors d'une modification qui conserve l'identifiant existant).
-     */
     public boolean existsByIdentifiant(String identifiant, Long excludeId) {
         String jpql = "SELECT COUNT(u) FROM Utilisateur u WHERE u.identifiant = :id"
                 + (excludeId != null ? " AND u.id <> :excludeId" : "");

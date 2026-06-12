@@ -4,17 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-/**
- * Représente la journée de travail du casino : commence à {@link #START_HOUR}h
- * et se termine à 05h59 le lendemain. Un horodatage tombant avant 06h00
- * appartient encore au jour précédent.
- *
- * <p>Toutes les opérations de « maintenant » s'évaluent dans le fuseau
- * {@link #ZONE} (Europe/Paris) plutôt que dans le fuseau du JVM. C'est
- * indispensable en déploiement Docker, où le container est généralement
- * en UTC : sans ce verrouillage, la bascule 06h00 dérive et la journée
- * de travail se confond avec la journée civile UTC.
- */
+
 public final class WorkDay {
 
     /** Heure de bascule (06h00) du jour de travail. */

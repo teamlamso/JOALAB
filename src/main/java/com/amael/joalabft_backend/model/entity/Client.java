@@ -7,12 +7,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Représente un client du casino, identifié ou non.
- *
- * <p>Si {@code identifie = true} : les champs d'état civil et de pièce d'identité sont renseignés.
- * <p>Si {@code identifie = false} : seul {@code descriptionPhysique} est renseigné.
- */
 @Entity
 @Table(name = "clients")
 public class Client {

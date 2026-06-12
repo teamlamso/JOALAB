@@ -24,27 +24,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Client pour {@code api-adresse.data.gouv.fr} (BAN — Base Adresse Nationale).
- * Résout une chaîne libre en adresse structurée. France uniquement.
- *
- * <p>Stratégie : on tente plusieurs reformulations de la requête (chaîne
- * complète, sans la mention « FRANCE » de fin, première ligne seule), et on
- * accepte le premier résultat qui colle réellement à une adresse postale
- * (type {@code housenumber} ou {@code street}). Si la BAN ne retourne que
- * des résultats trop vagues — type {@code municipality} qui n'a qu'un nom
- * de ville sans rue — on rejette pour laisser le caller faire un fallback.
- */
+
 @Stateless
 @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 public class AdresseService {
 
-    // NOT_SUPPORTED : ce service ne touche pas à JPA et fait des appels HTTP
-    // sortants pouvant durer plusieurs secondes (BAN, Nominatim). Sans cette
-    // annotation, chaque appel ouvre une transaction JTA + emprunte une
-    // connexion JDBC du pool — qui reste bloquée pendant tout l'aller-retour
-    // HTTP. Quelques appels concurrents suffisent à épuiser le pool de
-    // connexions et bloquer toute l'application.
 
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3))
@@ -56,13 +40,6 @@ public class AdresseService {
     /** Plafond raisonnable de suggestions (pour éviter une réponse trop lourde). */
     private static final int LIMITE_MAX = 10;
 
-    /**
-     * Retourne jusqu'à {@code limit} suggestions d'adresses pour la requête
-     * {@code q}. On interroge d'abord la BAN (France, rapide, libellés propres) ;
-     * si elle ne retourne rien, on bascule sur Nominatim (couverture mondiale).
-     * Si les deux échouent, on renvoie une liste vide — le frontend doit
-     * traiter ce cas comme « aucune suggestion ».
-     */
     public List<SuggestionAdresseResponse> chercherSuggestions(String q, int limit) {
         if (q == null || q.isBlank()) return List.of();
         int n = Math.max(1, Math.min(limit, LIMITE_MAX));
@@ -71,16 +48,6 @@ public class AdresseService {
         return chercherNominatim(q, n);
     }
 
-    /**
-     * Retourne jusqu'à {@code limit} suggestions de lieux (villes uniquement,
-     * sans rue ni numéro) pour la requête {@code q}. Interroge Nominatim
-     * directement et formate les libellés en {@code "Ville (XX)"} où XX est
-     * le numéro de département (France) ou le pays (international).
-     *
-     * <p>Distinct de {@link #chercherSuggestions} qui cible les adresses
-     * postales complètes : ici on veut juste localiser une ville pour le
-     * champ « lieu de naissance ».
-     */
     public List<SuggestionLieuResponse> chercherLieux(String q, int limit) {
         if (q == null || q.isBlank()) return List.of();
         int n = Math.max(1, Math.min(limit, LIMITE_MAX));
@@ -212,10 +179,7 @@ public class AdresseService {
         return "";
     }
 
-    /**
-     * Résout {@code raw} en adresse structurée. {@code null} si non trouvée
-     * ou si tous les essais retournent des résultats trop vagues.
-     */
+
     public Adresse resoudre(String raw) {
         if (raw == null || raw.isBlank()) return null;
 
@@ -268,7 +232,7 @@ public class AdresseService {
 
                 String type     = readString(props, "type",     null);
                 // Seuls housenumber et street produisent une vraie adresse postale ;
-                // municipality / locality / poi n'ont pas de rue → on rejette.
+                // municipality / locality / poi n'ont pas de rue donc on rejette.
                 if (!"housenumber".equals(type) && !"street".equals(type)) return null;
 
                 String rue   = readString(props, "name",     null);

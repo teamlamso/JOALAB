@@ -6,18 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/**
- * Hachage des mots de passe applicatifs.
- *
- * <p>Les nouveaux mots de passe sont hashés en <strong>BCrypt</strong> (facteur de coût 12,
- * salt aléatoire intégré au hash). Le format produit fait 60 caractères, par ex.
- * {@code $2a$12$...}.
- *
- * <p>Pour assurer la rétrocompatibilité avec les comptes créés avant la migration,
- * {@link #verify(String, String)} accepte aussi les anciens hashes SHA-256 (64 caractères
- * hexadécimaux). La méthode {@link #isLegacyHash(String)} permet d'identifier ces hashes
- * obsolètes afin de les re-hasher en BCrypt à la prochaine connexion réussie.
- */
 public final class PasswordHasher {
 
     /** Facteur de coût BCrypt : 2^12 = 4096 itérations (~250 ms sur un serveur moderne). */
@@ -25,12 +13,6 @@ public final class PasswordHasher {
 
     private PasswordHasher() {}
 
-    /**
-     * Hash {@code motDePasse} en BCrypt avec salt aléatoire.
-     *
-     * @return hash BCrypt de 60 caractères ({@code $2a$12$...})
-     * @throws IllegalArgumentException si {@code motDePasse} est {@code null}
-     */
     public static String hash(String motDePasse) {
         if (motDePasse == null) {
             throw new IllegalArgumentException("Mot de passe null");
@@ -38,19 +20,6 @@ public final class PasswordHasher {
         return BCrypt.withDefaults().hashToString(BCRYPT_COST, motDePasse.toCharArray());
     }
 
-    /**
-     * Vérifie qu'un mot de passe en clair correspond à un hash stocké.
-     *
-     * <p>Détecte automatiquement le format :
-     * <ul>
-     *   <li>BCrypt ({@code $2a$}, {@code $2b$}, {@code $2y$}) → vérification BCrypt.</li>
-     *   <li>SHA-256 (64 caractères hexadécimaux) → comparaison legacy
-     *       en temps constant.</li>
-     * </ul>
-     *
-     * @return {@code true} si le mot de passe correspond, {@code false} sinon
-     *         (y compris si {@code hashStocke} est {@code null}/vide)
-     */
     public static boolean verify(String motDePasse, String hashStocke) {
         if (motDePasse == null || hashStocke == null || hashStocke.isEmpty()) {
             return false;

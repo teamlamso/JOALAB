@@ -7,18 +7,6 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-/**
- * Entrée du journal d'audit : trace immuable d'une action utilisateur.
- *
- * <p>Le journal est append-only — aucun service ne modifie ni ne supprime
- * d'entrée. La référence à l'utilisateur n'est pas obligatoire (par exemple
- * pour des actions système éventuelles), mais en pratique elle l'est pour
- * toutes les actions générées par les ressources REST.
- *
- * <p>Le champ {@code libelleEntite} fige le nom lisible de l'entité au moment
- * de l'action — indispensable pour les SUPPRESSION où l'entité référencée par
- * {@code entiteId} n'existe plus.
- */
 @Entity
 @Table(name = "journal_actions")
 public class JournalAction {

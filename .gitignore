@@ -37,3 +37,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+# Documentation interne et fichiers d'assistance — gardés sur disque, non versionnés
+CLAUDE.md
+AGENT.MD
+docs/

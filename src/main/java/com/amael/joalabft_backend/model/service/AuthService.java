@@ -9,14 +9,6 @@ import jakarta.inject.Inject;
 
 import java.util.Optional;
 
-/**
- * Gère l'authentification des utilisateurs.
- *
- * <p>Les mots de passe sont vérifiés via {@link PasswordHasher#verify(String, String)},
- * qui accepte le format BCrypt courant et tolère les hashes SHA-256 hérités. Tout hash
- * legacy détecté lors d'une connexion réussie est <strong>migré en BCrypt</strong> de
- * manière transparente pour l'utilisateur.
- */
 @Stateless
 public class AuthService {
 
@@ -29,11 +21,6 @@ public class AuthService {
     @Inject
     private JournalService journalService;
 
-    /**
-     * Tente d'authentifier un utilisateur.
-     *
-     * @return le token de session si les identifiants sont valides, {@code null} sinon
-     */
     public String login(String identifiant, String motDePasse) {
         Optional<Utilisateur> opt = utilisateurRepository.findByIdentifiant(identifiant);
         if (opt.isEmpty()) return null;
@@ -57,7 +44,7 @@ public class AuthService {
         return token;
     }
 
-    /** Retourne l'utilisateur associé au token, ou {@code null}. */
+    /** Retourne l'utilisateur associé au token */
     public Utilisateur getUtilisateur(String token) {
         return sessionStore.getUtilisateur(token);
     }

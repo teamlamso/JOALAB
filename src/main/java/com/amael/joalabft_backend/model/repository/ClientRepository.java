@@ -11,22 +11,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Accès aux données des {@link Client}.
- */
 @Stateless
 public class ClientRepository {
 
     @PersistenceContext(unitName = "LABFTPU")
     private EntityManager em;
 
-    /**
-     * Retourne tous les clients identifiés, triés par nom puis prénom.
-     * Si {@code search} est fourni, le terme est découpé en mots (séparés par des espaces) ;
-     * chaque mot doit matcher au moins l'un des champs nom, prénom ou description physique
-     * (combinaison AND entre mots, OR entre champs). Cela permet de retrouver "Alexis Duchat"
-     * ou "Duchat Alexis" indifféremment.
-     */
     public List<Client> findAll(String search) {
         if (search == null || search.isBlank()) {
             return em.createQuery(
@@ -56,13 +46,6 @@ public class ClientRepository {
         return Optional.ofNullable(em.find(Client.class, id));
     }
 
-    /**
-     * Recherche les clients identifiés susceptibles de correspondre à un nouvel
-     * enregistrement, sur la base de :
-     *   - nom + prénom + date de naissance (correspondance exacte sur les 3),
-     *   - ou numéro de pièce d'identité (correspondance exacte).
-     * Permet de détecter les doublons potentiels.
-     */
     public List<Client> findSimilar(String nom, String prenom, LocalDate dateNaissance, String numeroPiece) {
         return em.createQuery(
                 "SELECT c FROM Client c WHERE c.identifie = true AND (" +
@@ -103,10 +86,6 @@ public class ClientRepository {
         ).setParameter("id", clientId).getSingleResult();
     }
 
-    /**
-     * Retourne la date de la dernière fiche créée pour un client,
-     * ou {@code null} s'il n'en a aucune.
-     */
     public LocalDate getDerniereActivite(Long clientId) {
         TypedQuery<LocalDateTime> q = em.createQuery(
                 "SELECT MAX(f.dateCreation) FROM FicheLABFT f WHERE f.client.id = :id",
@@ -117,12 +96,6 @@ public class ClientRepository {
         return result != null ? result.toLocalDate() : null;
     }
 
-    /**
-     * Retourne pour chaque identifiant fourni la date de la dernière fiche du
-     * client (clé absente si le client n'a aucune fiche). Une seule requête,
-     * remplace le N+1 que produisait {@link #getDerniereActivite(Long)} appelé
-     * en boucle depuis la liste des clients.
-     */
     public java.util.Map<Long, LocalDate> getDerniereActivitePourIds(java.util.List<Long> clientIds) {
         if (clientIds == null || clientIds.isEmpty()) return java.util.Collections.emptyMap();
         List<Object[]> rows = em.createQuery(

@@ -8,12 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Fiche LAB-FT (Lutte Anti-Blanchiment et contre le Financement du Terrorisme).
- *
- * <p>Une fiche regroupe N {@link LigneTransaction} pour un client donné sur une même journée.
- * Les fiches dont le total dépasse 2000 € doivent être inscrites dans les registres officiels.
- */
 @Entity
 @Table(name = "fiches_labft")
 public class FicheLABFT {

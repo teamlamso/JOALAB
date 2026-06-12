@@ -7,12 +7,6 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 
-/**
- * Ligne de transaction au sein d'une {@link FicheLABFT}.
- *
- * <p>Chaque ligne représente une opération de jeu distincte pour un client :
- * type de jeu, mode de paiement, type de change, montants et observations.
- */
 @Entity
 @Table(name = "lignes_transaction")
 public class LigneTransaction {

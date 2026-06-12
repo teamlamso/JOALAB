@@ -8,10 +8,6 @@ import jakarta.persistence.PersistenceContext;
 
 import java.util.List;
 
-/**
- * Accès aux données du {@link JournalAction}.
- * Append-only : seuls {@code save} et lectures sont exposés.
- */
 @Stateless
 public class JournalActionRepository {
 
@@ -24,11 +20,6 @@ public class JournalActionRepository {
         return entry;
     }
 
-    /**
-     * Retourne le journal complet, du plus récent au plus ancien.
-     * {@code limit} borne le nombre de résultats (utile pour ne pas charger
-     * tout le journal d'un coup côté front).
-     */
     public List<JournalAction> findAll(int limit) {
         return em.createQuery(
                 "SELECT j FROM JournalAction j ORDER BY j.horodatage DESC, j.id DESC",
@@ -36,10 +27,6 @@ public class JournalActionRepository {
         ).setMaxResults(limit).getResultList();
     }
 
-    /**
-     * Retourne les entrées concernant une entité précise (par type + identifiant),
-     * du plus récent au plus ancien.
-     */
     public List<JournalAction> findByEntite(TypeEntiteJournal typeEntite, Long entiteId) {
         return em.createQuery(
                 "SELECT j FROM JournalAction j " +

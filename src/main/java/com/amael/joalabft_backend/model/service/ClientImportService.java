@@ -23,32 +23,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Import en masse de clients à partir d'un fichier Excel (.xlsx ou .xls).
- *
- * <p>Le fichier doit contenir une ligne d'en-tête en première ligne. Les colonnes
- * attendues (insensibles à la casse et aux accents) sont :
- * <ul>
- *   <li>Prénom</li>
- *   <li>Nom de famille</li>
- *   <li>Date de naissance</li>
- *   <li>PPE (« Oui » / « Non »)</li>
- *   <li>PI Numéro</li>
- *   <li>PI Pays de délivrance</li>
- *   <li>PI Pays de naissance</li>
- *   <li>PI Ville de délivrance</li>
- *   <li>PI Ville de naissance</li>
- *   <li>PI Type de document</li>
- *   <li>PI Date de délivrance</li>
- *   <li>Adresse 1 (cellule sur trois lignes : rue / CP ville / pays)</li>
- * </ul>
- *
- * <p>Les colonnes supplémentaires sont ignorées. Les valeurs vides sont permises ;
- * un client créé avec des champs manquants est compté dans
- * {@link ImportClientsResponse#incomplete} pour que le frontend l'affiche avec
- * une pastille « À compléter ». Les doublons (mêmes nom+prénom+date de naissance,
- * ou même numéro de pièce) sont silencieusement ignorés.
- */
 @Stateless
 public class ClientImportService {
 
@@ -90,13 +64,6 @@ public class ClientImportService {
     @Inject
     private AdresseService adresseService;
 
-    /**
-     * Lit le classeur Excel fourni et crée les clients correspondants.
-     *
-     * @throws jakarta.ws.rs.ForbiddenException si {@code utilisateur} n'est pas
-     *         RESPONSABLE_CAISSE ou MCD
-     * @throws BadRequestException si le fichier ne peut pas être lu
-     */
     public ImportClientsResponse importer(InputStream input, Utilisateur utilisateur) {
         permissionService.ensurePeutImporterClients(utilisateur);
 
@@ -224,10 +191,6 @@ public class ClientImportService {
         c.setPrefectureDelivrance(cellString(row, columns, "PI Ville de délivrance", f));
 
         // Adresse : on tente d'abord le parsing maison (rapide, déterministe).
-        // Quand la cellule est bien structurée (rue \n CP ville \n pays), ça
-        // donne directement le bon résultat. Si maison n'arrive pas à extraire
-        // CP+ville (cellule mono-ligne foireuse, format inattendu…), on
-        // appelle la BAN en dernier recours.
         String adresseRaw = cellString(row, columns, "Adresse 1", f);
         if (adresseRaw != null) {
             appliquerAdresse(c, adresseRaw);
@@ -373,14 +336,6 @@ public class ClientImportService {
         return s == null ? null : s.trim();
     }
 
-    /**
-     * Normalise une chaîne pour la comparer (clé de header, valeur enum) :
-     * trim, lowercase, suppression des accents, et — important pour les
-     * exports Microsoft Dynamics qui sèment des espaces insécables (U+00A0)
-     * ou autres caractères invisibles dans les headers — réduction de toute
-     * séquence de whitespace Unicode (espaces, NBSP, séparateurs, contrôles
-     * invisibles) à un simple espace ASCII.
-     */
     private static String normalize(String s) {
         if (s == null) return "";
         String n = Normalizer.normalize(s, Normalizer.Form.NFKD)

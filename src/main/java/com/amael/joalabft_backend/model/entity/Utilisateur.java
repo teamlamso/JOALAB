@@ -3,12 +3,6 @@ package com.amael.joalabft_backend.model.entity;
 import com.amael.joalabft_backend.model.enums.RoleUtilisateur;
 import jakarta.persistence.*;
 
-/**
- * Compte applicatif d'un employé du casino.
- * Le mot de passe est stocké sous forme de hash BCrypt (60 caractères) ; les comptes
- * antérieurs à la migration peuvent transitoirement contenir un hash SHA-256 (64
- * caractères hex) re-hashé en BCrypt à la prochaine connexion.
- */
 @Entity
 @Table(name = "utilisateurs")
 public class Utilisateur {

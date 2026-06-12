@@ -10,13 +10,6 @@ import jakarta.ws.rs.ext.Provider;
 
 import java.io.IOException;
 
-/**
- * Filtre d'authentification : vérifie le token Bearer sur toutes les requêtes
- * sauf {@code POST /api/auth/login}.
- *
- * <p>Si le token est valide, l'utilisateur est injecté dans le contexte de la
- * requête sous la clé {@code "utilisateur"}.
- */
 @Provider
 public class AuthFilter implements ContainerRequestFilter {
 
